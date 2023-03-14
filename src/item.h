@@ -52,6 +52,14 @@ public:
     {
     }
 
+    Item(const Item &item)
+    {
+        this->_name = item._name;
+        this->_description = item._description;
+        this->_symbol = item._symbol;
+        this->_rarity = item._rarity;
+    }
+
     Item(Item &&item)
     {
         _name = std::move(item._name);
@@ -91,6 +99,9 @@ public:
         case Rarity::Legendary:
             return "Legendary";
         }
+        // I don't think this will ever get used, unless I write really bad stuff later down the line
+        // I'm doing this purely so that intellisense stops displaying a warning there
+        return "NO RARITY";
     }
     std::string get_name_with_prefix()
     {

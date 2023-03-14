@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.0.0)
 project(Unnamed-Roguelike LANGUAGES CXX VERSION 0.1.0)
 set(CMAKE_CXX_STANDARD 20)
+
 # FTXUI Includes ---------------------------------------------------------------
 include(FetchContent)
 
@@ -10,24 +11,24 @@ FetchContent_Declare(ftxui
 )
 
 FetchContent_GetProperties(ftxui)
+
 if(NOT ftxui_POPULATED)
   FetchContent_Populate(ftxui)
   add_subdirectory(${ftxui_SOURCE_DIR} ${ftxui_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
-# ------------------------------------------------------------------------------
 
+# ------------------------------------------------------------------------------
 include(CTest)
 enable_testing()
 
 add_executable(Unnamed-Roguelike main.cpp)
+target_include_directories(Unnamed-Roguelike PRIVATE src)
 
 target_link_libraries(Unnamed-Roguelike
   PRIVATE ftxui::screen
   PRIVATE ftxui::dom
   PRIVATE ftxui::component
 )
-
-target_include_directories(Unnamed-Roguelike PRIVATE src)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
