@@ -1,6 +1,10 @@
 #ifndef ENTITY_H
 #define ENTITY_H
-#include <ftxui/screen/color.hpp>
+
+// for some reason #include <ftxui/screen/color.hpp> doesn't work, so until I figure it out, this will
+// have to suffice
+#include "../build/_deps/ftxui-src/include/ftxui/screen/color.hpp"
+// #include <ftxui/screen/color.hpp>
 #include <regex>
 #include <memory>
 #include <list>
@@ -25,7 +29,7 @@ public:
         _pos_y = 0;
     }
     Entity(std::string name, std::string symbol, ftxui::Color color = ftxui::Color::White, int pos_x = 0, int pos_y = 0, std::list<std::unique_ptr<Item>> *inventory = nullptr)
-        : _name{name}, _symbol{symbol}, _color{color} ,_pos_x{pos_x}, _pos_y{pos_y}
+        : _name{name}, _symbol{symbol}, _color{color}, _pos_x{pos_x}, _pos_y{pos_y}
     {
         if (inventory != nullptr)
             _inventory = std::move(*inventory);

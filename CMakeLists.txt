@@ -21,14 +21,22 @@ endif()
 include(CTest)
 enable_testing()
 
-add_executable(Unnamed-Roguelike main.cpp)
-target_include_directories(Unnamed-Roguelike PRIVATE src)
+set(SOURCEFOLDER src)
+set(SOURCES main.cpp ${SOURCEFOLDER}/armor.h ${SOURCEFOLDER}/consumable.h ${SOURCEFOLDER}/entity_animate.h ${SOURCEFOLDER}/entity.h ${SOURCEFOLDER}/item.h ${SOURCEFOLDER}/monster.h ${SOURCEFOLDER}/player.h ${SOURCEFOLDER}/rarity.h ${SOURCEFOLDER}/tile.h ${SOURCEFOLDER}/TileTypes.h ${SOURCEFOLDER}/weapon.h)
+
+
+add_executable(Unnamed-Roguelike ${SOURCES})
+
+target_include_directories(Unnamed-Roguelike PRIVATE ${SOURCEFOLDER})
 
 target_link_libraries(Unnamed-Roguelike
   PRIVATE ftxui::screen
   PRIVATE ftxui::dom
   PRIVATE ftxui::component
 )
+
+
+
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})

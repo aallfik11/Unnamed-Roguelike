@@ -4,7 +4,7 @@
 #include "item.h"
 #include "TileTypes.h"
 #include <list>
-#include <ftxui/screen/color.hpp>
+#include "ftxui-src/include/ftxui/screen/color.hpp"
 
 class Tile
 {
