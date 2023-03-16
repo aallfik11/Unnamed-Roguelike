@@ -16,7 +16,15 @@ protected:
     int _pos_x, _pos_y;
 
 public:
-    Entity(std::string name, std::string symbol, ftxui::Color color, int pos_x, int pos_y, std::list<std::unique_ptr<Item>> *inventory = nullptr)
+    Entity()
+    {
+        _name = {};
+        _symbol = {};
+        _color = ftxui::Color::White;
+        _pos_x = 0;
+        _pos_y = 0;
+    }
+    Entity(std::string name, std::string symbol, ftxui::Color color = ftxui::Color::White, int pos_x = 0, int pos_y = 0, std::list<std::unique_ptr<Item>> *inventory = nullptr)
         : _name{name}, _symbol{symbol}, _color{color} ,_pos_x{pos_x}, _pos_y{pos_y}
     {
         if (inventory != nullptr)
