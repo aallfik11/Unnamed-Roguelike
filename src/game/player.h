@@ -5,11 +5,14 @@
 class Player : Entity
 {
     static std::weak_ptr<Player> instance;
-    
 
 public:
-    Player(const Player &player) = delete;
-    void operator=(const Player &player) = delete;
+    Player() {}
+    Player(const Player &) = delete;
+    Player(Player &&) = delete;
+    void operator=(const Player &) = delete;
+    void operator=(Player &&) = delete;
+
     static std::shared_ptr<Player> get_instance()
     {
         if (std::shared_ptr<Player> inst_ptr = instance.lock())
@@ -23,8 +26,13 @@ public:
             return inst_ptr;
         }
     }
-};
 
-// std::weak_ptr<Player> Player::instance = nullptr;
+    static void destroy_player()
+    {
+        instance.reset();
+    }
+
+    
+};
 
 #endif /*PLAYER_H*/

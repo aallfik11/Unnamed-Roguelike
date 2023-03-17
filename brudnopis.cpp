@@ -25,7 +25,7 @@ std::array<std::array<Tile, map_width>, map_height> map_cpy;
 
 std::random_device rd;
 std::mt19937 mt(rd());
-std::uniform_int_distribution rando(0, 100);
+std::uniform_int_distribution<int> rando(0, 100);
 
 int chance = 38;
 
@@ -149,8 +149,8 @@ int count_walls()
     return walls;
 }
 
-std::uniform_int_distribution randox(1, map_width - 1);
-std::uniform_int_distribution randoy(1, map_height - 1);
+std::uniform_int_distribution<int> randox(1, map_width - 1);
+std::uniform_int_distribution<int> randoy(1, map_height - 1);
 
 int main()
 {

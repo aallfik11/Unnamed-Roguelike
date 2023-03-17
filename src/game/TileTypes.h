@@ -4,9 +4,11 @@
 enum TileType {
     FLOOR,
     WALL,
+    CHEST,
+    TRAP,
     STAIRS,
     ENTITY,
-    ITEM    
-}
+    ITEM
+};
 
 #endif /*TILE_TYPES_H*/

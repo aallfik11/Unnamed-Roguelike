@@ -3,8 +3,8 @@
 
 // for some reason #include <ftxui/screen/color.hpp> doesn't work, so until I figure it out, this will
 // have to suffice
-#include "../build/_deps/ftxui-src/include/ftxui/screen/color.hpp"
-// #include <ftxui/screen/color.hpp>
+// #include "../build/_deps/ftxui-src/include/ftxui/screen/color.hpp"
+#include <ftxui/screen/color.hpp>
 #include <regex>
 #include <memory>
 #include <list>
@@ -14,10 +14,11 @@ class Entity
 {
 protected:
     std::string _name;
-    std::string _symbol;
+    std::string _symbol; // might not be needed
     ftxui::Color _color;
     std::list<std::unique_ptr<Item>> _inventory;
     int _pos_x, _pos_y;
+    bool _alive;
 
 public:
     Entity()
@@ -27,9 +28,22 @@ public:
         _color = ftxui::Color::White;
         _pos_x = 0;
         _pos_y = 0;
+        _alive = true;
     }
-    Entity(std::string name, std::string symbol, ftxui::Color color = ftxui::Color::White, int pos_x = 0, int pos_y = 0, std::list<std::unique_ptr<Item>> *inventory = nullptr)
-        : _name{name}, _symbol{symbol}, _color{color}, _pos_x{pos_x}, _pos_y{pos_y}
+    Entity(std::string name,
+           std::string symbol,
+           ftxui::Color color = ftxui::Color::White,
+           int pos_x = 0,
+           int pos_y = 0,
+           bool alive = true,
+           std::list<std::unique_ptr<Item>> *inventory = nullptr)
+
+        : _name{name}
+        , _symbol{symbol}
+        , _color{color}
+        , _pos_x{pos_x}
+        , _pos_y{pos_y}
+        , _alive{alive}
     {
         if (inventory != nullptr)
             _inventory = std::move(*inventory);
@@ -160,6 +174,15 @@ public:
     void set_pos_y(int _pos_y)
     {
         this->_pos_y = _pos_y;
+    }
+
+    bool get_alive()
+    {
+        return _alive;
+    }
+    void die()
+    {
+        _alive = false;
     }
 
     virtual void on_interact(const Entity *actor)
