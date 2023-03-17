@@ -21,13 +21,13 @@ endif()
 include(CTest)
 enable_testing()
 
-set(SOURCEFOLDER src)
-set(SOURCES main.cpp ${SOURCEFOLDER}/armor.h ${SOURCEFOLDER}/consumable.h ${SOURCEFOLDER}/entity_animate.h ${SOURCEFOLDER}/entity.h ${SOURCEFOLDER}/item.h ${SOURCEFOLDER}/monster.h ${SOURCEFOLDER}/player.h ${SOURCEFOLDER}/rarity.h ${SOURCEFOLDER}/tile.h ${SOURCEFOLDER}/TileTypes.h ${SOURCEFOLDER}/weapon.h)
+set(GAMEHEADERS src/game)
+set(SOURCES main.cpp ${GAMEHEADERS}/armor.h ${GAMEHEADERS}/consumable.h ${GAMEHEADERS}/entity_animate.h ${GAMEHEADERS}/entity.h ${GAMEHEADERS}/item.h ${GAMEHEADERS}/monster.h ${GAMEHEADERS}/player.h ${GAMEHEADERS}/rarity.h ${GAMEHEADERS}/tile.h ${GAMEHEADERS}/TileTypes.h ${GAMEHEADERS}/weapon.h)
 
 
 add_executable(Unnamed-Roguelike ${SOURCES})
 
-target_include_directories(Unnamed-Roguelike PRIVATE ${SOURCEFOLDER})
+target_include_directories(Unnamed-Roguelike PRIVATE ${GAMEHEADERS})
 
 target_link_libraries(Unnamed-Roguelike
   PRIVATE ftxui::screen
