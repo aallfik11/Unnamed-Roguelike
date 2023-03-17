@@ -2,6 +2,7 @@
 #define MONSTER_H
 #include "entity.h"
 #include <array>
+#include <functional>
 
 class Monster : Entity
 {

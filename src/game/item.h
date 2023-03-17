@@ -1,7 +1,9 @@
 #ifndef ITEM_H
 #define ITEM_H
-#include <string>
 #include "rarity.h"
+#include <string>
+#include <functional>
+
 
 class Item
 {
@@ -107,8 +109,13 @@ public:
     {
         return this->get_rarity_string() + " " + _name;
     }
+    virtual void on_use(std::function<void()> func)
+    {
+        
+    }
     virtual void on_use()
     {
+        
     }
 };
 
