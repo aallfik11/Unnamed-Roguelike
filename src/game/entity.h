@@ -1,197 +1,70 @@
 #ifndef ENTITY_H
 #define ENTITY_H
-
-// for some reason #include <ftxui/screen/color.hpp> doesn't work, so until I figure it out, this will
-// have to suffice
-// #include "../build/_deps/ftxui-src/include/ftxui/screen/color.hpp"
-#include <ftxui/screen/color.hpp>
-#include <regex>
+#include "component.h"
 #include <memory>
-#include <list>
-#include "item.h"
+#include <algorithm>
+#include <vector>
+#include <typeinfo>
 
 class Entity
 {
-protected:
-    std::string _name;
-    std::string _symbol; // might not be needed
-    ftxui::Color _color;
-    std::list<std::unique_ptr<Item>> _inventory;
-    int _pos_x, _pos_y;
-    bool _alive;
+    static uint32_t _max_id;
+    uint32_t _id;
+    std::vector<std::shared_ptr<Component>> _components;
 
 public:
     Entity()
     {
-        _name = {};
-        _symbol = {};
-        _color = ftxui::Color::White;
-        _pos_x = 0;
-        _pos_y = 0;
-        _alive = true;
-    }
-    Entity(std::string name,
-           std::string symbol,
-           ftxui::Color color = ftxui::Color::White,
-           int pos_x = 0,
-           int pos_y = 0,
-           bool alive = true,
-           std::list<std::unique_ptr<Item>> *inventory = nullptr)
-
-        : _name{name}
-        , _symbol{symbol}
-        , _color{color}
-        , _pos_x{pos_x}
-        , _pos_y{pos_y}
-        , _alive{alive}
-    {
-        if (inventory != nullptr)
-            _inventory = std::move(*inventory);
+        _id = _max_id;
+        _max_id++;
     }
 
-    /**
-     * @brief Copy constructor, perhaps I'll never use it in which case I'll delete it
-     *
-     * @param entity
-     */
-    Entity(Entity &entity)
+    Entity(std::vector<Component *> &components) : Entity()
     {
-        this->_name = entity._name;
-        this->_symbol = entity._symbol;
-        this->_pos_x = entity._pos_x;
-        this->_pos_y = entity._pos_y;
-
-        // now for the fun part
-
-        if (!entity._inventory.empty())
+        for (auto &component : components)
         {
-            this->_inventory.clear();
-            std::list<std::unique_ptr<Item>> temp_inv;
-
-            // this looks terrible, maybe if I weren't afraid of manual memory management I could make it better :(
-            for (auto &it : entity._inventory)
-            {
-                Item *itemptr = it.release();
-                Item item = *itemptr;
-                delete itemptr;
-                std::unique_ptr<Item> item1(new Item(item));
-                std::unique_ptr<Item> item2(new Item(item));
-                temp_inv.push_back(std::move(item1));
-                this->_inventory.push_back(std::move(item2));
-            }
-            entity._inventory = std::move(temp_inv);
+            _components.emplace_back(std::shared_ptr<Component>(component));
         }
     }
 
-    /**
-     * @brief Move constructor
-     *
-     * @param entity
-     */
-    Entity(Entity &&entity)
+    // void update_components()
+    // {
+    //     for (auto &component : _components)
+    //     {
+    //         component.get()->update();
+    //     }
+    // }
+
+    void add_component(std::shared_ptr<Component> &component)
     {
-        this->_name = std::move(entity._name);
-        this->_symbol = std::move(entity._symbol);
-        this->_inventory = std::move(entity._inventory);
-        this->_pos_x = std::move(entity._pos_x);
-        this->_pos_y = std::move(entity._pos_y);
+        _components.emplace_back(std::move(component));
     }
 
-    std::string get_name()
+    void add_component(Component *component)
     {
-        return _name;
+        _components.emplace_back(std::shared_ptr<Component>(component));
     }
 
-    std::string get_symbol()
+    template <class ComponentType>
+    bool has_component()
     {
-        return _symbol;
+        return std::any_of(_components.begin(), _components.end(), [](std::shared_ptr<Component> &component)
+                           { return (typeid(ComponentType) == typeid(*(component.get()))); });
     }
 
-    virtual std::list<std::unique_ptr<Item>> &get_inventory()
+    template <class ComponentType>
+    std::shared_ptr<ComponentType> get_component()
     {
-        return _inventory;
-    }
+        auto it = std::find_if(_components.begin(), _components.end(), [](std::shared_ptr<Component> &component)
+                               { return (typeid(ComponentType) == typeid(*(component.get()))); });
 
-    void add_to_inventory(std::unique_ptr<Item> &item)
-    {
-        _inventory.push_back(std::move(item));
-    }
-
-    void add_to_inventory(Item *item = nullptr)
-    {
-        if (item != nullptr)
-        {
-            std::unique_ptr<Item> temp(new Item(std::move(*item)));
-            _inventory.push_back(std::move(temp));
-        }
-    }
-
-    // since all items are going to be created with smart pointers, extra care needs to go into making sure I don't leave this pointer dangling
-
-    /**
-     * @brief Pulls out an item at the specified index of the inventory
-     *
-     * @param index
-     * @return Item* null if invalid index
-     */
-    Item *pull_item_out(int index = 0)
-    {
-        if (index >= _inventory.size() || index < 0)
+        if (it == _components.end())
             return nullptr;
 
-        auto it = _inventory.begin();
-        while (index < 0)
-        {
-            it++;
-            index--;
-        }
-        auto item = std::move(*it);
-        _inventory.erase(it);
-        return item.release();
-    }
-
-    void transfer_inventory(Entity *target)
-    {
-        auto &target_list = target->get_inventory();
-        target_list.splice(target_list.end(), this->_inventory);
-    }
-
-    int get_pos_x()
-    {
-        return _pos_x;
-    }
-
-    void set_pos_x(int _pos_x)
-    {
-        this->_pos_x = _pos_x;
-    }
-
-    int get_pos_y()
-    {
-        return _pos_y;
-    }
-
-    void set_pos_y(int _pos_y)
-    {
-        this->_pos_y = _pos_y;
-    }
-
-    bool get_alive()
-    {
-        return _alive;
-    }
-    void die()
-    {
-        _alive = false;
-    }
-
-    virtual void on_interact(const Entity *actor)
-    {
-    }
-
-    virtual void on_tick()
-    {
+        return std::static_pointer_cast<ComponentType>(*it);
     }
 };
+
+uint32_t Entity::_max_id = 0;
 
 #endif /*ENTITY_H*/

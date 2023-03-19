@@ -1,9 +1,0 @@
-{
-    "C_Cpp.default.includePath": [
-        "${workspaceFolder}/build/_deps/ftxui-src/include"
-    ],
-    "C_Cpp.default.configurationProvider": "go2sh.cmake-integration",
-    "files.associations": {
-        "string": "cpp"
-    }
-}

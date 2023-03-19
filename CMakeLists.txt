@@ -22,10 +22,10 @@ include(CTest)
 enable_testing()
 
 set(GAMEHEADERS src/game)
-set(SOURCES main.cpp ${GAMEHEADERS}/armor.h ${GAMEHEADERS}/consumable.h ${GAMEHEADERS}/entity_animate.h ${GAMEHEADERS}/entity.h ${GAMEHEADERS}/item.h ${GAMEHEADERS}/monster.h ${GAMEHEADERS}/player.h ${GAMEHEADERS}/rarity.h ${GAMEHEADERS}/tile.h ${GAMEHEADERS}/TileTypes.h ${GAMEHEADERS}/weapon.h)
+# set(SOURCES test.cpp ${GAMEHEADERS}/armor.h ${GAMEHEADERS}/consumable.h ${GAMEHEADERS}/entity_animate.h ${GAMEHEADERS}/entity.h ${GAMEHEADERS}/item.h ${GAMEHEADERS}/monster.h ${GAMEHEADERS}/player.h ${GAMEHEADERS}/rarity.h ${GAMEHEADERS}/tile.h ${GAMEHEADERS}/TileTypes.h ${GAMEHEADERS}/weapon.h)
+# set(SOURCES tester.cpp ${GAMEHEADERS}/entity.h ${GAMEHEADERS}/component.h)
 
-
-add_executable(Unnamed-Roguelike ${SOURCES})
+add_executable(Unnamed-Roguelike tester.cpp)
 
 target_include_directories(Unnamed-Roguelike PRIVATE ${GAMEHEADERS})
 
