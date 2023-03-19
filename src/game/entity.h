@@ -2,11 +2,10 @@
 #define ENTITY_H
 #include "component.h"
 #include <memory>
-#include <string>
 #include <algorithm>
 #include <vector>
 #include <unordered_map>
-#include <optional>
+#include <optional> //I wanna experiment with it later for get_component function
 #include <typeinfo>
 #include <type_traits>
 #include <typeindex>
@@ -39,14 +38,6 @@ public:
         return _id;
     }
 
-    // void update_components()
-    // {
-    //     for (auto &component : _components)
-    //     {
-    //         component.get()->update();
-    //     }
-    // }
-
     void add_component(std::shared_ptr<Component> &component)
     {
         _components.emplace(typeid(*(component.get())), component);
@@ -60,22 +51,28 @@ public:
     template <class ComponentType>
     bool has_component()
     {
-        return std::any_of(_components.begin(), _components.end(), [](const Components::value_type &component)
-                           { return (typeid(ComponentType) == typeid(*(component.second.get()))); });
+        // return std::any_of(_components.begin(), _components.end(), [](const Components::value_type &component)
+        //                    { return (typeid(ComponentType) == typeid(*(component.second.get()))); });
+        return _components.contains(typeid(ComponentType));
     }
 
     template <class ComponentType>
     std::shared_ptr<ComponentType> get_component()
     {
-        // std::unordered_map<std::string, std::shared_ptr<Component>>::iterator
-        auto it = std::find_if(_components.begin(), _components.end(),
-                               [&](const Components::value_type &component)
-                               { return (typeid(ComponentType) == typeid(*(component.second.get()))); });
+        // auto it = std::find_if(_components.begin(), _components.end(),
+        //                        [&](const Components::value_type &component)
+        //                        { return (typeid(ComponentType) == typeid(*(component.second.get()))); });
+        auto it = _components.find(typeid(ComponentType));
 
         if (it == _components.end())
             return std::shared_ptr<ComponentType>(nullptr);
 
-        return std::dynamic_pointer_cast<ComponentType>(it->second);
+        return std::static_pointer_cast<ComponentType>(it->second);
+    }
+
+    static void reset_max_id()
+    {
+        _max_id = 0;
     }
 };
 

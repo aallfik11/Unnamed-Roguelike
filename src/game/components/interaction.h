@@ -9,7 +9,8 @@ class Interaction : Component
     std::function<T(Args)> _interact;
 
 public:
-    Interaction(std::function<void(Args)> fn = 0) : _interact{fn}
+    Interaction(std::function<void(Args)> fn = 0)
+        : _interact{fn}
     {
     }
 
@@ -21,6 +22,11 @@ public:
     set_interaction(std::function<T(Args)> fn)
     {
         _interact = fn;
+    }
+
+    T interact(Args... args)
+    {
+        return _interact(args);
     }
 };
 #endif /*INTERACTION_H*/

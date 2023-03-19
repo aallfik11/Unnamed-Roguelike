@@ -8,10 +8,10 @@ class Coordinates : public Component
 public:
     uint16_t x, y;
 
-    Coordinates()
+    Coordinates(uint16_t x = 0, uint16_t y = 0)
     {
-        x = 0;
-        y = 0;
+        this->x = x;
+        this->y = y;
     }
 };
 
