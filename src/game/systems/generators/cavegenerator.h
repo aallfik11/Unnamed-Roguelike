@@ -5,12 +5,14 @@
 #include <random>
 #include <cstdint>
 
-namespace CaveGenerator
+class CaveGenerator
 {
-    std::vector<std::vector<Tile>>& generate(uint32_t seed, uint32_t size_x, uint32_t size_y)
+
+    public:
+    static std::vector<std::vector<Tile>>& generate(uint32_t seed, uint32_t size_x, uint32_t size_y)
     {
-        
+
     }
-}
+};
 
 #endif
