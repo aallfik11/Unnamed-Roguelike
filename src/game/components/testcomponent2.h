@@ -9,8 +9,5 @@ class TestComponent2 : public Component
     {
         std::cout << "PUUU MMMMM" << std::endl;
     }
-    void get() {}
-    void set() {}
 };
-
 #endif /*TESTCOMPONENT2_H*/

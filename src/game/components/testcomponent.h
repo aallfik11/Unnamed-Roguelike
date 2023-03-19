@@ -5,14 +5,13 @@
 
 class TestComponent : public Component
 {
-    public:
-    std::string test = "TEST";
+public:
     // void update(Entity *entity = nullptr)
     // {
     //     std::cout << "MMMM PUUUUU" << std::endl;
     // }
     // void get() {}
     // void set() {}
+    std::string test = "PUU";
 };
-
 #endif /*TESTCOMPONENT_H*/

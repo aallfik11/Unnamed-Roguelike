@@ -11,7 +11,8 @@ public:
     Health(uint16_t max_hp = 0, uint16_t current_hp = 0)
     {
         max_health_points = max_hp;
-        current_health_points = current_hp;
+        (current_hp > max_hp) ? current_health_points = max_hp
+                              : current_health_points = current_hp;
     }
 };
 

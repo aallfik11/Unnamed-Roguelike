@@ -6,9 +6,6 @@
 class Inventory : public Component
 {
 public:
-    std::list<std::unique_ptr<Entity>> _inventory;
-    void update(Entity *entity) {}
-    void get() {}
-    void set() {}
+    std::list<std::shared_ptr<Entity>> _inventory;
 };
 #endif /*INVENTORY_H*/
