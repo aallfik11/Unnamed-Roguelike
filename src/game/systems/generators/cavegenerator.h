@@ -7,7 +7,7 @@
 
 class CaveGenerator
 {
-    typedef std::vector<std::vector<Tile>> GameMap;
+    using GameMap = std::vector<std::vector<Tile>>;
     static void random_fill_map(GameMap &map,
                                 std::mt19937 &twister_engine,
                                 uint32_t size_x,
