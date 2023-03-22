@@ -6,31 +6,39 @@
 
 class EntityManager
 {
-    std::unordered_map<std::shared_ptr<Entity>, bool> entities; // bool is purge flag,
+    // bool is purge flag,
+    using EntityHashmap = std::unordered_map<uint32_t, std::pair<std::shared_ptr<Entity>, bool>>;
+    EntityHashmap entities_;
 
 public:
-    uint32_t create_entity()
+    uint32_t createEntity()
     {
-        entities.insert(std::pair<uint32_t, bool>(entity, false));
-        return entity;
+        Entity *temp = new Entity();
+        entities_.emplace(temp->get_id(), std::make_pair<std::shared_ptr<Entity>, bool>(std::shared_ptr<Entity>(temp), false));
+        return temp->get_id();
     }
 
-    std::unordered_map<uint32_t, bool> &get_all_entities()
+    std::shared_ptr<Entity> getEntity(uint32_t entity_id)
     {
-        return entities;
+        return entities_.at(entity_id).first;
     }
 
-    void mark_for_deletion(uint32_t id)
+    EntityHashmap &getAllEntities()
     {
-        entities.at(id) = true;
+        return entities_;
     }
 
-    void purge_all_marked()
+    void markForDeletion(uint32_t id)
     {
-        for (auto it = entities.begin(); it != entities.end(); it++)
+        entities_.at(id).second = true;
+    }
+
+    void purgeAllMarked()
+    {
+        for (auto it = entities_.begin(); it != entities_.end(); it++)
         {
-            if (it->second == true)
-                entities.erase(it);
+            if (it->second.second == true)
+                entities_.erase(it);
         }
     }
 };

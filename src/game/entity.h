@@ -13,7 +13,6 @@
 class Entity
 {
     typedef std::unordered_map<std::type_index, std::shared_ptr<Component>> Components;
-    uint64_t a;
     static uint32_t _max_id;
     uint32_t _id;
     Components _components;

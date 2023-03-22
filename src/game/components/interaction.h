@@ -14,12 +14,12 @@ public:
     {
     }
 
-    std::function<T(Args)> get_interaction()
+    std::function<T(Args)> getInteraction()
     {
         return _interact;
     }
 
-    set_interaction(std::function<T(Args)> fn)
+    setInteraction(std::function<T(Args)> fn)
     {
         _interact = fn;
     }

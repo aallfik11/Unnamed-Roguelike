@@ -6,6 +6,6 @@
 class Inventory : public Component
 {
 public:
-    std::list<std::shared_ptr<Entity>> _inventory;
+    std::list<std::shared_ptr<Entity>> inventory_;
 };
 #endif /*INVENTORY_H*/

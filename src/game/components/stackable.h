@@ -10,10 +10,10 @@ public:
     uint32_t max_stack_count;
     uint32_t current_stack_count;
 
-    Stackable(uint32_t max_stack = 1, uint32_t current_stack = 0)
-        : max_stack_count{max_stack},
-          current_stack_count{current_stack}
+    Stackable(uint32_t max_stack_count = 1, uint32_t current_stack_count = 0)
     {
+        this->max_stack_count = max_stack_count;
+        this->current_stack_count = current_stack_count;
     }
 };
 
