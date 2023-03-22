@@ -1,25 +1,31 @@
 #ifndef POSITIONSYSTEM_H
 #define POSITIONSYSTEM_H
 #include "../components/coordinates.h"
+#include "../components/tilecomponent.h"
 #include "../entity.h"
 #include "../tile.h"
 #include "../coordhash.h"
+#include "../directions.h"
 #include <unordered_map>
 #include <cstdint>
 
 class PositionSystem
 {
     using EntityId = uint16_t;
+    using Coords = std::pair<uint16_t, uint16_t>;
     // using YMap = std::unordered_multimap<uint16_t, EntityId>;
-    // using EntityMap = std::unordered_multimap<uint16_t, std::pair<uint16_t, EntityId>>;
-    using EntityMap = std::unordered_multimap<std::weak_ptr<Coordinates>, EntityId>;
+    // using CoordEntityMap = std::unordered_multimap<uint16_t, std::pair<uint16_t, EntityId>>;
+    using CoordEntityMap = std::unordered_multimap<Coords, EntityId>;
 
-    using CoordMap = std::unordered_map<EntityId, std::weak_ptr<Coordinates>>;
+    using EntityTileMap = std::unordered_map<EntityId, std::weak_ptr<Tile>>;
+
+    using EntityCoordMap = std::unordered_map<EntityId, std::weak_ptr<Coordinates>>;
 
     using GameMap = std::vector<std::vector<Tile>>;
 
-    EntityMap CoordsWithEntities;
-    CoordMap EntitiesWithCoords;
+    CoordEntityMap coords_with_entities_;
+    EntityTileMap entities_with_tiles_;
+    EntityCoordMap entities_with_coords_;
     GameMap &map_;
 
     /**
@@ -48,7 +54,7 @@ public:
     }
 
     /**
-     * @brief
+     * @brief adds a new entity to the map (might soon remove that)
      *
      * @brief adds a weak_ptr of type Entity to a tile at a given position
      * @param x - coordinate x
@@ -69,7 +75,7 @@ public:
     }
 
     /**
-     * @brief
+     * @brief checks for potential collisions with walls and other entities
      *
      * @param x - coordinate x
      * @param y - coordinate y
@@ -79,75 +85,167 @@ public:
 
     bool checkCollision(uint16_t x, uint16_t y)
     {
-        return (checkCoordinateValidity(x, y)) ? (map_[x][y].type & TileType::TRAVERSIBLE)
-                                               : false;
-    }
+        if (checkCoordinateValidity(x, y) == false)
+            return true;
 
-    bool updatePosition(uint16_t x, uint16_t y)
-    {
-    }
-
-    std::optional<std::vector<EntityId>> &get_entity_ids(uint16_t x, uint16_t y)
-    {
-        std::optional<std::vector<EntityId>> potential_ids;
-        auto coords = std::weak_ptr<Coordinates>(std::shared_ptr<Coordinates>(new Coordinates(x, y)));
-        if (CoordsWithEntities.contains(coords))
+        if (map_[x][y].type & TileType::TRAVERSIBLE)
         {
-            auto range = CoordsWithEntities.equal_range(coords);
+            if (coords_with_entities_.contains(Coords(x, y)))
+            {
+                auto range = coords_with_entities_.equal_range(Coords(x, y));
+                while (range.first != range.second)
+                {
+                    if (auto tile = entities_with_tiles_
+                                        .at(range.first->second)
+                                        .lock())
+                    {
+                        if (tile->type ^ TileType::TRAVERSIBLE)
+                            return true;
+                    }
+                    range.first++;
+                }
+            }
+        }
+        else
+            return true;
+
+        return false;
+    }
+
+    /**
+     * @brief updates given entities' position in the system
+     *
+     * @param entity_id - entity whose position will be updated
+     * @param x
+     * @param y
+     * @return true - successfully updated the position
+     * @return false - position could not be updated
+     */
+    bool updatePosition(EntityId entity_id, uint16_t x, uint16_t y)
+    {
+        if (entities_with_coords_.contains(entity_id) == false)
+            return false;
+
+        if (checkCollision(x, y))
+            return false;
+
+        if (auto coord_ptr = entities_with_coords_.at(entity_id).lock())
+        {
+            coord_ptr->x = x;
+            coord_ptr->y = y;
+
+            auto range = coords_with_entities_.equal_range(Coords(coord_ptr->x, coord_ptr->y));
             while (range.first != range.second)
             {
-                //                                              entity_id
-                potential_ids->emplace_back(range.first);
+                if (range.first->second == entity_id)
+                    coords_with_entities_.erase(range.first);
+
+                range.first++;
+            }
+            coords_with_entities_.emplace(x, y, entity_id);
+        }
+        else
+        {
+            deleteEntity(entity_id);
+            return false;
+        }
+
+        return true;
+    }
+
+    std::optional<std::vector<EntityId>> &getEntityIds(uint16_t x, uint16_t y)
+    {
+        std::optional<std::vector<EntityId>> potential_ids;
+        if (coords_with_entities_.contains(Coords(x, y)))
+        {
+            auto range = coords_with_entities_.equal_range(Coords(x, y));
+            while (range.first != range.second)
+            {
+                potential_ids->emplace_back(range.first->second);
                 range.first++;
             }
         }
         return potential_ids;
     }
-    std::optional<std::vector<EntityId>> &get_all_entity_ids()
+
+    std::optional<std::vector<EntityId>> &getAllEntityIds()
     {
         std::optional<std::vector<EntityId>> potential_ids;
-        for (auto &entity_id : CoordsWithEntities)
+        for (auto &entity_id : entities_with_coords_)
         {
             potential_ids->emplace_back(entity_id.first);
         }
         return potential_ids;
     }
 
-    std::shared_ptr<Coordinates> &get_entity_coordinates(EntityId entity_id)
+    std::shared_ptr<Coordinates> &getEntityCoordinates(EntityId entity_id)
     {
-        if (EntitiesWithCoords.contains(entity_id))
+        if (entities_with_coords_.contains(entity_id))
         {
-            return EntitiesWithCoords.at(entity_id).lock();
+            return entities_with_coords_.at(entity_id).lock();
         }
         return std::shared_ptr<Coordinates>(nullptr);
     }
 
-    void add_entity(EntityId entity_id, std::shared_ptr<Coordinates> &coordinates)
+    void addEntity(std::shared_ptr<Entity> &entity)
     {
-        EntitiesWithCoords.emplace(entity_id,
-                                   std::weak_ptr<Coordinates>(coordinates));
+        if (auto coord_ptr = entity->getComponent<Coordinates>())
+        {
+            entities_with_coords_.emplace(entity->getId(),
+                                          coord_ptr);
 
-        CoordsWithEntities.emplace(coordinates->x,
-                                   std::pair<uint16_t, EntityId>(coordinates->y, entity_id));
+            coords_with_entities_.emplace(coord_ptr->x, coord_ptr->y,
+                                          entity->getId());
+        }
+
+        if (auto tile_ptr = entity->getComponent<TileComponent>())
+        {
+            entities_with_tiles_.emplace(entity->getId(), tile_ptr);
+        }
+    }
+
+    void deleteEntity(EntityId entity_id)
+    {
+        if (entities_with_coords_.contains(entity_id) == false)
+            return;
+
+        if (auto coord_ptr = entities_with_coords_.at(entity_id).lock())
+        {
+            auto range = coords_with_entities_.equal_range(Coords(coord_ptr->x, coord_ptr->y));
+            while (range.first != range.second)
+            {
+                if (range.first->second == entity_id)
+                {
+                    coords_with_entities_.erase(range.first);
+                    break;
+                }
+                range.first++;
+            }
+        }
+
+        if (entities_with_tiles_.contains(entity_id))
+        {
+            entities_with_tiles_.erase(entity_id);
+        }
     }
 
     // void remove_entity(EntityId entity_id)
     // {
-    //     if (EntitiesWithCoords.contains(entity_id))
+    //     if (entities_with_coords_.contains(entity_id))
     //     {
 
-    //             auto range = CoordsWithEntities.equal_range(coord->x);
+    //             auto range = coords_with_entities_.equal_range(coord->x);
     //             while (range.first != range.second)
     //             {
     //                 if (range.first->second.second == entity_id)
     //                 {
-    //                     CoordsWithEntities.erase(range.first);
+    //                     coords_with_entities_.erase(range.first);
     //                     break;
     //                 }
     //                 range.first++;
     //             }
 
-    //         EntitiesWithCoords.erase(entity_id);
+    //         entities_with_coords_.erase(entity_id);
     //     }
     // }
 
@@ -155,31 +253,31 @@ public:
     // {
     //     for (auto entity_id : entity_ids)
     //     {
-    //         if (EntitiesWithCoords.contains(entity_id))
+    //         if (entities_with_coords_.contains(entity_id))
     //         {
-    //             if (auto coord = EntitiesWithCoords.at(entity_id).lock())
+    //             if (auto coord = entities_with_coords_.at(entity_id).lock())
     //             {
-    //                 auto range = CoordsWithEntities.equal_range(coord->x);
+    //                 auto range = coords_with_entities_.equal_range(coord->x);
     //                 while (range.first != range.second)
     //                 {
     //                     if (range.first->second.second == entity_id)
     //                     {
-    //                         CoordsWithEntities.erase(range.first);
+    //                         coords_with_entities_.erase(range.first);
     //                         break;
     //                     }
     //                     range.first++;
     //                 }
     //             }
-    //             EntitiesWithCoords.erase(entity_id);
+    //             entities_with_coords_.erase(entity_id);
     //         }
     //     }
     // }
 
     void modify_position(EntityId entity_id, uint16_t new_x, uint16_t new_y)
     {
-        if (EntitiesWithCoords.contains(entity_id))
+        if (entities_with_coords_.contains(entity_id))
         {
-            if (auto coord = EntitiesWithCoords.at(entity_id).lock())
+            if (auto coord = entities_with_coords_.at(entity_id).lock())
             {
             }
         }

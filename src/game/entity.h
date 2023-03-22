@@ -32,23 +32,23 @@ public:
         }
     }
 
-    uint32_t get_id()
+    uint32_t getId()
     {
         return _id;
     }
 
-    void add_component(std::shared_ptr<Component> &component)
+    void addComponent(std::shared_ptr<Component> &component)
     {
         _components.emplace(typeid(*(component.get())), component);
     }
 
-    void add_component(Component *component)
+    void addComponent(Component *component)
     {
         _components.emplace(typeid(*component), std::shared_ptr<Component>(component));
     }
 
     template <class ComponentType>
-    bool has_component()
+    bool hasComponent()
     {
         // return std::any_of(_components.begin(), _components.end(), [](const Components::value_type &component)
         //                    { return (typeid(ComponentType) == typeid(*(component.second.get()))); });
@@ -56,7 +56,7 @@ public:
     }
 
     template <class ComponentType>
-    std::shared_ptr<ComponentType> get_component()
+    std::shared_ptr<ComponentType> getComponent()
     {
         // auto it = std::find_if(_components.begin(), _components.end(),
         //                        [&](const Components::value_type &component)
@@ -69,7 +69,7 @@ public:
         return std::static_pointer_cast<ComponentType>(it->second);
     }
 
-    static void reset_max_id()
+    static void resetMaxId()
     {
         _max_id = 0;
     }

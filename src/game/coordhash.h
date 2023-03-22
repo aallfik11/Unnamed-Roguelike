@@ -1,18 +1,15 @@
 #ifndef COORDHASH_H
 #define COORDHASH_H
 #include "components/coordinates.h"
-#include <memory>
+#include <cstdint>
 
 namespace std
 {
-    struct hash<std::weak_ptr<Coordinates>>
+    struct hash<std::pair<uint16_t, uint16_t>>
     {
-        std::size_t operator()(const std::weak_ptr<Coordinates> &coords_ptr) const //this is bad and I won't be using it anyway, but I'll leave it until I finish just in case
+        std::size_t operator()(const std::pair<uint16_t, uint16_t> &coords) const // this is bad and I won't be using it anyway, but I'll leave it until I finish just in case
         {
-            if (auto coords = coords_ptr.lock())
-                return std::hash<uint64_t>()((uint64_t(coords->x) << 32) | coords->y);
-            else
-                return -1;
+            return std::hash<uint64_t>()((uint64_t(coords.first) << 32) | coords.second);
         }
     };
 }
