@@ -68,7 +68,7 @@ class PositionSystem
                                         .at(range.first->second)
                                         .lock())
                     {
-                        if (tile->type ^ TileType::TRAVERSIBLE)
+                        if (!(tile->tile.type & TileType::TRAVERSIBLE))
                             return true;
                     }
                     range.first++;
@@ -203,50 +203,6 @@ public:
             entities_with_tiles_.erase(entity_id);
         }
     }
-
-    // void remove_entity(EntityId entity_id)
-    // {
-    //     if (entities_with_coords_.contains(entity_id))
-    //     {
-
-    //             auto range = coords_with_entities_.equal_range(coord->x);
-    //             while (range.first != range.second)
-    //             {
-    //                 if (range.first->second.second == entity_id)
-    //                 {
-    //                     coords_with_entities_.erase(range.first);
-    //                     break;
-    //                 }
-    //                 range.first++;
-    //             }
-
-    //         entities_with_coords_.erase(entity_id);
-    //     }
-    // }
-
-    // void remove_entities(std::vector<EntityId> &entity_ids)
-    // {
-    //     for (auto entity_id : entity_ids)
-    //     {
-    //         if (entities_with_coords_.contains(entity_id))
-    //         {
-    //             if (auto coord = entities_with_coords_.at(entity_id).lock())
-    //             {
-    //                 auto range = coords_with_entities_.equal_range(coord->x);
-    //                 while (range.first != range.second)
-    //                 {
-    //                     if (range.first->second.second == entity_id)
-    //                     {
-    //                         coords_with_entities_.erase(range.first);
-    //                         break;
-    //                     }
-    //                     range.first++;
-    //                 }
-    //             }
-    //             entities_with_coords_.erase(entity_id);
-    //         }
-    //     }
-    // }
 };
 
 #endif /*POSITIONSYSTEM*/

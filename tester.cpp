@@ -2,6 +2,7 @@
 #include "src/game/component.h"
 #include "src/game/components/components_all.h"
 #include "src/game/systems/generators/cavegenerator.h"
+#include "src/game/systems/generators/debugmapgenerator.h"
 #include "src/game/systems/mapmanager.h"
 #include "src/game/systems/positionsystem.h"
 #include <iostream>
@@ -44,7 +45,7 @@ int main()
     //     }
     //     std::cout << std::endl;
     // }
-    MapManager manager(CaveGenerator::generate);
+    MapManager manager(DebugMapGenerator::generate);
     manager.generate(100, 50);
     PositionSystem pos_system(*(manager.getMap()));
     std::shared_ptr<Entity> player(new Entity());
@@ -52,17 +53,18 @@ int main()
     std::shared_ptr<Entity> chest(new Entity());
     player->addComponent(new Name("Steve"));
     player->addComponent(new TileComponent(TileType::SPRITE, "@", ftxui::Color::Green1));
-    player->addComponent(new Coordinates(1,1));
+    player->addComponent(new Coordinates(1, 1));
 
     monster->addComponent(new TileComponent(TileType::SPRITE, "M"));
-    monster->addComponent(new Coordinates(2,2));
+    monster->addComponent(new Coordinates(2, 2));
 
     chest->addComponent(new Inventory());
     chest->addComponent(new TileComponent(TileType(SPRITE | TRAVERSIBLE), " ", ftxui::Color::White, ftxui::Color::RosyBrown));
-    chest->addComponent(new Coordinates(3,3));
+    chest->addComponent(new Coordinates(3, 3));
     pos_system.addEntity(player);
     pos_system.addEntity(monster);
     pos_system.addEntity(chest);
-    std::cout << std::boolalpha << pos_system.updatePosition(player->getId(), 3,3);
+    std::cout << std::boolalpha << pos_system.updatePosition(player->getId(), 3, 3) << std::endl
+              << pos_system.updatePosition(monster->getId(), 3, 3);
     return 0;
 }

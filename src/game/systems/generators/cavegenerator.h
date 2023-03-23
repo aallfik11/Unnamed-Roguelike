@@ -77,7 +77,7 @@ class CaveGenerator
                     auto walls = checkNeighbors(map, x, y);
                     if ((map[x][y].type & WALL) && walls <= 2)
                     {
-                        map_cpy[x][y].type = FLOOR | TRAVERSIBLE;
+                        map_cpy[x][y].type = TileType(FLOOR | TRAVERSIBLE);
                     }
 
                     else if (walls >= 5)
@@ -128,7 +128,7 @@ class CaveGenerator
     {
         if ((map[x][y].type & FLOOR) && !(map[x][y].type & CHECKED))
         {
-            map[x][y].type += CHECKED;
+            map[x][y].type |= CHECKED;
         }
         else
             return;

@@ -5,24 +5,21 @@
 #include <string>
 #include <ftxui/screen/color.hpp>
 
-
 class TileComponent : public Component
 {
 public:
-    TileType type;
+    Tile tile;
     std::string sprite;
-    ftxui::Color color;
-    ftxui::Color bg_color;
 
     TileComponent(TileType type = TileType::SPRITE,
                   std::string sprite = " ",
                   ftxui::Color color = ftxui::Color::White,
                   ftxui::Color bg_color = ftxui::Color::Black)
     {
-        this->type = type;
+        this->tile.type = type;
         this->sprite = sprite;
-        this->color = color;
-        this->bg_color = bg_color;
+        this->tile.color = color;
+        this->tile.background_color = bg_color;
     }
 };
 
