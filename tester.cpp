@@ -1,11 +1,9 @@
 #include "src/game/entity.h"
 #include "src/game/component.h"
-#include "src/game/components/testcomponent.h"
-#include "src/game/components/testcomponent2.h"
-#include "src/game/components/inventory.h"
+#include "src/game/components/components_all.h"
 #include "src/game/systems/generators/cavegenerator.h"
 #include "src/game/systems/mapmanager.h"
-#include "src/game/components/coordinates.h"
+#include "src/game/systems/positionsystem.h"
 #include <iostream>
 #include <random>
 #include <chrono>
@@ -33,7 +31,7 @@ int main()
 
     // MapManager manager(CaveGenerator::generate);
     // manager.generate(200, 50);
-    // auto map_ptr = manager.get_map();
+    // auto map_ptr = manager.getMap();
     // auto map = *map_ptr;
     // for (auto y = 0; y < map[0].size(); y++)
     // {
@@ -46,5 +44,25 @@ int main()
     //     }
     //     std::cout << std::endl;
     // }
+    MapManager manager(CaveGenerator::generate);
+    manager.generate(100, 50);
+    PositionSystem pos_system(*(manager.getMap()));
+    std::shared_ptr<Entity> player(new Entity());
+    std::shared_ptr<Entity> monster(new Entity());
+    std::shared_ptr<Entity> chest(new Entity());
+    player->addComponent(new Name("Steve"));
+    player->addComponent(new TileComponent(TileType::SPRITE, "@", ftxui::Color::Green1));
+    player->addComponent(new Coordinates(1,1));
+
+    monster->addComponent(new TileComponent(TileType::SPRITE, "M"));
+    monster->addComponent(new Coordinates(2,2));
+
+    chest->addComponent(new Inventory());
+    chest->addComponent(new TileComponent(TileType(SPRITE | TRAVERSIBLE), " ", ftxui::Color::White, ftxui::Color::RosyBrown));
+    chest->addComponent(new Coordinates(3,3));
+    pos_system.addEntity(player);
+    pos_system.addEntity(monster);
+    pos_system.addEntity(chest);
+    std::cout << std::boolalpha << pos_system.updatePosition(player->getId(), 3,3);
     return 0;
 }
