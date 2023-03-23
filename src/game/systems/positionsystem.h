@@ -135,7 +135,6 @@ public:
      * @return true - successfuly updated the position
      * @return false - position could not be updated
      */
-
     bool updatePosition(EntityId entity_id, Direction direction)
     {
         if (entities_with_coords_.contains(entity_id) == false)
