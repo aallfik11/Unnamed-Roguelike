@@ -68,7 +68,7 @@ class PositionSystem
                                         .at(range.first->second)
                                         .lock())
                     {
-                        if (!(tile->tile.type & TileType::TRAVERSIBLE))
+                        if ((tile->tile.type & TileType::TRAVERSIBLE) == false)
                             return true;
                     }
                     range.first++;
@@ -125,6 +125,48 @@ public:
         }
 
         return true;
+    }
+
+    /**
+     * @brief a version of updatePosition which accepts enumerated type Direction as an argument
+     *
+     * @param entity_id - entity whose position will be updated
+     * @param direction - can be UP, DOWN, LEFT or RIGHT, the position is updated accordingly
+     * @return true - successfuly updated the position
+     * @return false - position could not be updated
+     */
+
+    bool updatePosition(EntityId entity_id, Direction direction)
+    {
+        if (entities_with_coords_.contains(entity_id) == false)
+            return false;
+
+        if (auto coord_ptr = entities_with_coords_.at(entity_id).lock())
+        {
+            auto x = coord_ptr->x;
+            auto y = coord_ptr->y;
+            switch (direction)
+            {
+            case Direction::UP:
+                return updatePosition(entity_id, x, y - 1);
+
+            case Direction::DOWN:
+                return updatePosition(entity_id, x, y + 1);
+
+            case Direction::LEFT:
+                return updatePosition(entity_id, x - 1, y);
+
+            case Direction::RIGHT:
+                return updatePosition(entity_id, x + 1, y);
+            default:
+                return false;
+            }
+        }
+        else
+        {
+            deleteEntity(entity_id);
+            return false;
+        }
     }
 
     std::optional<std::vector<EntityId>> &getEntityIds(uint16_t x, uint16_t y)
