@@ -14,8 +14,8 @@ public:
     uint32_t createEntity()
     {
         Entity *temp = new Entity();
-        entities_.emplace(temp->get_id(), std::make_pair<std::shared_ptr<Entity>, bool>(std::shared_ptr<Entity>(temp), false));
-        return temp->get_id();
+        entities_.emplace(temp->getId(), std::make_pair<std::shared_ptr<Entity>, bool>(std::shared_ptr<Entity>(temp), false));
+        return temp->getId();
     }
 
     std::shared_ptr<Entity> getEntity(uint32_t entity_id)
