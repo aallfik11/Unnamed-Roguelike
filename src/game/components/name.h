@@ -7,11 +7,10 @@ class Name : public Component
 {
 public:
     std::string name;
-    Name() { name = ""; }
-
-    // void update(Entity *entity) override {}
-    // void get() override {}
-    // void set() override {}
+    Name(std::string name = "")
+    {
+        this->name = name;
+    }
 };
 
 #endif /*NAME_H*/

@@ -4,7 +4,7 @@
 #include <functional>
 
 template <class T, class... Args>
-class Interaction : Component
+class Interaction : public Component
 {
     std::function<T(Args)> _interact;
 

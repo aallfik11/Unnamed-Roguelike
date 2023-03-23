@@ -17,7 +17,6 @@ enum TileType
 struct Tile
 {
     uint8_t type = FLOOR | TRAVERSIBLE;
-    std::vector<std::weak_ptr<Entity>> entities;
 };
 
 #endif /*TILE_H*/

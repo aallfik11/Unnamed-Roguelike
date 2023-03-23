@@ -13,14 +13,9 @@ class PositionSystem
 {
     using EntityId = uint16_t;
     using Coords = std::pair<uint16_t, uint16_t>;
-    // using YMap = std::unordered_multimap<uint16_t, EntityId>;
-    // using CoordEntityMap = std::unordered_multimap<uint16_t, std::pair<uint16_t, EntityId>>;
     using CoordEntityMap = std::unordered_multimap<Coords, EntityId>;
-
-    using EntityTileMap = std::unordered_map<EntityId, std::weak_ptr<Tile>>;
-
+    using EntityTileMap = std::unordered_map<EntityId, std::weak_ptr<TileComponent>>;
     using EntityCoordMap = std::unordered_map<EntityId, std::weak_ptr<Coordinates>>;
-
     using GameMap = std::vector<std::vector<Tile>>;
 
     CoordEntityMap coords_with_entities_;
@@ -45,32 +40,6 @@ class PositionSystem
             return false;
         if (y > map_[x].size())
             return false;
-        return true;
-    }
-
-public:
-    PositionSystem(GameMap &given_map) : map_{given_map}
-    {
-    }
-
-    /**
-     * @brief adds a new entity to the map (might soon remove that)
-     *
-     * @brief adds a weak_ptr of type Entity to a tile at a given position
-     * @param x - coordinate x
-     * @param y - coordinate y
-     * @return true - entity successfully added
-     * @return false - entity could not be placed at given coordinates
-     */
-
-    bool addEntityToMap(std::shared_ptr<Entity> &entity,
-                        uint16_t x,
-                        uint16_t y)
-    {
-        if (checkCoordinateValidity(x, y))
-        {
-            map_[x][y].entities.emplace_back(entity);
-        }
         return true;
     }
 
@@ -112,6 +81,11 @@ public:
         return false;
     }
 
+public:
+    PositionSystem(GameMap &given_map) : map_{given_map}
+    {
+    }
+
     /**
      * @brief updates given entities' position in the system
      *
@@ -142,7 +116,7 @@ public:
 
                 range.first++;
             }
-            coords_with_entities_.emplace(x, y, entity_id);
+            coords_with_entities_.emplace(std::make_pair(Coords(x, y), entity_id));
         }
         else
         {
@@ -178,7 +152,7 @@ public:
         return potential_ids;
     }
 
-    std::shared_ptr<Coordinates> &getEntityCoordinates(EntityId entity_id)
+    std::shared_ptr<Coordinates> getEntityCoordinates(EntityId entity_id)
     {
         if (entities_with_coords_.contains(entity_id))
         {
@@ -194,13 +168,14 @@ public:
             entities_with_coords_.emplace(entity->getId(),
                                           coord_ptr);
 
-            coords_with_entities_.emplace(coord_ptr->x, coord_ptr->y,
+            coords_with_entities_.emplace(Coords(coord_ptr->x, coord_ptr->y),
                                           entity->getId());
         }
 
         if (auto tile_ptr = entity->getComponent<TileComponent>())
         {
-            entities_with_tiles_.emplace(entity->getId(), tile_ptr);
+            entities_with_tiles_.emplace(entity->getId(),
+                                         tile_ptr);
         }
     }
 
@@ -272,16 +247,6 @@ public:
     //         }
     //     }
     // }
-
-    void modify_position(EntityId entity_id, uint16_t new_x, uint16_t new_y)
-    {
-        if (entities_with_coords_.contains(entity_id))
-        {
-            if (auto coord = entities_with_coords_.at(entity_id).lock())
-            {
-            }
-        }
-    }
 };
 
 #endif /*POSITIONSYSTEM*/

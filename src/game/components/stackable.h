@@ -3,7 +3,7 @@
 #include "../component.h"
 #include <cstdint>
 
-class Stackable : Component
+class Stackable : public Component
 {
 
 public:

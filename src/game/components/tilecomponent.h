@@ -5,7 +5,8 @@
 #include <string>
 #include <ftxui/screen/color.hpp>
 
-class TileComponent : Component
+
+class TileComponent : public Component
 {
 public:
     TileType type;

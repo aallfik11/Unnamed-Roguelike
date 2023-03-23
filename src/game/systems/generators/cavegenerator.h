@@ -4,11 +4,12 @@
 #include <vector>
 #include <random>
 #include <cstdint>
+#include <memory>
 
 class CaveGenerator
 {
     using GameMap = std::vector<std::vector<Tile>>;
-    static void random_fill_map(GameMap &map,
+    static void randomFillMap(GameMap &map,
                                 std::mt19937 &twister_engine,
                                 uint32_t size_x,
                                 uint32_t size_y)
@@ -39,7 +40,7 @@ class CaveGenerator
         }
     }
 
-    static uint8_t check_neighbours(GameMap &map,
+    static uint8_t checkNeighbors(GameMap &map,
                                     uint32_t x,
                                     uint32_t y)
     {
@@ -60,7 +61,7 @@ class CaveGenerator
         return wall_counter;
     }
 
-    static void four_five(GameMap &map,
+    static void fourFive(GameMap &map,
                           uint32_t size_x,
                           uint32_t size_y)
     {
@@ -73,7 +74,7 @@ class CaveGenerator
             {
                 for (auto y = 1; y < size_y-1; y++)
                 {
-                    auto walls = check_neighbours(map, x, y);
+                    auto walls = checkNeighbors(map, x, y);
                     if ((map[x][y].type & WALL) && walls <= 2)
                     {
                         map_cpy[x][y].type = FLOOR | TRAVERSIBLE;
@@ -105,7 +106,7 @@ class CaveGenerator
         }
     }
 
-    static uint32_t count_walls(GameMap &map)
+    static uint32_t countWalls(GameMap &map)
     {
         uint32_t walls = 0;
         for (auto &x : map)
@@ -121,7 +122,7 @@ class CaveGenerator
         return walls;
     }
 
-    static void flood_fill(GameMap &map,
+    static void floodFill(GameMap &map,
                            uint32_t x,
                            uint32_t y)
     {
@@ -131,10 +132,10 @@ class CaveGenerator
         }
         else
             return;
-        flood_fill(map, x - 1, y);
-        flood_fill(map, x + 1, y);
-        flood_fill(map, x, y - 1);
-        flood_fill(map, x, y + 1);
+        floodFill(map, x - 1, y);
+        floodFill(map, x + 1, y);
+        floodFill(map, x, y - 1);
+        floodFill(map, x, y + 1);
     }
 
 public:
@@ -149,12 +150,12 @@ public:
         GameMap map;
         while (true)
         {
-            random_fill_map(map,
+            randomFillMap(map,
                             twister_engine,
                             size_x,
                             size_y);
 
-            four_five(map, size_x, size_y);
+            fourFive(map, size_x, size_y);
 
             auto x = random_x(twister_engine);
             auto y = random_y(twister_engine);
@@ -165,9 +166,9 @@ public:
                 y = random_y(twister_engine);
             }
 
-            flood_fill(map, x, y);
+            floodFill(map, x, y);
             rectify(map);
-            if ((count_walls(map) / map_size) <= max_wall_percentage)
+            if ((countWalls(map) / map_size) <= max_wall_percentage)
                 break;
         }
         return std::shared_ptr<GameMap>(new GameMap(map));
