@@ -8,6 +8,7 @@ add_library(game
     directions.h
     entity.h
     tile.h
+    action.h
     )
 
 set_target_properties(game PROPERTIES LINKER_LANGUAGE CXX)
