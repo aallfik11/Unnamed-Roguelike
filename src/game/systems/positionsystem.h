@@ -11,7 +11,7 @@
 
 class PositionSystem
 {
-    using EntityId = uint16_t;
+    using EntityId = uint32_t;
     using Coords = std::pair<uint16_t, uint16_t>;
     using CoordEntityMap = std::unordered_multimap<Coords, EntityId>;
     using EntityTileMap = std::unordered_map<EntityId, std::weak_ptr<TileComponent>>;
