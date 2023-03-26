@@ -13,6 +13,9 @@
 
 class ActionComponent : public Component
 {
+    //TO DO: instead of a function, create an enum for different functions(or just whole ai systems like idk, Monster Greedy, Monster Cowardly etc) 
+    //(most monsters have the same ones) and store this instead,
+    // make action system simply look at which ones have which actions defined and add them to according AI systems
     std::function<Action(uint32_t)> action;
 };
 
