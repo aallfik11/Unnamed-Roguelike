@@ -3,22 +3,23 @@
 #include "../action.h"
 #include "../ai_enum.h"
 #include "../components/aicomponent.h"
-#include "../"
+#include "../entity.h"
 #include <cstdint>
 #include <memory>
 #include <unordered_map>
+#include <unordered_set>
 #include <array>
 #include <functional>
 
 class AISystem
 {
 
-  // might need to include pos and health system here;
   using EntityId = uint32_t;
-  using AIMap = std::unordered_map<EntityId, std::weak_ptr<AIComponent>>;
+  using AIMap = std::unordered_map<std::shared_ptr<Entity>, std::weak_ptr<AIComponent>>;
+  using AISet = std::unordered_set<std::shared_ptr<Entity>>;
   using StateArray = std::array<std::unordered_map<AIState, std::function<Action(EntityId, EntityId)>>, 7>;
 
-  AIMap ais;
+  AISet ais;
   StateArray states;
 
   Action approachTarget(EntityId caller_id, EntityId target_id)
@@ -89,22 +90,22 @@ public:
     /*SPECIAL*/
   }
 
-  void addEntityAI(EntityId entity_id, std::shared_ptr<AIComponent> &ai_component_ptr)
+  void addEntityAI(std::shared_ptr<Entity>& entity_ptr, std::shared_ptr<AIComponent> &ai_component_ptr)
   {
-    ais.emplace(entity_id, ai_component_ptr);
+    ais.emplace(entity_ptr, ai_component_ptr);
   }
 
-  void deleteEntityAI(EntityId entity_id)
+  void deleteEntityAI(std::shared_ptr<Entity>& entity_ptr)
   {
-    if (ais.contains(entity_id))
+    if (ais.contains(entity_ptr))
     {
-      ais.erase(entity_id);
+      ais.erase(entity_ptr);
     }
   }
 
-  Action runAI(EntityId entity_id)
+  Action runAI(std::shared_ptr<Entity>& entity_ptr)
   {
-    if (!ais.contains(entity_id))
+    if (!ais.contains(entity_ptr))
       return Action::ERROR;
   }
 };
