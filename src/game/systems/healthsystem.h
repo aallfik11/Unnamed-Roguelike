@@ -57,8 +57,13 @@ public:
 
                 if (action & DEDUCE)
                 {
-                    health_ptr->current_health_points = (amount >= current_health) ? 0
-                                                                                   : current_health - amount;
+                    if(amount >= current_health)
+                    {
+                        health_ptr->current_health_points = 0;
+                        health_ptr->alive = false;
+                    }
+                    else
+                        health_ptr->current_health_points -= amount;
                 }
                 else
                 {
