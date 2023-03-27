@@ -10,6 +10,7 @@ add_library(components
     tilecomponent.h
     interaction.h
     aicomponent.h
+    velocitycomponent.h
     )
 
 set_target_properties(components PROPERTIES LINKER_LANGUAGE CXX)

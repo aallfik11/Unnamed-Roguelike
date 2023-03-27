@@ -6,49 +6,52 @@
 #include <cstdint>
 #include <unordered_map>
 #include <memory>
+#include <unordered_set>
 
 class HealthSystem
 {
     using EntityId = uint32_t;
     using HealthPtr = std::shared_ptr<Health>;
+    using EntityPtr = std::shared_ptr<Entity>;
 
-    std::unordered_map<EntityId, std::weak_ptr<Health>> health_register;
+    // std::unordered_map<EntityId, std::weak_ptr<Health>> health_register_;
+    std::unordered_set<EntityPtr> health_register_;
 
 public:
-    void addEntity(EntityId entity_id, std::shared_ptr<Health> &health_component)
+    void addEntity(EntityPtr &entity)
     {
-        health_register.emplace(entity_id, health_component);
+        health_register_.emplace(entity);
     }
 
-    void deleteEntity(EntityId entity_id)
+    void deleteEntity(EntityPtr& entity)
     {
-        if (health_register.contains(entity_id))
+        if (health_register_.contains(entity))
         {
-            health_register.erase(entity_id);
+            health_register_.erase(entity);
         }
     }
 
-    uint16_t getHealth(EntityId entity_id, HealthAction action)
+    uint16_t getHealth(EntityPtr &entity, HealthAction action)
     {
-        if (!health_register.contains(entity_id))
+        if (!health_register_.contains(entity))
             return 0;
 
-        if (auto health_ptr = health_register.at(entity_id).lock())
+        if (auto health_ptr = entity->getComponent<Health>())
         {
             uint16_t health = (action & CURRENT) ? health_ptr->current_health_points
                                                  : health_ptr->max_health_points;
             return health;
         }
-        deleteEntity(entity_id);
+        deleteEntity(entity);
         return 0;
     }
 
-    void updateHealth(EntityId entity_id, uint16_t amount, HealthAction action)
+    void updateHealth(EntityPtr &entity, uint16_t amount, HealthAction action)
     {
-        if (!health_register.contains(entity_id))
+        if (!health_register_.contains(entity))
             return;
 
-        if (auto health_ptr = health_register.at(entity_id).lock())
+        if (auto health_ptr = entity->getComponent<Health>())
         {
             uint16_t current_health = health_ptr->current_health_points;
             uint16_t max_health = health_ptr->max_health_points;
@@ -92,7 +95,7 @@ public:
             }
         }
         else
-            deleteEntity(entity_id);
+            deleteEntity(entity);
     }
 };
 

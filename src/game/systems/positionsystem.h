@@ -7,6 +7,7 @@
 #include "../coordhash.h"
 #include "../directions.h"
 #include <unordered_map>
+#include <unordered_set>
 #include <cstdint>
 
 class PositionSystem
@@ -17,10 +18,13 @@ class PositionSystem
     using EntityTileMap = std::unordered_map<EntityId, std::weak_ptr<TileComponent>>;
     using EntityCoordMap = std::unordered_map<EntityId, std::weak_ptr<Coordinates>>;
     using GameMap = std::vector<std::vector<Tile>>;
-    
+    using EntityPtr = std::shared_ptr<Entity>;
+    // using EntityPositions = std::unordered_set<EntityPtr>;
+
     CoordEntityMap coords_with_entities_;
     EntityTileMap entities_with_tiles_;
     EntityCoordMap entities_with_coords_;
+    std::unordered_set<EntityPtr> entity_positions_;
     GameMap &map_;
 
     /**
@@ -35,9 +39,9 @@ class PositionSystem
     {
         if (map_.empty())
             return false;
-        if (x > map_.size())
+        if (x >= map_.size())
             return false;
-        if (y > map_[x].size())
+        if (y >= map_[x].size())
             return false;
         return true;
     }
@@ -55,26 +59,31 @@ class PositionSystem
         if (checkCoordinateValidity(x, y) == false)
             return true;
 
-        if (map_[x][y].type & TileType::TRAVERSIBLE)
-        {
-            if (coords_with_entities_.contains(Coords(x, y)))
-            {
-                auto range = coords_with_entities_.equal_range(Coords(x, y));
-                while (range.first != range.second)
-                {
-                    if (auto tile = entities_with_tiles_
-                                        .at(range.first->second)
-                                        .lock())
-                    {
-                        if ((tile->tile.type & TileType::TRAVERSIBLE) == false)
-                            return true;
-                    }
-                    range.first++;
-                }
-            }
-        }
-        else
+        if (!(map_[x][y].type & TileType::TRAVERSIBLE))
             return true;
+
+        // if (coords_with_entities_.contains(Coords(x, y)))
+        // {
+        //     auto range = coords_with_entities_.equal_range(Coords(x, y));
+        //     while (range.first != range.second)
+        //     {
+        //         if (auto tile = entities_with_tiles_
+        //                             .at(range.first->second)
+        //                             .lock())
+        //         {
+        //             if ((tile->tile.type & TileType::TRAVERSIBLE) == false)
+        //                 return true;
+        //         }
+        //         range.first++;
+        //     }
+        // }
+
+        for (auto position : entity_positions_)
+        {
+            auto coords = position->getComponent<Coordinates>();
+            if (coords->x == x && coords->y == y)
+                return true;
+        }
 
         return false;
     }
@@ -87,43 +96,46 @@ public:
     /**
      * @brief Updates given entities' position in the system
      *
-     * @param entity_id Entity whose position will be updated
+     * @param entity Entity whose position will be updated
      * @param x Coordinate x
      * @param y Coordinate y
      * @return true Successfully updated the position,
      * @return false Position could not be updated
      */
-    bool updatePosition(EntityId entity_id, uint16_t x, uint16_t y)
+    bool updatePosition(EntityPtr &entity, uint16_t x, uint16_t y)
     {
-        if (entities_with_coords_.contains(entity_id) == false)
+        if (entity_positions_.contains(entity) == false)
+        {
+            //deleteEntity(entity);
             return false;
+        }
 
         if (checkCollision(x, y))
             return false;
 
-        if (auto coord_ptr = entities_with_coords_.at(entity_id).lock())
-        {
+        // if (auto coord_ptr = entities_with_coords_.at(entity).lock())
+        // {
 
-            auto range = coords_with_entities_.equal_range(Coords(coord_ptr->x, coord_ptr->y));
-            while (range.first != range.second)
-            {
-                if (range.first->second == entity_id)
-                {
-                    coords_with_entities_.erase(range.first);
-                    break;
-                }
+        //     auto range = coords_with_entities_.equal_range(Coords(coord_ptr->x, coord_ptr->y));
+        //     while (range.first != range.second)
+        //     {
+        //         if (range.first->second == entity)
+        //         {
+        //             coords_with_entities_.erase(range.first);
+        //             break;
+        //         }
 
-                range.first++;
-            }
-            coord_ptr->x = x;
-            coord_ptr->y = y;
-            coords_with_entities_.emplace(std::make_pair(Coords(x, y), entity_id));
-        }
-        else
-        {
-            deleteEntity(entity_id);
-            return false;
-        }
+        //         range.first++;
+        //     }
+        //     coord_ptr->x = x;
+        //     coord_ptr->y = y;
+        //     coords_with_entities_.emplace(std::make_pair(Coords(x, y), entity));
+        // }
+        // else
+        // {
+        //     deleteEntity(entity);
+        //     return false;
+        // }
 
         return true;
     }
@@ -131,40 +143,40 @@ public:
     /**
      * @brief A version of updatePosition which accepts enumerated type Direction as an argument
      *
-     * @param entity_id Entity whose position will be updated
+     * @param entity Entity whose position will be updated
      * @param direction Can be UP, DOWN, LEFT or RIGHT, the position is updated accordingly
      * @return true - Successfuly updated the position,
      * @return false - Position could not be updated
      */
-    bool updatePosition(EntityId entity_id, Direction direction)
+    bool updatePosition(EntityId entity, Direction direction)
     {
-        if (entities_with_coords_.contains(entity_id) == false)
+        if (entities_with_coords_.contains(entity) == false)
             return false;
 
-        if (auto coord_ptr = entities_with_coords_.at(entity_id).lock())
+        if (auto coord_ptr = entities_with_coords_.at(entity).lock())
         {
             auto x = coord_ptr->x;
             auto y = coord_ptr->y;
             switch (direction)
             {
             case Direction::UP:
-                return updatePosition(entity_id, x, y - 1);
+                return updatePosition(entity, x, y - 1);
 
             case Direction::DOWN:
-                return updatePosition(entity_id, x, y + 1);
+                return updatePosition(entity, x, y + 1);
 
             case Direction::LEFT:
-                return updatePosition(entity_id, x - 1, y);
+                return updatePosition(entity, x - 1, y);
 
             case Direction::RIGHT:
-                return updatePosition(entity_id, x + 1, y);
+                return updatePosition(entity, x + 1, y);
             default:
                 return false;
             }
         }
         else
         {
-            deleteEntity(entity_id);
+            deleteEntity(entity);
             return false;
         }
     }
@@ -199,9 +211,9 @@ public:
     std::vector<EntityId> getAllEntityIds()
     {
         std::vector<EntityId> potential_ids;
-        for (auto &entity_id : entities_with_coords_)
+        for (auto &entity : entities_with_coords_)
         {
-            potential_ids.emplace_back(entity_id.first);
+            potential_ids.emplace_back(entity.first);
         }
         return potential_ids;
     }
@@ -209,14 +221,14 @@ public:
     /**
      * @brief Gets a given entities' "Coordinates" component
      *
-     * @param entity_id
+     * @param entity
      * @return std::shared_ptr<Coordinates>
      */
-    std::shared_ptr<Coordinates> getEntityCoordinates(EntityId entity_id)
+    std::shared_ptr<Coordinates> getEntityCoordinates(EntityId entity)
     {
-        if (entities_with_coords_.contains(entity_id))
+        if (entities_with_coords_.contains(entity))
         {
-            return entities_with_coords_.at(entity_id).lock();
+            return entities_with_coords_.at(entity).lock();
         }
         return std::shared_ptr<Coordinates>(nullptr);
     }
@@ -247,31 +259,31 @@ public:
     /**
      * @brief Deletes entity with a given id, does nothing if no id is matched to the argument
      *
-     * @param entity_id
+     * @param entity
      */
-    void deleteEntity(EntityId entity_id)
+    void deleteEntity(EntityId entity)
     {
-        if (entities_with_coords_.contains(entity_id) == false)
+        if (entities_with_coords_.contains(entity) == false)
             return;
 
-        if (auto coord_ptr = entities_with_coords_.at(entity_id).lock())
+        if (auto coord_ptr = entities_with_coords_.at(entity).lock())
         {
             auto range = coords_with_entities_.equal_range(Coords(coord_ptr->x, coord_ptr->y));
             while (range.first != range.second)
             {
-                if (range.first->second == entity_id)
+                if (range.first->second == entity)
                 {
                     coords_with_entities_.erase(range.first);
                     break;
                 }
                 range.first++;
             }
-            entities_with_coords_.erase(entity_id);
+            entities_with_coords_.erase(entity);
         }
 
-        if (entities_with_tiles_.contains(entity_id))
+        if (entities_with_tiles_.contains(entity))
         {
-            entities_with_tiles_.erase(entity_id);
+            entities_with_tiles_.erase(entity);
         }
     }
 };
