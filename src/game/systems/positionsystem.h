@@ -17,8 +17,7 @@ class PositionSystem
     using EntityTileMap = std::unordered_map<EntityId, std::weak_ptr<TileComponent>>;
     using EntityCoordMap = std::unordered_map<EntityId, std::weak_ptr<Coordinates>>;
     using GameMap = std::vector<std::vector<Tile>>;
-
-public:
+    
     CoordEntityMap coords_with_entities_;
     EntityTileMap entities_with_tiles_;
     EntityCoordMap entities_with_coords_;
