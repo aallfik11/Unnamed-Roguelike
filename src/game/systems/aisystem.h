@@ -90,9 +90,9 @@ public:
     /*SPECIAL*/
   }
 
-  void addEntityAI(std::shared_ptr<Entity>& entity_ptr, std::shared_ptr<AIComponent> &ai_component_ptr)
+  void addEntityAI(std::shared_ptr<Entity>& entity_ptr)
   {
-    ais.emplace(entity_ptr, ai_component_ptr);
+    ais.emplace(entity_ptr);
   }
 
   void deleteEntityAI(std::shared_ptr<Entity>& entity_ptr)
