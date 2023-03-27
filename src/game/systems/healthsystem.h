@@ -30,13 +30,17 @@ public:
 
     uint16_t getHealth(EntityId entity_id, HealthAction action)
     {
-        if(!health_register.contains(entity_id))
+        if (!health_register.contains(entity_id))
             return 0;
-        
-        if(auto health_ptr = health_register.at(entity_id).lock())
+
+        if (auto health_ptr = health_register.at(entity_id).lock())
         {
-            return health_ptr->((action & MAX) ? current_health_points : max_health_points);
+            uint16_t health = (action & CURRENT) ? health_ptr->current_health_points
+                                                 : health_ptr->max_health_points;
+            return health;
         }
+        deleteEntity(entity_id);
+        return 0;
     }
 
     void updateHealth(EntityId entity_id, uint16_t amount, HealthAction action)
