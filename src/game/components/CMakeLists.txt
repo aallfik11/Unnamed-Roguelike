@@ -9,6 +9,7 @@ add_library(components
     stackable.h
     tilecomponent.h
     interaction.h
+    aicomponent.h
     )
 
 set_target_properties(components PROPERTIES LINKER_LANGUAGE CXX)

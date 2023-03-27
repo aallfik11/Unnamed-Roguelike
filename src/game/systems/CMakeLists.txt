@@ -7,9 +7,10 @@ add_library(systems
     attacksystem.h
     actionsystem.h
     entitymanager.h
-    healthregistry.h
     mapmanager.h
     positionsystem.h
+    healthsystem.h
+    aisystem.h
 )
 target_link_libraries(systems
     PUBLIC factories

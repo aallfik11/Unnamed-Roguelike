@@ -19,8 +19,10 @@ class AIComponent : public Component
     //  make action system simply look at which ones have which actions defined and add them to according AI systems
 public:
     AIType ai_type;
+    AIState ai_state;
 
-    AIComponent(AIType ai_type = AIType::AI_MONSTER_DEFAULT)
+    AIComponent(AIType ai_type = AIType::AI_MONSTER_DEFAULT,
+                AIState ai_state = AIState::WANDER_AROUND)
     {
         this->ai_type = ai_type;
     }
