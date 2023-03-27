@@ -14,6 +14,7 @@ enum class Action
     EAT,
     USE_ITEM,
     REST,
+    ERROR,
 };
 
 #endif /*ACTION_H*/
