@@ -25,15 +25,12 @@ public:
 
     void deleteEntity(EntityPtr& entity)
     {
-        if (health_register_.contains(entity))
-        {
             health_register_.erase(entity);
-        }
     }
 
     uint16_t getHealth(EntityPtr &entity, HealthAction action)
     {
-        if (!health_register_.contains(entity))
+        if (health_register_.contains(entity) == false)
             return 0;
 
         if (auto health_ptr = entity->getComponent<Health>())
