@@ -35,7 +35,7 @@ class PositionSystem
      * @return true - Coordinates are valid,
      * @return false - Coordinates are not valid
      */
-    inline bool checkCoordinateValidity(uint16_t x, uint16_t y)
+    bool checkCoordinateValidity(uint16_t x, uint16_t y)
     {
         if (map_.empty())
             return false;
@@ -102,16 +102,23 @@ public:
      * @return true Successfully updated the position,
      * @return false Position could not be updated
      */
-    bool updatePosition(EntityPtr &entity, uint16_t x, uint16_t y)
+    bool updatePosition(const EntityPtr &entity, uint16_t x, uint16_t y)
     {
         if (entity_positions_.contains(entity) == false)
         {
-            //deleteEntity(entity);
             return false;
         }
 
         if (checkCollision(x, y))
             return false;
+
+        if (auto position = entity->getComponent<Coordinates>())
+        {
+            position->x = x;
+            position->y = y;
+            return true;
+        }
+        return false;
 
         // if (auto coord_ptr = entities_with_coords_.at(entity).lock())
         // {
@@ -136,8 +143,6 @@ public:
         //     deleteEntity(entity);
         //     return false;
         // }
-
-        return true;
     }
 
     /**
@@ -148,41 +153,69 @@ public:
      * @return true - Successfuly updated the position,
      * @return false - Position could not be updated
      */
-    bool updatePosition(EntityId entity, Direction direction)
+    bool updatePosition(const EntityPtr &entity, Direction direction)
     {
-        if (entities_with_coords_.contains(entity) == false)
+
+        if (entity_positions_.contains(entity) == false)
             return false;
 
-        if (auto coord_ptr = entities_with_coords_.at(entity).lock())
+        if (auto position = entity->getComponent<Coordinates>())
         {
-            auto x = coord_ptr->x;
-            auto y = coord_ptr->y;
+            auto x = position->x;
+            auto y = position->y;
+
             switch (direction)
             {
             case Direction::UP:
-                return updatePosition(entity, x, y - 1);
-
+                y--;
+                break;
             case Direction::DOWN:
-                return updatePosition(entity, x, y + 1);
-
+                y++;
+                break;
             case Direction::LEFT:
-                return updatePosition(entity, x - 1, y);
-
+                x--;
+                break;
             case Direction::RIGHT:
-                return updatePosition(entity, x + 1, y);
-            default:
-                return false;
+                x++;
+                break;
             }
+
+            position->x = x;
+            position->y = y;
+            return true;
         }
-        else
-        {
-            deleteEntity(entity);
-            return false;
-        }
+        return false;
+
+        // if (auto coord_ptr = entities_with_coords_.at(entity).lock())
+        // {
+        //     auto x = coord_ptr->x;
+        //     auto y = coord_ptr->y;
+        //     switch (direction)
+        //     {
+        //     case Direction::UP:
+        //         return updatePosition(entity, x, y - 1);
+
+        //     case Direction::DOWN:
+        //         return updatePosition(entity, x, y + 1);
+
+        //     case Direction::LEFT:
+        //         return updatePosition(entity, x - 1, y);
+
+        //     case Direction::RIGHT:
+        //         return updatePosition(entity, x + 1, y);
+        //     default:
+        //         return false;
+        //     }
+        // }
+        // else
+        // {
+        //     deleteEntity(entity);
+        //     return false;
+        // }
     }
 
     /**
-     * @brief Gets all entity ids at given coordinates
+     * @brief (DO NOT USE) Gets all entity ids at given coordinates
      *
      * @param x Coordinate x
      * @param y Coordinate y
@@ -204,7 +237,7 @@ public:
     }
 
     /**
-     * @brief Gets all entity ids currently stored in the system
+     * @brief (DO NOT USE) Gets all entity ids currently stored in the system
      *
      * @return std::optional<std::vector<EntityId>>
      */
@@ -219,7 +252,7 @@ public:
     }
 
     /**
-     * @brief Gets a given entities' "Coordinates" component
+     * @brief (DO NOT USE) Gets a given entities' "Coordinates" component
      *
      * @param entity
      * @return std::shared_ptr<Coordinates>
@@ -238,22 +271,23 @@ public:
      *
      * @param entity
      */
-    void addEntity(std::shared_ptr<Entity> &entity)
+    void addEntity(const EntityPtr &entity)
     {
-        if (auto coord_ptr = entity->getComponent<Coordinates>())
-        {
-            entities_with_coords_.emplace(entity->getId(),
-                                          coord_ptr);
+        entity_positions_.emplace(entity);
+        // if (auto coord_ptr = entity->getComponent<Coordinates>())
+        // {
+        //     entities_with_coords_.emplace(entity->getId(),
+        //                                   coord_ptr);
 
-            coords_with_entities_.emplace(Coords(coord_ptr->x, coord_ptr->y),
-                                          entity->getId());
-        }
+        //     coords_with_entities_.emplace(Coords(coord_ptr->x, coord_ptr->y),
+        //                                   entity->getId());
+        // }
 
-        if (auto tile_ptr = entity->getComponent<TileComponent>())
-        {
-            entities_with_tiles_.emplace(entity->getId(),
-                                         tile_ptr);
-        }
+        // if (auto tile_ptr = entity->getComponent<TileComponent>())
+        // {
+        //     entities_with_tiles_.emplace(entity->getId(),
+        //                                  tile_ptr);
+        // }
     }
 
     /**
@@ -261,30 +295,31 @@ public:
      *
      * @param entity
      */
-    void deleteEntity(EntityId entity)
+    void deleteEntity(const EntityPtr &entity)
     {
-        if (entities_with_coords_.contains(entity) == false)
-            return;
+        entity_positions_.erase(entity);
+        // if (entities_with_coords_.contains(entity) == false)
+        //     return;
 
-        if (auto coord_ptr = entities_with_coords_.at(entity).lock())
-        {
-            auto range = coords_with_entities_.equal_range(Coords(coord_ptr->x, coord_ptr->y));
-            while (range.first != range.second)
-            {
-                if (range.first->second == entity)
-                {
-                    coords_with_entities_.erase(range.first);
-                    break;
-                }
-                range.first++;
-            }
-            entities_with_coords_.erase(entity);
-        }
+        // if (auto coord_ptr = entities_with_coords_.at(entity).lock())
+        // {
+        //     auto range = coords_with_entities_.equal_range(Coords(coord_ptr->x, coord_ptr->y));
+        //     while (range.first != range.second)
+        //     {
+        //         if (range.first->second == entity)
+        //         {
+        //             coords_with_entities_.erase(range.first);
+        //             break;
+        //         }
+        //         range.first++;
+        //     }
+        //     entities_with_coords_.erase(entity);
+        // }
 
-        if (entities_with_tiles_.contains(entity))
-        {
-            entities_with_tiles_.erase(entity);
-        }
+        // if (entities_with_tiles_.contains(entity))
+        // {
+        //     entities_with_tiles_.erase(entity);
+        // }
     }
 };
 
