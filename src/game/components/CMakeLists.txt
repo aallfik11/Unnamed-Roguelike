@@ -11,6 +11,7 @@ add_library(components
     interaction.h
     aicomponent.h
     velocitycomponent.h
+    navmapcomponent.h
     )
 
 set_target_properties(components PROPERTIES LINKER_LANGUAGE CXX)

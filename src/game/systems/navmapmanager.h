@@ -1,37 +1,38 @@
 #ifndef NAVMAPMANAGER
 #define NAVMAPMANAGER
 #include "../tile.h"
+#include "../entity.h"
+#include "../components/navmapcomponent.h"
+#include "../components/coordinates.h"
+#include "../globals.h"
 #include <vector>
 #include <queue>
 #include <unordered_map>
 #include <cmath>
+#include <memory>
 
 class NavMapManager
 {
 
-    struct NavCell : std::pair<uint32_t, bool>
-    {
-        uint32_t &score = this->first;
-        bool &visited = this->second;
-    };
-
     using GameMap = std::vector<std::vector<Tile>>;
     using NavMap = std::vector<std::vector<NavCell>>;
     using EntityId = uint32_t;
+    using EntityPtr = std::shared_ptr<Entity>;
 
-    std::unordered_map<EntityId, NavMap> nav_maps_;
+    // std::unordered_map<EntityPtr, NavMap> nav_maps_;
     GameMap &map_;
 
-    void resetNavMap(EntityId entity_id)
+    void resetNavMap(EntityPtr &entity)
     {
-        if (!nav_maps_.contains(entity_id))
-            return;
-        for (auto column : nav_maps_.at(entity_id))
+        if (auto nav_map_component = entity->getComponent<NavMapComponent>())
         {
-            for (auto cell : column)
+            for (auto column : nav_map_component->nav_map)
             {
-                cell.first = ~0;
-                cell.second = false;
+                for (auto cell : column)
+                {
+                    cell.score = ~0;
+                    cell.visited = false;
+                }
             }
         }
     }
@@ -84,13 +85,24 @@ class NavMapManager
     }
 
 public:
-    void calculateNavMap(EntityId entity_id,
+    enum class Destination
+    {
+        AWAY_FROM,
+        TOWARDS
+    };
+
+    NavMapManager(GameMap &map) : map_(map)
+    {
+    }
+    void calculateNavMap(EntityPtr &entity,
                          std::vector<std::tuple<uint16_t,
                                                 uint16_t,
                                                 uint16_t,
                                                 double>>
                              targets)
     {
+
+        NavMap &nav_map = entity->getComponent<NavMapComponent>()->nav_map;
 
         std::vector<NavMap> nav_maps(targets.size()); // for each target there's a navmap
 
@@ -104,7 +116,7 @@ public:
         }
         auto navmap_x_size = nav_maps[0].size();
         auto navmap_y_size = nav_maps[0][0].size();
-        auto &main_navmap = nav_maps[0];
+        NavMap &main_navmap = nav_maps[0];
 
         // combining all targets together, monsters will act on their most pressing desire
         for (auto navmap_id = 1; navmap_id < nav_maps.size(); navmap_id++)
@@ -122,7 +134,55 @@ public:
             }
         }
 
-        nav_maps_[entity_id] = main_navmap;
+        for (auto x = 0; x < G_MAP_WIDTH; x++)
+        {
+            nav_map[x] = main_navmap[x];
+        }
+    }
+
+    std::tuple<uint16_t, uint16_t> nextBestCoordinates(EntityPtr &entity, Destination destination)
+    {
+        auto nav_map = entity->getComponent<NavMapComponent>()->nav_map;
+        auto current_coordinates = entity->getComponent<Coordinates>();
+        auto current_x = current_coordinates->x;
+        auto current_y = current_coordinates->y;
+
+        using NavTuple = std::tuple<uint16_t, uint16_t, NavCell>;
+
+        NavTuple up = {current_x, current_y - 1, nav_map[current_x][current_y - 1]};
+        NavTuple down = {current_x, current_y + 1, nav_map[current_x][current_y - 1]};
+        NavTuple left = {current_x - 1, current_y, nav_map[current_x][current_y - 1]};
+        NavTuple right = {current_x + 1, current_y, nav_map[current_x][current_y - 1]};
+
+        auto compare_higher = [](const NavTuple &nt1, const NavTuple &nt2)
+        {
+            if (std::get<2>(nt1).visited == false)
+                return false;
+
+            return (std::get<2>(nt1).score > std::get<2>(nt2).score);
+        };
+        auto compare_lower = [](const NavTuple &nt1, const NavTuple &nt2)
+        {
+            if (std::get<2>(nt1).visited == false)
+                return false;
+
+            return (std::get<2>(nt1).score < std::get<2>(nt2).score);
+        };
+
+        if (destination == Destination::AWAY_FROM)
+        {
+            NavTuple result = std::max(std::max(up, down, compare_higher),
+                                       std::max(left, right, compare_higher),
+                                       compare_higher);
+            return (std::make_tuple(get<0>(result), get<1>(result)));
+        }
+        else
+        {
+            NavTuple result = std::min(std::min(up, down, compare_lower),
+                                       std::min(left, right, compare_lower),
+                                       compare_lower);
+            return (std::make_tuple(get<0>(result), get<1>(result)));
+        }
     }
 };
 
