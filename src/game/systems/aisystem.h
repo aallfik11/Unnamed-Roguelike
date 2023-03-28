@@ -4,6 +4,8 @@
 #include "../ai_enum.h"
 #include "../components/aicomponent.h"
 #include "../entity.h"
+#include "positionsystem.h"
+#include "healthsystem.h"
 #include <cstdint>
 #include <memory>
 #include <unordered_map>
@@ -18,6 +20,9 @@ class AISystem
   using AIMap = std::unordered_map<std::shared_ptr<Entity>, std::weak_ptr<AIComponent>>;
   using AISet = std::unordered_set<std::shared_ptr<Entity>>;
   using StateArray = std::array<std::unordered_map<AIState, std::function<Action(EntityId, EntityId)>>, 7>;
+
+  PositionSystem &positon_system_;
+  HealthSystem &health_system_;
 
   AISet ais;
   StateArray states;
@@ -45,7 +50,9 @@ class AISystem
   }
 
 public:
-  AISystem()
+  AISystem(PositionSystem &position_system, HealthSystem &health_system)
+      : positon_system_{position_system},
+        health_system_{health_system}
   {
     /*APPROACH TARGET*/
     states[APPROACH_TARGET].emplace(ATTACK, attack); // if player close enough
@@ -90,12 +97,12 @@ public:
     /*SPECIAL*/
   }
 
-  void addEntityAI(std::shared_ptr<Entity>& entity_ptr)
+  void addEntityAI(std::shared_ptr<Entity> &entity_ptr)
   {
     ais.emplace(entity_ptr);
   }
 
-  void deleteEntityAI(std::shared_ptr<Entity>& entity_ptr)
+  void deleteEntityAI(std::shared_ptr<Entity> &entity_ptr)
   {
     if (ais.contains(entity_ptr))
     {
@@ -103,7 +110,7 @@ public:
     }
   }
 
-  Action runAI(std::shared_ptr<Entity>& entity_ptr)
+  Action runAI(std::shared_ptr<Entity> &entity_ptr)
   {
     if (!ais.contains(entity_ptr))
       return Action::ERROR;
