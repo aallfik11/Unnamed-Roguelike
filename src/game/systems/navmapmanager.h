@@ -1,15 +1,15 @@
 #ifndef NAVMAPMANAGER
 #define NAVMAPMANAGER
-#include "../tile.h"
-#include "../entity.h"
-#include "../components/navmapcomponent.h"
 #include "../components/coordinates.h"
+#include "../components/navmapcomponent.h"
+#include "../entity.h"
 #include "../globals.h"
-#include <vector>
-#include <queue>
-#include <unordered_map>
+#include "../tile.h"
 #include <cmath>
 #include <memory>
+#include <queue>
+#include <unordered_map>
+#include <vector>
 
 class NavMapManager
 {

@@ -1,13 +1,13 @@
-#include "src/game/entity.h"
 #include "src/game/component.h"
 #include "src/game/components/components_all.h"
+#include "src/game/entity.h"
 #include "src/game/systems/generators/cavegenerator.h"
 #include "src/game/systems/generators/debugmapgenerator.h"
 #include "src/game/systems/mapmanager.h"
 #include "src/game/systems/positionsystem.h"
+#include <chrono>
 #include <iostream>
 #include <random>
-#include <chrono>
 
 int main()
 {

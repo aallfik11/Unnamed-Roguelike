@@ -5,7 +5,7 @@
 class LOSComponent : public Component
 {
 public:
-    //I want to make it work for other entities later on
+    // I want to make it work for other entities later on
     bool hasLOSToPlayer = false;
 };
 

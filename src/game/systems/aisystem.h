@@ -39,7 +39,7 @@ class AISystem
       if no player in LOS around last known coords, wander around
     */
 
-    auto[x,y] = navigation_manager_.nextBestCoordinates(caller, NavMapManager::Destination::TOWARDS);
+    auto [x, y] = navigation_manager_.nextBestCoordinates(caller, NavMapManager::Destination::TOWARDS);
     positon_system_.updatePosition(caller, x, y);
   }
 

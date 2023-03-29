@@ -1,8 +1,8 @@
 #ifndef ENTITYMANAGER_H
 #define ENTITYMANAGER_H
 #include "../entity.h"
-#include <unordered_map>
 #include <cstdint>
+#include <unordered_map>
 
 class EntityManager
 {

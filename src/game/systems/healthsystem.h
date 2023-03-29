@@ -4,8 +4,8 @@
 #include "../entity.h"
 #include "../health_enum.h"
 #include <cstdint>
-#include <unordered_map>
 #include <memory>
+#include <unordered_map>
 #include <unordered_set>
 
 class HealthSystem
@@ -23,9 +23,9 @@ public:
         health_register_.emplace(entity);
     }
 
-    void deleteEntity(EntityPtr& entity)
+    void deleteEntity(EntityPtr &entity)
     {
-            health_register_.erase(entity);
+        health_register_.erase(entity);
     }
 
     uint16_t getHealth(EntityPtr &entity, HealthAction action)
@@ -57,7 +57,7 @@ public:
 
                 if (action & DEDUCE)
                 {
-                    if(amount >= current_health)
+                    if (amount >= current_health)
                     {
                         health_ptr->current_health_points = 0;
                         health_ptr->alive = false;

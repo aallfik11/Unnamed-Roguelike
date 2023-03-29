@@ -5,7 +5,7 @@
 
 namespace std
 {
-    template<>
+    template <>
     struct hash<std::pair<uint16_t, uint16_t>>
     {
         std::size_t operator()(const std::pair<uint16_t, uint16_t> &coords) const // this is bad and I won't be using it anyway, but I'll leave it until I finish just in case

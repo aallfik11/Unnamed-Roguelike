@@ -1,9 +1,9 @@
 #ifndef TILECOMPONENT_H
 #define TILECOMPONENT_H
-#include "../tile.h"
 #include "../component.h"
-#include <string>
+#include "../tile.h"
 #include <ftxui/screen/color.hpp>
+#include <string>
 
 class TileComponent : public Component
 {

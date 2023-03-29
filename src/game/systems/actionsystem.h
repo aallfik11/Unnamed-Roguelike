@@ -1,12 +1,11 @@
 #ifndef ACTIONSYSTEM_H
 #define ACTIONSYSTEM_H
-#include "../entity.h"
 #include "../action.h"
 #include "../components/actioncomponent.h"
+#include "../entity.h"
 
 class ActionSystem
 {
-
 };
 
 #endif /*ACTIONSYSTEM_H*/

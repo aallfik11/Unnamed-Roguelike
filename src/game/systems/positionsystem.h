@@ -2,13 +2,13 @@
 #define POSITIONSYSTEM_H
 #include "../components/coordinates.h"
 #include "../components/tilecomponent.h"
-#include "../entity.h"
-#include "../tile.h"
 #include "../coordhash.h"
 #include "../directions.h"
+#include "../entity.h"
+#include "../tile.h"
+#include <cstdint>
 #include <unordered_map>
 #include <unordered_set>
-#include <cstdint>
 
 class PositionSystem
 {

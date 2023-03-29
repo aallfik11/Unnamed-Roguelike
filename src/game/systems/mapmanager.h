@@ -1,10 +1,10 @@
 #ifndef MAPMANAGER_H
 #define MAPMANAGER_H
 #include "../tile.h"
-#include <functional>
 #include <cstdint>
-#include <random>
+#include <functional>
 #include <memory>
+#include <random>
 #include <vector>
 
 class MapManager

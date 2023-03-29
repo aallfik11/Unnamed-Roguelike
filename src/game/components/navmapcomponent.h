@@ -35,17 +35,15 @@ bool operator>=(const NavCell &nc1, const NavCell &nc2)
     return (nc1.score >= nc2.score);
 }
 
-bool operator==(const NavCell &nc1, const NavCell &nc2) 
+bool operator==(const NavCell &nc1, const NavCell &nc2)
 {
     return (nc1.score == nc2.score && nc1.visited == nc2.visited);
 }
 
-bool operator!=(const NavCell &nc1, const NavCell &nc2) 
+bool operator!=(const NavCell &nc1, const NavCell &nc2)
 {
     return (nc1.score != nc2.score || nc1.visited != nc2.visited);
 }
-
-
 
 class NavMapComponent : public Component
 {

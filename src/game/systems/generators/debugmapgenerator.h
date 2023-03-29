@@ -1,10 +1,10 @@
 #ifndef DEBUGMAPGENERATOR_H
 #define DEBUGMAPGENERATOR_H
 #include "../../tile.h"
-#include <vector>
+#include <cstdint>
 #include <memory>
 #include <random>
-#include <cstdint>
+#include <vector>
 
 class DebugMapGenerator
 {
@@ -12,8 +12,8 @@ class DebugMapGenerator
 
 public:
     static std::shared_ptr<GameMap> generate(std::mt19937 &,
-                                              uint32_t size_x,
-                                              uint32_t size_y)
+                                             uint32_t size_x,
+                                             uint32_t size_y)
     {
         Tile floor;
         Tile wall;

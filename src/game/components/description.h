@@ -6,7 +6,7 @@
 class Description : public Component
 {
 public:
-std::string description;
+    std::string description;
     Description(std::string description = "")
     {
         this->description = description;

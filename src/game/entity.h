@@ -1,14 +1,14 @@
 #ifndef ENTITY_H
 #define ENTITY_H
 #include "component.h"
-#include <memory>
 #include <algorithm>
-#include <vector>
-#include <unordered_map>
+#include <memory>
 #include <optional> //I wanna experiment with it later for get_component function
-#include <typeinfo>
 #include <type_traits>
 #include <typeindex>
+#include <typeinfo>
+#include <unordered_map>
+#include <vector>
 
 class Entity
 {

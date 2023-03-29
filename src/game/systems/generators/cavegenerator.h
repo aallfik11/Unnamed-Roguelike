@@ -1,18 +1,18 @@
 #ifndef CAVEGENERATOR_H
 #define CAVEGENERATOR_H
 #include "../../tile.h"
-#include <vector>
-#include <random>
 #include <cstdint>
 #include <memory>
+#include <random>
+#include <vector>
 
 class CaveGenerator
 {
     using GameMap = std::vector<std::vector<Tile>>;
     static void randomFillMap(GameMap &map,
-                                std::mt19937 &twister_engine,
-                                uint32_t size_x,
-                                uint32_t size_y)
+                              std::mt19937 &twister_engine,
+                              uint32_t size_x,
+                              uint32_t size_y)
     {
         std::uniform_int_distribution<uint32_t> roll_wall_chance(0, 100);
         uint32_t wall_chance = 38;
@@ -41,8 +41,8 @@ class CaveGenerator
     }
 
     static uint8_t checkNeighbors(GameMap &map,
-                                    uint32_t x,
-                                    uint32_t y)
+                                  uint32_t x,
+                                  uint32_t y)
     {
         uint8_t wall_counter = 0;
         for (auto column = x - 1; column <= x + 1; column++)
@@ -62,17 +62,17 @@ class CaveGenerator
     }
 
     static void fourFive(GameMap &map,
-                          uint32_t size_x,
-                          uint32_t size_y)
+                         uint32_t size_x,
+                         uint32_t size_y)
     {
         uint32_t max_iterations = 15;
         GameMap map_cpy(map);
 
         for (auto iteration = 0; iteration < max_iterations; iteration++)
         {
-            for (auto x = 1; x < size_x-1; x++)
+            for (auto x = 1; x < size_x - 1; x++)
             {
-                for (auto y = 1; y < size_y-1; y++)
+                for (auto y = 1; y < size_y - 1; y++)
                 {
                     auto walls = checkNeighbors(map, x, y);
                     if ((map[x][y].type & WALL) && walls <= 2)
@@ -123,8 +123,8 @@ class CaveGenerator
     }
 
     static void floodFill(GameMap &map,
-                           uint32_t x,
-                           uint32_t y)
+                          uint32_t x,
+                          uint32_t y)
     {
         if ((map[x][y].type & FLOOR) && !(map[x][y].type & CHECKED))
         {
@@ -140,8 +140,8 @@ class CaveGenerator
 
 public:
     static std::shared_ptr<GameMap> generate(std::mt19937 &twister_engine,
-                             uint32_t size_x,
-                             uint32_t size_y)
+                                             uint32_t size_x,
+                                             uint32_t size_y)
     {
         std::uniform_int_distribution<uint32_t> random_x(1, size_x - 1);
         std::uniform_int_distribution<uint32_t> random_y(1, size_y - 1);
@@ -151,9 +151,9 @@ public:
         while (true)
         {
             randomFillMap(map,
-                            twister_engine,
-                            size_x,
-                            size_y);
+                          twister_engine,
+                          size_x,
+                          size_y);
 
             fourFive(map, size_x, size_y);
 

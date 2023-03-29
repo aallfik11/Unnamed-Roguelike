@@ -1,10 +1,10 @@
 #ifndef AI_COMPONENT_H
 #define AI_COMPONENT_H
-#include "../component.h"
 #include "../action.h"
 #include "../ai_enum.h"
-#include <functional>
+#include "../component.h"
 #include <cstdint>
+#include <functional>
 
 /*
  * Probably one of the only few components that will break the rule of being nothing but "data buckets"
