@@ -14,6 +14,7 @@ public:
     LOSComponent(uint16_t seeingDistance = 15)
     {
         has_LOS_to_player = false;
+        this->seeingDistance = seeingDistance;
     }
 };
 #endif /*LINEOFSIGHTCOMPONENT_H*/
