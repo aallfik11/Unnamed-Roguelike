@@ -12,6 +12,7 @@ add_library(components
     aicomponent.h
     velocitycomponent.h
     navmapcomponent.h
+    lineofsightcomponent.h
     )
 
 set_target_properties(components PROPERTIES LINKER_LANGUAGE CXX)
