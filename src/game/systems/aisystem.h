@@ -18,7 +18,7 @@ class AISystem
 {
 
   using EntityId = uint32_t;
-  using AIMap = std::unordered_map<std::shared_ptr<Entity>, std::weak_ptr<AIComponent>>;
+  // using AIMap = std::unordered_map<std::shared_ptr<Entity>, std::weak_ptr<AIComponent>>;
   using AISet = std::unordered_set<std::shared_ptr<Entity>>;
   using StateArray = std::array<std::unordered_map<AIState, std::function<Action(EntityId, EntityId)>>, 7>;
   using GameMap = std::vector<std::vector<Tile>>;
@@ -34,7 +34,7 @@ class AISystem
 
   Action approachTarget(EntityId caller_id, EntityId target_id)
   {
-    
+
   }
   Action runAway(EntityId caller_id, EntityId target_id)
   {

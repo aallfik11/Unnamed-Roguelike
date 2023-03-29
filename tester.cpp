@@ -76,5 +76,23 @@ int main()
     // {
     //     std::cout << x.first.first << ' ' << x.first.second << "id: " << x.second << std::endl;
     // }
+    Entity ent;
+
+    ent.addComponent(new Coordinates());
+    ent.addComponent(new Health);
+    ent.addComponent(new Name);
+    auto t1 = std::chrono::high_resolution_clock::now();
+    ent.addComponent(new TileComponent);
+    auto t2 = std::chrono::high_resolution_clock::now();
+    auto dur = std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1);
+    std::cout << dur.count() << std::endl;
+
+    t1 = std::chrono::high_resolution_clock::now();
+    auto x = ent.getComponent<Name>();
+    t2 = std::chrono::high_resolution_clock::now();
+
+    dur = std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1);
+    std::cout << dur.count() << std::endl;
+
     return 0;
 }
