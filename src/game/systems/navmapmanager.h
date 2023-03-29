@@ -184,9 +184,6 @@ public:
             return (std::make_tuple(get<0>(result), get<1>(result)));
         }
     }
-    bool isGoalReached(EntityPtr &Entity)
-    {
-    }
 };
 
 #endif /*NAVMAPMANAGER*/
