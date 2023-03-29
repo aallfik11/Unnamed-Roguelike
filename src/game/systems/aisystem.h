@@ -4,64 +4,87 @@
 #include "../ai_enum.h"
 #include "../components/aicomponent.h"
 #include "../entity.h"
+#include "../globals.h"
+#include "healthsystem.h"
 #include "navmapmanager.h"
 #include "positionsystem.h"
-#include "healthsystem.h"
+#include <array>
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
-#include <array>
-#include <functional>
 
 class AISystem
 {
 
   using EntityId = uint32_t;
+  using EntityPtr = std::shared_ptr<Entity>;
   // using AIMap = std::unordered_map<std::shared_ptr<Entity>, std::weak_ptr<AIComponent>>;
-  using AISet = std::unordered_set<std::shared_ptr<Entity>>;
-  using StateArray = std::array<std::unordered_map<AIState, std::function<Action(EntityId, EntityId)>>, 7>;
+  using AISet = std::unordered_set<EntityPtr>;
+  using StateArray = std::array<std::unordered_map<AIState, std::function<Action(EntityPtr, EntityPtr)>>, 7>;
   using GameMap = std::vector<std::vector<Tile>>;
 
   PositionSystem &positon_system_;
   HealthSystem &health_system_;
-  NavMapManager navigation_manager;
+  NavMapManager &navigation_manager_;
 
   AISet ais_;
   StateArray states_;
-  GameMap &map_;
-  bool &player_moved_;
 
-  Action approachTarget(EntityId caller_id, EntityId target_id)
+  Action approachTarget(EntityPtr &caller, EntityPtr &target)
   {
+    /*if player within range, attack
+      if lost LOS of player, go to the last known coords
+      if no player in LOS around last known coords, wander around
+    */
 
+    auto[x,y] = navigation_manager_.nextBestCoordinates(caller, NavMapManager::Destination::TOWARDS);
+    positon_system_.updatePosition(caller, x, y);
   }
-  Action runAway(EntityId caller_id, EntityId target_id)
+
+  Action runAway(EntityPtr &caller, EntityPtr &target)
   {
+    // if there's a line of sight to the player, run away, else rest
   }
-  Action rest(EntityId caller_id, EntityId)
+  Action rest(EntityPtr &caller, EntityPtr &target)
   {
+    /*if hp high enough and there's a LOS to the player, approach
+      if hp low and LOS to player then run away
+      if hp high enough and no LOS to the player, wander around
+    */
   }
-  Action attack(EntityId caller_id, EntityId target_id)
+  Action attack(EntityPtr &caller, EntityPtr &target)
   {
+    /*if hp goes low, run away
+      if player runs away, chase,
+     */
   }
-  Action interactWithObject(EntityId caller_id, EntityId target_id)
+  Action interactWithObject(EntityPtr &caller, EntityPtr &target)
   {
+    /*unused for now
+     */
   }
-  Action wanderAround(EntityId caller_id, EntityId)
+  Action wanderAround(EntityPtr &caller, EntityPtr &target)
   {
+    /*if player enters LOS, approach/run away (depending on the circumstances)
+     */
   }
-  Action special(EntityId caller_id, EntityId target_id)
+  Action special(EntityPtr &caller, EntityPtr &target)
   {
+    /*unused for now
+     */
   }
 
 public:
-  AISystem(GameMap &map, PositionSystem &position_system, HealthSystem &health_system, bool& player_moved)
-      : map_{map},
-        navigation_manager{map},
-        positon_system_{position_system},
+  AISystem(GameMap &map,
+           PositionSystem &position_system,
+           HealthSystem &health_system,
+           NavMapManager &nav_manager,
+           bool &player_moved)
+      : positon_system_{position_system},
         health_system_{health_system},
-        player_moved_{player_moved}
+        navigation_manager_{nav_manager}
   {
 
     /*APPROACH TARGET*/
@@ -107,22 +130,19 @@ public:
     /*SPECIAL*/
   }
 
-  void addEntityAI(std::shared_ptr<Entity> &entity_ptr)
+  void addEntityAI(EntityPtr &entity)
   {
-    ais_.emplace(entity_ptr);
+    ais_.emplace(entity);
   }
 
-  void deleteEntityAI(std::shared_ptr<Entity> &entity_ptr)
+  void deleteEntityAI(EntityPtr &entity)
   {
-    if (ais_.contains(entity_ptr))
-    {
-      ais_.erase(entity_ptr);
-    }
+    ais_.erase(entity);
   }
 
-  Action runAI(std::shared_ptr<Entity> &entity_ptr)
+  Action runAI(EntityPtr &entity)
   {
-    if (!ais_.contains(entity_ptr))
+    if (!ais_.contains(entity))
       return Action::ERROR;
   }
 };
