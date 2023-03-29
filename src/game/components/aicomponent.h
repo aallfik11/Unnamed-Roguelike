@@ -20,11 +20,15 @@ class AIComponent : public Component
 public:
     AIType ai_type;
     AIState ai_state;
+    uint16_t last_target_x;
+    uint16_t last_target_y;
 
     AIComponent(AIType ai_type = AIType::AI_MONSTER_DEFAULT,
                 AIState ai_state = AIState::WANDER_AROUND)
     {
         this->ai_type = ai_type;
+        last_target_x = 0;
+        last_target_y = 0;
     }
 };
 

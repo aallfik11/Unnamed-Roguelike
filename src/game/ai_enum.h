@@ -7,6 +7,7 @@ enum AIType : uint8_t
     AI_MONSTER_DEFAULT,
     AI_MONSTER_AGGRESSIVE,
     AI_MONSTER_COWARDLY,
+    AI_MONSTER_BERSERK,
 };
 
 enum AIState : uint8_t

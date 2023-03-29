@@ -78,9 +78,12 @@ class PositionSystem
         //     }
         // }
 
-        for (auto position : entity_positions_)
+        for (auto entity : entity_positions_)
         {
-            auto coords = position->getComponent<Coordinates>();
+            auto coords = entity->getComponent<Coordinates>();
+            auto tilecomponent = entity->getComponent<TileComponent>();
+            if (tilecomponent->tile.type & TileType::TRAVERSIBLE)
+                continue;
             if (coords->x == x && coords->y == y)
                 return true;
         }

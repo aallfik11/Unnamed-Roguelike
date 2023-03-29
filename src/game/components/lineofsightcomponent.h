@@ -6,7 +6,14 @@ class LOSComponent : public Component
 {
 public:
     // I want to make it work for other entities later on
-    bool hasLOSToPlayer = false;
-};
+    bool has_LOS_to_player;
+    uint16_t seeingDistance;
+    // uint16_t last_player_x;
+    // uint16_t last_player_y;
 
+    LOSComponent(uint16_t seeingDistance = 15)
+    {
+        has_LOS_to_player = false;
+    }
+};
 #endif /*LINEOFSIGHTCOMPONENT_H*/
