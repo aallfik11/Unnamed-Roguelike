@@ -24,7 +24,7 @@ public:
         _max_id++;
     }
 
-    Entity(std::vector<Component *> &components) : Entity()
+    Entity(std::vector<Component *> components) : Entity()
     {
         for (auto &component : components)
         {
@@ -37,7 +37,7 @@ public:
         return _id;
     }
 
-    void addComponent(std::shared_ptr<Component> &component)
+    void addComponent(const std::shared_ptr<Component> &component)
     {
         _components.emplace(typeid(*(component.get())), component);
     }
@@ -45,6 +45,12 @@ public:
     void addComponent(Component *component)
     {
         _components.emplace(typeid(*component), std::shared_ptr<Component>(component));
+    }
+
+    template <class ComponentType>
+    void removeComponent()
+    {
+        _components.erase(typeid(ComponentType));
     }
 
     template <class ComponentType>
