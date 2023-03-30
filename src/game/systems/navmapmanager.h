@@ -43,12 +43,12 @@ class NavMapManager
                    double multiplier,
                    NavMap &nav_map)
     {
-        uint16_t vector_x[] = {-1, 0, 1, 0};
-        uint16_t vector_y[] = {0, 1, 0, -1};
+        int16_t vector_x[] = {-1, 0, 1, 0};
+        int16_t vector_y[] = {0, 1, 0, -1};
         std::queue<std::pair<uint16_t, uint16_t>> queue;
         queue.push({target_x, target_y});
         nav_map[target_x][target_y].visited = true;
-        nav_map[target_x][target_y].score = 0;
+        nav_map[target_x][target_y].score = priority;
         uint32_t score = priority;
 
         while (!queue.empty())
@@ -76,11 +76,14 @@ class NavMapManager
                 }
             }
         }
-        if ((std::fabs(multiplier - 1.0)) <= std::numeric_limits<double>::epsilon())
+        if ((std::fabs(multiplier - 1.0)) >= std::numeric_limits<double>::epsilon())
         {
             for (auto &col : nav_map)
                 for (auto &cell : col)
-                    cell.score *= multiplier;
+                {
+                    if (cell.visited)
+                        cell.score *= multiplier;
+                }
         }
     }
 
@@ -94,6 +97,7 @@ public:
     NavMapManager(GameMap &map) : map_(map)
     {
     }
+
     void calculateNavMap(EntityPtr &entity,
                          std::vector<std::tuple<uint16_t,
                                                 uint16_t,
@@ -104,7 +108,7 @@ public:
 
         NavMap &nav_map = entity->getComponent<NavMapComponent>()->nav_map;
 
-        std::vector<NavMap> nav_maps(targets.size()); // for each target there's a navmap
+        std::vector<NavMap> nav_maps(targets.size(), nav_map); // for each target there's a navmap
 
         for (auto i = 0; i < targets.size(); i++)
         {
