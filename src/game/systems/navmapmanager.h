@@ -154,16 +154,18 @@ public:
         using NavTuple = std::tuple<uint16_t, uint16_t, NavCell>;
 
         NavTuple up = {current_x, current_y - 1, nav_map[current_x][current_y - 1]};
-        NavTuple down = {current_x, current_y + 1, nav_map[current_x][current_y - 1]};
-        NavTuple left = {current_x - 1, current_y, nav_map[current_x][current_y - 1]};
-        NavTuple right = {current_x + 1, current_y, nav_map[current_x][current_y - 1]};
+        NavTuple down = {current_x, current_y + 1, nav_map[current_x][current_y + 1]};
+        NavTuple left = {current_x - 1, current_y, nav_map[current_x - 1][current_y]};
+        NavTuple right = {current_x + 1, current_y, nav_map[current_x + 1][current_y]};
 
         auto compare_higher = [](const NavTuple &nt1, const NavTuple &nt2)
         {
             if (std::get<2>(nt1).visited == false)
+                return true;
+            if(std::get<2>(nt2).visited == false)
                 return false;
 
-            return (std::get<2>(nt1).score > std::get<2>(nt2).score);
+            return (std::get<2>(nt1).score < std::get<2>(nt2).score);
         };
         auto compare_lower = [](const NavTuple &nt1, const NavTuple &nt2)
         {
