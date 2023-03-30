@@ -21,9 +21,9 @@
 int main()
 {
     std::random_device rd;
-    std::mt19937 mt(rd());
-    auto map = *CaveGenerator::generate(mt, 100, 50);
-    PositionSystem pos_sys(map);
+    std::mt19937       mt(rd());
+    auto               map = *CaveGenerator::generate(mt, 100, 50);
+    PositionSystem     pos_sys(map);
 
     // map[10][10].type = WALL;
 
@@ -31,8 +31,8 @@ int main()
     // map[10][12].type = WALL;
 
     // map[10][13].type = WALL;
-    NavMapManager nav_test(map);
-    std::shared_ptr<Entity> entity(new Entity({new TileComponent()}));
+    NavMapManager                    nav_test(map);
+    std::shared_ptr<Entity>          entity(new Entity({new TileComponent()}));
     std::shared_ptr<NavMapComponent> navmap(new NavMapComponent());
     entity->addComponent(new Coordinates(34, 33));
     entity->addComponent(navmap);
@@ -53,18 +53,18 @@ int main()
     auto renderer = Renderer(
         [&]
         {
-            auto coord_ptr     = entity->getComponent<Coordinates>();
-            auto x_coord       = coord_ptr->x;
-            auto y_coord       = coord_ptr->y;
-            std::string sprite = " ";
-            Elements cols;
+            auto        coord_ptr = entity->getComponent<Coordinates>();
+            auto        x_coord   = coord_ptr->x;
+            auto        y_coord   = coord_ptr->y;
+            std::string sprite    = " ";
+            Elements    cols;
             for (int x = 0; x < 100; x++)
             {
                 Elements rows;
                 for (int y = 0; y < 50; y++)
                 {
 
-                    auto score    = nav_map[x][y].score;
+                    auto    score = nav_map[x][y].score;
                     uint8_t red   = 0;
                     uint8_t green = 0;
                     uint8_t blue  = 0;
