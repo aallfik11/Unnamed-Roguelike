@@ -12,20 +12,23 @@
 
 class PositionSystem
 {
-    using EntityId = uint32_t;
-    using Coords = std::pair<uint16_t, uint16_t>;
+    using EntityId       = uint32_t;
+    using Coords         = std::pair<uint16_t, uint16_t>;
     using CoordEntityMap = std::unordered_multimap<Coords, EntityId>;
-    using EntityTileMap = std::unordered_map<EntityId, std::weak_ptr<TileComponent>>;
-    using EntityCoordMap = std::unordered_map<EntityId, std::weak_ptr<Coordinates>>;
-    using GameMap = std::vector<std::vector<Tile>>;
-    using EntityPtr = std::shared_ptr<Entity>;
+    using GameMap        = std::vector<std::vector<Tile>>;
+    using EntityPtr      = std::shared_ptr<Entity>;
+    using EntityTileMap =
+        std::unordered_map<EntityId, std::weak_ptr<TileComponent>>;
+    using EntityCoordMap =
+        std::unordered_map<EntityId, std::weak_ptr<Coordinates>>;
+
     // using EntityPositions = std::unordered_set<EntityPtr>;
 
-    CoordEntityMap coords_with_entities_;
-    EntityTileMap entities_with_tiles_;
-    EntityCoordMap entities_with_coords_;
+    CoordEntityMap                coords_with_entities_;
+    EntityTileMap                 entities_with_tiles_;
+    EntityCoordMap                entities_with_coords_;
     std::unordered_set<EntityPtr> entity_positions_;
-    GameMap &map_;
+    GameMap                      &map_;
 
     /**
      * @brief Checks if the coordinates are within the map's bounds
@@ -80,7 +83,7 @@ class PositionSystem
 
         for (auto entity : entity_positions_)
         {
-            auto coords = entity->getComponent<Coordinates>();
+            auto coords        = entity->getComponent<Coordinates>();
             auto tilecomponent = entity->getComponent<TileComponent>();
             if (tilecomponent->tile.type & TileType::TRAVERSIBLE)
                 continue;
@@ -92,9 +95,7 @@ class PositionSystem
     }
 
 public:
-    PositionSystem(GameMap &given_map) : map_{given_map}
-    {
-    }
+    PositionSystem(GameMap &given_map) : map_{given_map} {}
 
     /**
      * @brief Updates given entities' position in the system
@@ -126,8 +127,9 @@ public:
         // if (auto coord_ptr = entities_with_coords_.at(entity).lock())
         // {
 
-        //     auto range = coords_with_entities_.equal_range(Coords(coord_ptr->x, coord_ptr->y));
-        //     while (range.first != range.second)
+        //     auto range =
+        //     coords_with_entities_.equal_range(Coords(coord_ptr->x,
+        //     coord_ptr->y)); while (range.first != range.second)
         //     {
         //         if (range.first->second == entity)
         //         {
@@ -139,7 +141,8 @@ public:
         //     }
         //     coord_ptr->x = x;
         //     coord_ptr->y = y;
-        //     coords_with_entities_.emplace(std::make_pair(Coords(x, y), entity));
+        //     coords_with_entities_.emplace(std::make_pair(Coords(x, y),
+        //     entity));
         // }
         // else
         // {
@@ -149,10 +152,12 @@ public:
     }
 
     /**
-     * @brief A version of updatePosition which accepts enumerated type Direction as an argument
+     * @brief A version of updatePosition which accepts enumerated type
+     * Direction as an argument
      *
      * @param entity Entity whose position will be updated
-     * @param direction Can be UP, DOWN, LEFT or RIGHT, the position is updated accordingly
+     * @param direction Can be UP, DOWN, LEFT or RIGHT, the position is updated
+     * accordingly
      * @return true - Successfuly updated the position,
      * @return false - Position could not be updated
      */
@@ -294,7 +299,8 @@ public:
     }
 
     /**
-     * @brief Deletes entity with a given id, does nothing if no id is matched to the argument
+     * @brief Deletes entity with a given id, does nothing if no id is matched
+     * to the argument
      *
      * @param entity
      */
@@ -306,8 +312,9 @@ public:
 
         // if (auto coord_ptr = entities_with_coords_.at(entity).lock())
         // {
-        //     auto range = coords_with_entities_.equal_range(Coords(coord_ptr->x, coord_ptr->y));
-        //     while (range.first != range.second)
+        //     auto range =
+        //     coords_with_entities_.equal_range(Coords(coord_ptr->x,
+        //     coord_ptr->y)); while (range.first != range.second)
         //     {
         //         if (range.first->second == entity)
         //         {

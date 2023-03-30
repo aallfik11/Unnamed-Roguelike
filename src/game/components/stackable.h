@@ -12,7 +12,7 @@ public:
 
     Stackable(uint32_t max_stack_count = 1, uint32_t current_stack_count = 0)
     {
-        this->max_stack_count = max_stack_count;
+        this->max_stack_count     = max_stack_count;
         this->current_stack_count = current_stack_count;
     }
 };

@@ -9,13 +9,11 @@
 class CaveGenerator
 {
     using GameMap = std::vector<std::vector<Tile>>;
-    static void randomFillMap(GameMap &map,
-                              std::mt19937 &twister_engine,
-                              uint32_t size_x,
-                              uint32_t size_y)
+    static void randomFillMap(GameMap &map, std::mt19937 &twister_engine,
+                              uint32_t size_x, uint32_t size_y)
     {
         std::uniform_int_distribution<uint32_t> roll_wall_chance(0, 100);
-        uint32_t wall_chance = 38;
+        uint32_t                                wall_chance = 38;
         map.erase(map.begin(), map.end());
         map.resize(size_x);
         for (auto &row : map)
@@ -40,9 +38,7 @@ class CaveGenerator
         }
     }
 
-    static uint8_t checkNeighbors(GameMap &map,
-                                  uint32_t x,
-                                  uint32_t y)
+    static uint8_t checkNeighbors(GameMap &map, uint32_t x, uint32_t y)
     {
         uint8_t wall_counter = 0;
         for (auto column = x - 1; column <= x + 1; column++)
@@ -61,12 +57,10 @@ class CaveGenerator
         return wall_counter;
     }
 
-    static void fourFive(GameMap &map,
-                         uint32_t size_x,
-                         uint32_t size_y)
+    static void fourFive(GameMap &map, uint32_t size_x, uint32_t size_y)
     {
         uint32_t max_iterations = 15;
-        GameMap map_cpy(map);
+        GameMap  map_cpy(map);
 
         for (auto iteration = 0; iteration < max_iterations; iteration++)
         {
@@ -122,9 +116,7 @@ class CaveGenerator
         return walls;
     }
 
-    static void floodFill(GameMap &map,
-                          uint32_t x,
-                          uint32_t y)
+    static void floodFill(GameMap &map, uint32_t x, uint32_t y)
     {
         if ((map[x][y].type & FLOOR) && !(map[x][y].type & CHECKED))
         {
@@ -140,20 +132,16 @@ class CaveGenerator
 
 public:
     static std::shared_ptr<GameMap> generate(std::mt19937 &twister_engine,
-                                             uint32_t size_x,
-                                             uint32_t size_y)
+                                             uint32_t size_x, uint32_t size_y)
     {
         std::uniform_int_distribution<uint32_t> random_x(1, size_x - 1);
         std::uniform_int_distribution<uint32_t> random_y(1, size_y - 1);
-        double map_size = size_x * size_y;
-        double max_wall_percentage = 0.45l;
-        GameMap map;
+        double                                  map_size = size_x * size_y;
+        double                                  max_wall_percentage = 0.45l;
+        GameMap                                 map;
         while (true)
         {
-            randomFillMap(map,
-                          twister_engine,
-                          size_x,
-                          size_y);
+            randomFillMap(map, twister_engine, size_x, size_y);
 
             fourFive(map, size_x, size_y);
 

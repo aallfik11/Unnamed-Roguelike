@@ -8,17 +8,16 @@
 class TileComponent : public Component
 {
 public:
-    Tile tile;
+    Tile        tile;
     std::string sprite;
 
-    TileComponent(TileType type = TileType::SPRITE,
-                  std::string sprite = " ",
-                  ftxui::Color color = ftxui::Color::White,
+    TileComponent(TileType type = TileType::SPRITE, std::string sprite = " ",
+                  ftxui::Color color    = ftxui::Color::White,
                   ftxui::Color bg_color = ftxui::Color::Black)
     {
-        this->tile.type = type;
-        this->sprite = sprite;
-        this->tile.color = color;
+        this->tile.type             = type;
+        this->sprite                = sprite;
+        this->tile.color            = color;
         this->tile.background_color = bg_color;
     }
 };

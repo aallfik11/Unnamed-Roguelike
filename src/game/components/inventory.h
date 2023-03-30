@@ -1,8 +1,8 @@
 #ifndef INVENTORY_H
 #define INVENTORY_H
 #include "../component.h"
-#include <memory>
 #include <list>
+#include <memory>
 
 class Entity;
 

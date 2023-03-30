@@ -7,14 +7,17 @@
 class EntityManager
 {
     // bool is purge flag,
-    using EntityHashmap = std::unordered_map<uint32_t, std::pair<std::shared_ptr<Entity>, bool>>;
+    using EntityHashmap =
+        std::unordered_map<uint32_t, std::pair<std::shared_ptr<Entity>, bool>>;
     EntityHashmap entities_;
 
 public:
     uint32_t createEntity()
     {
         Entity *temp = new Entity();
-        entities_.emplace(temp->getId(), std::make_pair<std::shared_ptr<Entity>, bool>(std::shared_ptr<Entity>(temp), false));
+        entities_.emplace(temp->getId(),
+                          std::make_pair<std::shared_ptr<Entity>, bool>(
+                              std::shared_ptr<Entity>(temp), false));
         return temp->getId();
     }
 
@@ -23,15 +26,9 @@ public:
         return entities_.at(entity_id).first;
     }
 
-    EntityHashmap &getAllEntities()
-    {
-        return entities_;
-    }
+    EntityHashmap &getAllEntities() { return entities_; }
 
-    void markForDeletion(uint32_t id)
-    {
-        entities_.at(id).second = true;
-    }
+    void markForDeletion(uint32_t id) { entities_.at(id).second = true; }
 
     void purgeAllMarked()
     {

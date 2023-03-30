@@ -4,13 +4,13 @@
 #include "../globals.h"
 #include <vector>
 
-struct NavCell //: std::pair<uint32_t, bool>
+struct NavCell        //: std::pair<uint32_t, bool>
 {
-    uint32_t score;// = this->first;
-    bool visited;// = this->second;
+    uint32_t score;   // = this->first;
+    bool     visited; // = this->second;
     NavCell()
     {
-        score = ~0;
+        score   = ~0;
         visited = false;
     }
 };
@@ -51,7 +51,8 @@ public:
     std::vector<std::vector<NavCell>> nav_map;
     NavMapComponent()
     {
-        nav_map = std::vector<std::vector<NavCell>>(G_MAP_WIDTH, std::vector<NavCell>(G_MAP_HEIGHT));
+        nav_map = std::vector<std::vector<NavCell>>(
+            G_MAP_WIDTH, std::vector<NavCell>(G_MAP_HEIGHT));
     }
 };
 

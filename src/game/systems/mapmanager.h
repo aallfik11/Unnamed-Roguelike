@@ -10,15 +10,17 @@
 class MapManager
 {
     using MapPointer = std::shared_ptr<std::vector<std::vector<Tile>>>;
-    using GeneratorFunction = std::function<MapPointer(std::mt19937 &, uint32_t, uint32_t)>;
+    using GeneratorFunction =
+        std::function<MapPointer(std::mt19937 &, uint32_t, uint32_t)>;
 
-    GeneratorFunction generator_;
+    GeneratorFunction  generator_;
     std::random_device rng_;
-    std::mt19937 twister_engine_;
-    MapPointer map_;
+    std::mt19937       twister_engine_;
+    MapPointer         map_;
 
 public:
-    MapManager(GeneratorFunction initial_generator = 0) : generator_{initial_generator}
+    MapManager(GeneratorFunction initial_generator = 0)
+        : generator_{initial_generator}
     {
         twister_engine_ = std::mt19937(rng_());
     }
@@ -33,10 +35,7 @@ public:
         generator_ = new_generator;
     }
 
-    MapPointer getMap()
-    {
-        return map_;
-    }
+    MapPointer getMap() { return map_; }
 };
 
 #endif /*MAPMANAGER_H*/

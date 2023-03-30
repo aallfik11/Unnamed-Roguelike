@@ -10,7 +10,7 @@
 
 class HealthSystem
 {
-    using EntityId = uint32_t;
+    using EntityId  = uint32_t;
     using HealthPtr = std::shared_ptr<Health>;
     using EntityPtr = std::shared_ptr<Entity>;
 
@@ -18,15 +18,9 @@ class HealthSystem
     std::unordered_set<EntityPtr> health_register_;
 
 public:
-    void addEntity(EntityPtr &entity)
-    {
-        health_register_.emplace(entity);
-    }
+    void addEntity(EntityPtr &entity) { health_register_.emplace(entity); }
 
-    void deleteEntity(EntityPtr &entity)
-    {
-        health_register_.erase(entity);
-    }
+    void deleteEntity(EntityPtr &entity) { health_register_.erase(entity); }
 
     uint16_t getHealth(EntityPtr &entity, HealthAction action)
     {
@@ -35,8 +29,9 @@ public:
 
         if (auto health_ptr = entity->getComponent<Health>())
         {
-            uint16_t health = (action & CURRENT) ? health_ptr->current_health_points
-                                                 : health_ptr->max_health_points;
+            uint16_t health = (action & CURRENT)
+                                  ? health_ptr->current_health_points
+                                  : health_ptr->max_health_points;
             return health;
         }
         deleteEntity(entity);
@@ -51,7 +46,7 @@ public:
         if (auto health_ptr = entity->getComponent<Health>())
         {
             uint16_t current_health = health_ptr->current_health_points;
-            uint16_t max_health = health_ptr->max_health_points;
+            uint16_t max_health     = health_ptr->max_health_points;
             if (action & CURRENT)
             {
 
@@ -60,15 +55,17 @@ public:
                     if (amount >= current_health)
                     {
                         health_ptr->current_health_points = 0;
-                        health_ptr->alive = false;
+                        health_ptr->alive                 = false;
                     }
                     else
                         health_ptr->current_health_points -= amount;
                 }
                 else
                 {
-                    health_ptr->current_health_points = (amount + current_health >= max_health) ? max_health
-                                                                                                : amount + current_health;
+                    health_ptr->current_health_points =
+                        (amount + current_health >= max_health)
+                            ? max_health
+                            : amount + current_health;
                 }
             }
             else
@@ -77,14 +74,15 @@ public:
                 {
                     if (amount >= max_health)
                     {
-                        health_ptr->max_health_points = 0;
+                        health_ptr->max_health_points     = 0;
                         health_ptr->current_health_points = 0;
                     }
                     else
                     {
                         health_ptr->max_health_points = max_health - amount;
                         if (current_health > health_ptr->max_health_points)
-                            health_ptr->current_health_points = health_ptr->max_health_points;
+                            health_ptr->current_health_points =
+                                health_ptr->max_health_points;
                     }
                 }
                 else

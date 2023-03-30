@@ -1,7 +1,8 @@
 #include "entity.h"
-#include "rarity.h"
 #include "item.h"
+#include "rarity.h"
 #include <iostream>
+
 // #include "consumable.h"
 
 int main()
@@ -10,10 +11,11 @@ int main()
     //           << item.get_description() << std::endl
     //           << item.get_symbol();
     std::list<std::unique_ptr<Item>> inv;
-    Entity chest("Oak Chest", "H",ftxui::Color::White, 3, 5);
-    Entity dummy("Dummy", "D",ftxui::Color::White, 0, 0);
-    Entity dummy2(dummy);
-    std::unique_ptr<Item> item_ptr(new Item("Test Item", "Test Description", "I", Rarity::Legendary));
+    Entity                chest("Oak Chest", "H", ftxui::Color::White, 3, 5);
+    Entity                dummy("Dummy", "D", ftxui::Color::White, 0, 0);
+    Entity                dummy2(dummy);
+    std::unique_ptr<Item> item_ptr(
+        new Item("Test Item", "Test Description", "I", Rarity::Legendary));
     chest.add_to_inventory(item_ptr);
     for (auto &x : chest.get_inventory())
         std::cout << x.get()->get_name_with_prefix() << std::endl;
@@ -21,6 +23,6 @@ int main()
     for (auto &x : dummy.get_inventory())
         std::cout << x.get()->get_name_with_prefix() << std::endl;
     dummy.transfer_inventory(&dummy2);
-    for(auto &x : dummy2.get_inventory())
+    for (auto &x : dummy2.get_inventory())
         std::cout << x.get()->get_name_with_prefix();
 }

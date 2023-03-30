@@ -8,11 +8,11 @@ class Health : public Component
 public:
     uint16_t max_health_points;
     uint16_t current_health_points;
-    bool alive;
-    
+    bool     alive;
+
     Health(uint16_t max_hp = 0, uint16_t current_hp = 0, bool alive = false)
     {
-        this->alive = alive;
+        this->alive       = alive;
         max_health_points = max_hp;
         (current_hp > max_hp) ? current_health_points = max_hp
                               : current_health_points = current_hp;

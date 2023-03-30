@@ -1,9 +1,10 @@
-#include <iostream>
-#include <random>
 #include <array>
 #include <cmath>
+#include <iostream>
+#include <random>
 
-const int map_width = 225;
+
+const int map_width  = 225;
 const int map_height = 50;
 
 enum TileType
@@ -16,15 +17,15 @@ enum TileType
 
 struct Tile
 {
-    bool flag = false;
+    bool     flag = false;
     TileType type = Floor;
 };
 
 std::array<std::array<Tile, map_width>, map_height> map;
 std::array<std::array<Tile, map_width>, map_height> map_cpy;
 
-std::random_device rd;
-std::mt19937 mt(rd());
+std::random_device                 rd;
+std::mt19937                       mt(rd());
 std::uniform_int_distribution<int> rando(0, 100);
 
 int chance = 38;
@@ -155,8 +156,8 @@ std::uniform_int_distribution<int> randoy(1, map_height - 1);
 int main()
 {
     double max_wall_percentage = 0.45l;
-    double wall_percentage = 0.0l;
-    double map_size = map_height * map_width;
+    double wall_percentage     = 0.0l;
+    double map_size            = map_height * map_width;
     while (true)
     {
         std::array<std::array<Tile, map_width>, map_height> temp;
@@ -173,7 +174,7 @@ int main()
         }
         flood_fill(y, x);
         rectify_map();
-        double walls_d = count_walls();
+        double walls_d  = count_walls();
         wall_percentage = walls_d / map_size;
         if (wall_percentage > max_wall_percentage)
             continue;
@@ -195,7 +196,8 @@ int main()
     {
         int x = randox(rd);
         int y = randoy(rd);
-        if (map[y][x].type == Floor && (abs(x - stairs_x) > 30 && abs(y - stairs_y) > 10))
+        if (map[y][x].type == Floor &&
+            (abs(x - stairs_x) > 30 && abs(y - stairs_y) > 10))
         {
             map[y][x].type = Player;
             break;
@@ -204,7 +206,8 @@ int main()
     render_map();
     std::cout << std::endl
               << "Walls: " << count_walls() << std::endl
-              << "Free Spaces: " << (map_width * map_height) - count_walls() << std::endl
+              << "Free Spaces: " << (map_width * map_height) - count_walls()
+              << std::endl
               << "Wall Percentage: " << wall_percentage;
     // std::cout << std::endl
     //           << is_cave_interconnected();

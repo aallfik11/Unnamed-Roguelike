@@ -1,7 +1,7 @@
 ---
 Language:        Cpp
 # BasedOnStyle:  LLVM
-AccessModifierOffset: -2
+AccessModifierOffset: -4
 AlignAfterOpenBracket: Align
 AlignArrayOfStructures: Left
 AlignConsecutiveAssignments:
@@ -17,11 +17,11 @@ AlignConsecutiveBitFields:
   AlignCompound:   true
   PadOperators:    true
 AlignConsecutiveDeclarations:
-  Enabled:         false
+  Enabled:         true
   AcrossEmptyLines: false
-  AcrossComments:  false
-  AlignCompound:   false
-  PadOperators:    false
+  AcrossComments:  true
+  AlignCompound:   true
+  PadOperators:    true
 AlignConsecutiveMacros:
   Enabled:         false
   AcrossEmptyLines: false
