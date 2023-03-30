@@ -28,8 +28,9 @@ int main()
     // map[10][13].type = WALL;
     NavMapManager nav_test(map);
     std::shared_ptr<Entity> entity(new Entity());
-    // std::shared_ptr<NavMapComponent> navmap(new NavMapComponent());
-    entity->addComponent(new NavMapComponent());
+    std::shared_ptr<NavMapComponent> navmap(new NavMapComponent());
+    entity->addComponent(navmap);
+    // entity->addComponent(new NavMapComponent());
 
     int breakpoint;
 
@@ -41,52 +42,52 @@ int main()
 
     auto nav_map = nav_map_ptr->nav_map;
 
-    using namespace ftxui;
-    auto scr = ScreenInteractive::Fullscreen();
-    auto renderer = Renderer([&]
-                             {
-                                 Elements cols;
-                                 for (int x = 0; x < 100; x++)
-                                 {
-                                     Elements rows;
-                                     for (int y = 0; y < 50; y++)
-                                     {
-                                         auto score = nav_map[x][y].score;
-                                         uint8_t red = 0;
-                                         uint8_t green = 0;
-                                         uint8_t blue = 0;
-                                         if (score <= 255)
-                                         {
-                                             red = 255;
-                                             green = score;
-                                         }
-                                         else if (score > 255 && score <= 511)
-                                         {
-                                             red = 255 - score % 256;
-                                             green = 255;
-                                             blue = score % 256;
-                                         }
-                                         else if (score > 511 && score <= 767)
-                                         {
-                                             green = 255 - score % 256;
-                                             blue = 255;
-                                         }
-                                         else
-                                             blue = 255;
+    // using namespace ftxui;
+    // auto scr = ScreenInteractive::Fullscreen();
+    // auto renderer = Renderer([&]
+    //                          {
+    //                              Elements cols;
+    //                              for (int x = 0; x < 100; x++)
+    //                              {
+    //                                  Elements rows;
+    //                                  for (int y = 0; y < 50; y++)
+    //                                  {
+    //                                      auto score = nav_map[x][y].score;
+    //                                      uint8_t red = 0;
+    //                                      uint8_t green = 0;
+    //                                      uint8_t blue = 0;
+    //                                      if (score <= 255)
+    //                                      {
+    //                                          red = 255;
+    //                                          green = score;
+    //                                      }
+    //                                      else if (score > 255 && score <= 511)
+    //                                      {
+    //                                          red = 255 - score % 256;
+    //                                          green = 255;
+    //                                          blue = score % 256;
+    //                                      }
+    //                                      else if (score > 511 && score <= 767)
+    //                                      {
+    //                                          green = 255 - score % 256;
+    //                                          blue = 255;
+    //                                      }
+    //                                      else
+    //                                          blue = 255;
                                          
-                                         if (score == 0)
-                                            rows.push_back(text("$") | bgcolor(Color::RGB(red, green, blue)));
-                                            else if(score == ~0)
-                                            {
-                                                rows.push_back(text(" ") | bgcolor(Color::GrayDark));
-                                            } else
-                                             rows.push_back(text(".") | bgcolor(Color::RGB(red, green, blue)));
-                                     }
-                                     cols.push_back(vbox(rows));
-                                 }
-                                 return hbox(cols); });
+    //                                      if (score == 0)
+    //                                         rows.push_back(text("$") | bgcolor(Color::RGB(red, green, blue)));
+    //                                         else if(score == ~0)
+    //                                         {
+    //                                             rows.push_back(text(" ") | bgcolor(Color::GrayDark));
+    //                                         } else
+    //                                          rows.push_back(text(".") | bgcolor(Color::RGB(red, green, blue)));
+    //                                  }
+    //                                  cols.push_back(vbox(rows));
+    //                              }
+    //                              return hbox(cols); });
 
-    scr.Loop(renderer);
+    // scr.Loop(renderer);
 
     return 0;
 }
