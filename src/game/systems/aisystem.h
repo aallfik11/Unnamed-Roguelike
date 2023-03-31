@@ -44,7 +44,7 @@ class AISystem
     using GameMap   = std::vector<std::vector<Tile>>;
     using StateMap =
         std::unordered_map<AIState,
-                           std::function<Action(EntityPtr, EntityPtr)>>;
+                           std::function<Action(EntityPtr &, EntityPtr &)>>;
 
     PositionSystem &positon_system_;
     HealthSystem   &health_system_;
@@ -78,7 +78,7 @@ public: // temporary
     // todo: make the functions take a boolean to ignore checks (to make calling
     // them from other functions faster);
 
-    Action approachTarget(EntityPtr &caller, EntityPtr &target)
+    void approachTarget(EntityPtr &caller, EntityPtr &target)
     {
         /*if player within range, attack
           if lost LOS of player, go to the last known coords
@@ -109,7 +109,7 @@ public: // temporary
         }
     }
 
-    Action runAway(EntityPtr &caller, EntityPtr &target)
+    void runAway(EntityPtr &caller, EntityPtr &target)
     {
         /*if there's a line of sight to the player, run away, else rest
          * if no way of running exists (backed into a corner),
@@ -136,7 +136,7 @@ public: // temporary
         }
         positon_system_.updatePosition(caller, x, y);
     }
-    Action rest(EntityPtr &caller, EntityPtr &target)
+    void rest(EntityPtr &caller, EntityPtr &target)
     {
         /*if hp high enough and there's a LOS to the player, approach
          * if hp low and LOS to player then run away
@@ -186,7 +186,7 @@ public: // temporary
         // might want to add a regen_amount component (or a field to
         // Health component) later
     }
-    Action attack(EntityPtr &caller, EntityPtr &target)
+    void attack(EntityPtr &caller, EntityPtr &target)
     {
         /*if hp goes low, run away
          *if player runs away, chase,
@@ -221,12 +221,12 @@ public: // temporary
         health_system_.updateHealth(
             target, weapon_damage, HealthAction::DEDUCE);
     }
-    Action interactWithObject(EntityPtr &caller, EntityPtr &target)
+    void interactWithObject(EntityPtr &caller, EntityPtr &target)
     {
         /*unused for now
          */
     }
-    Action wanderAround(EntityPtr &caller, EntityPtr &target)
+    void wanderAround(EntityPtr &caller, EntityPtr &target)
     {
         /*if player enters LOS, approach/run away
          *(depending on the circumstances)
@@ -253,7 +253,7 @@ public: // temporary
             return runAway(caller, target);
         }
     }
-    Action special(EntityPtr &caller, EntityPtr &target)
+    void special(EntityPtr &caller, EntityPtr &target)
     {
         /*unused for now
          */
@@ -267,8 +267,14 @@ public:
         : positon_system_{position_system}, health_system_{health_system},
           navigation_manager_{nav_manager}
     {
-
-        // This isn't necessary;
+        // states_[APPROACH_TARGET] = std::function<Action(EntityPtr&,
+        // EntityPtr&)>(approachTarget); states_[RUN_AWAY]        =
+        // std::function<Action(EntityPtr&, EntityPtr&)>(runAway);
+        // states_[WANDER_AROUND]   = std::function<Action(EntityPtr&,
+        // EntityPtr&)>(wanderAround); states_[REST]            =
+        // std::function<Action(EntityPtr&, EntityPtr&)>(rest); states_[ATTACK]
+        // = std::function<Action(EntityPtr&, EntityPtr&)>(attack); This isn't
+        // necessary;
         // /*APPROACH TARGET*/
         // states_[APPROACH_TARGET].emplace(ATTACK, attack); // if player close
         // enough states_[APPROACH_TARGET].emplace(INTERACT_WITH_OBJECT,
@@ -327,14 +333,42 @@ public:
         // /*SPECIAL*/
     }
 
-    void addEntity(EntityPtr &entity) { ais_.emplace(entity); }
+    void addEntity(const EntityPtr &entity) { ais_.emplace(entity); }
 
     void deleteEntity(EntityPtr &entity) { ais_.erase(entity); }
 
-    Action runAI(EntityPtr &entity)
+    void runAI(EntityPtr &caller, EntityPtr &target)
     {
-        if (!ais_.contains(entity))
-            return Action::ERROR;
+        if (!ais_.contains(caller))
+            return;
+
+        switch (caller->getComponent<AIComponent>()->ai_state)
+        {
+        case AIState::APPROACH_TARGET:
+
+            approachTarget(caller, target);
+            break;
+
+        case AIState::RUN_AWAY:
+
+            runAway(caller, target);
+            break;
+
+        case AIState::REST:
+
+            rest(caller, target);
+            break;
+
+        case AIState::WANDER_AROUND:
+
+            wanderAround(caller, target);
+            break;
+
+        case AIState::ATTACK:
+
+            attack(caller, target);
+            break;
+        }
     }
 };
 

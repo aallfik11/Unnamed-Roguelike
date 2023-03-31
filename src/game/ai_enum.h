@@ -2,7 +2,7 @@
 #define AI_ENUM_H
 #include <cstdint>
 
-enum AIType : uint8_t
+enum class AIType : uint8_t
 {
     AI_MONSTER_DEFAULT,
     AI_MONSTER_AGGRESSIVE,
@@ -10,7 +10,7 @@ enum AIType : uint8_t
     AI_MONSTER_BERSERK,
 };
 
-enum AIState : uint8_t
+enum class AIState : uint8_t
 {
     APPROACH_TARGET,
     RUN_AWAY,
