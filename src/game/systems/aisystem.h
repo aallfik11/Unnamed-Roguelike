@@ -22,6 +22,17 @@
 class AISystem
 {
 
+    /* In order to work correctly, an entity in the AI System is required
+     * to have the following components:
+     * AIComponent
+     * NavMapComponent
+     * LOSComponent
+     * Health
+     * Coordinates
+     * WeaponComponent
+     * StrengthComponent
+     */
+
     using EntityId  = uint32_t;
     using EntityPtr = std::shared_ptr<Entity>;
     // using AIMap = std::unordered_map<std::shared_ptr<Entity>,
@@ -41,6 +52,7 @@ class AISystem
     AISet    ais_;
     StateMap states_;
 
+public: // temporary
     double getRunThreshold(AIType &ai_type)
     {
         switch (ai_type)
@@ -99,9 +111,9 @@ class AISystem
     Action runAway(EntityPtr &caller, EntityPtr &target)
     {
         /*if there's a line of sight to the player, run away, else rest
-          if no way of running exists (backed into a corner), if not cowardly
-          enter berserk mode
-        */
+         * if no way of running exists (backed into a corner),
+         * if not cowardly enter berserk mode
+         */
         if (caller->getComponent<LOSComponent>()->has_LOS_to_player == false)
         {
             caller->getComponent<AIComponent>()->ai_state = AIState::REST;
@@ -126,9 +138,9 @@ class AISystem
     Action rest(EntityPtr &caller, EntityPtr &target)
     {
         /*if hp high enough and there's a LOS to the player, approach
-          if hp low and LOS to player then run away
-          if hp high enough and no LOS to the player, wander around
-        */
+         * if hp low and LOS to player then run away
+         * if hp high enough and no LOS to the player, wander around
+         */
         auto   caller_brain  = caller->getComponent<AIComponent>();
         auto   LOS           = caller->getComponent<LOSComponent>();
         auto   caller_health = caller->getComponent<Health>();
@@ -175,7 +187,7 @@ class AISystem
     Action attack(EntityPtr &caller, EntityPtr &target)
     {
         /*if hp goes low, run away
-          if player runs away, chase,
+         *if player runs away, chase,
          */
         auto caller_brain    = caller->getComponent<AIComponent>();
         auto caller_health   = caller->getComponent<Health>();
@@ -200,7 +212,7 @@ class AISystem
         }
         health_system_.updateHealth(
             target,
-            /*WEAPON OR DAMAGE COMPONENT GOES HERE, THIS IS A PLACEHOLDER*/ 420,
+            /*WEAPON OR DAMAGE COMPONENT GOES HERE, THIS IS A PLACEHOLDER*/ 5,
             HealthAction::DEDUCE);
     }
     Action interactWithObject(EntityPtr &caller, EntityPtr &target)
@@ -210,8 +222,8 @@ class AISystem
     }
     Action wanderAround(EntityPtr &caller, EntityPtr &target)
     {
-        /*if player enters LOS, approach/run away (depending on the
-         * circumstances)
+        /*if player enters LOS, approach/run away
+         *(depending on the circumstances)
          */
         auto LOS = caller->getComponent<LOSComponent>();
 
@@ -240,9 +252,10 @@ class AISystem
     }
 
 public:
-    AISystem(GameMap &map, PositionSystem &position_system,
-             HealthSystem &health_system, NavMapManager &nav_manager,
-             bool &player_moved)
+    AISystem(GameMap        &map,
+             PositionSystem &position_system,
+             HealthSystem   &health_system,
+             NavMapManager  &nav_manager)
         : positon_system_{position_system}, health_system_{health_system},
           navigation_manager_{nav_manager}
     {
