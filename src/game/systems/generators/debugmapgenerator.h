@@ -11,8 +11,8 @@ class DebugMapGenerator
     using GameMap = std::vector<std::vector<Tile>>;
 
 public:
-    static std::shared_ptr<GameMap> generate(std::mt19937 &, uint32_t size_x,
-                                             uint32_t size_y)
+    static std::shared_ptr<GameMap>
+    generate(std::mt19937 &, uint32_t size_x, uint32_t size_y)
     {
         Tile floor;
         Tile wall;

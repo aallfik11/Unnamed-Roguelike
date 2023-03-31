@@ -150,10 +150,10 @@ public:
         auto current_x           = current_coordinates->x;
         auto current_y           = current_coordinates->y;
 
-        if (nav_map[current_x][current_y].score == 0)
-        {
-            return std::make_tuple(current_x, current_y);
-        }
+        // if (nav_map[current_x][current_y].score == 0)
+        // {
+        //     return std::make_tuple(current_x, current_y);
+        // }
 
         using NavTuple = std::tuple<uint16_t, uint16_t, NavCell>;
 

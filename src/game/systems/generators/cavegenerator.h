@@ -9,8 +9,10 @@
 class CaveGenerator
 {
     using GameMap = std::vector<std::vector<Tile>>;
-    static void randomFillMap(GameMap &map, std::mt19937 &twister_engine,
-                              uint32_t size_x, uint32_t size_y)
+    static void randomFillMap(GameMap      &map,
+                              std::mt19937 &twister_engine,
+                              uint32_t      size_x,
+                              uint32_t      size_y)
     {
         std::uniform_int_distribution<uint32_t> roll_wall_chance(0, 100);
         uint32_t                                wall_chance = 38;
@@ -131,8 +133,8 @@ class CaveGenerator
     }
 
 public:
-    static std::shared_ptr<GameMap> generate(std::mt19937 &twister_engine,
-                                             uint32_t size_x, uint32_t size_y)
+    static std::shared_ptr<GameMap>
+    generate(std::mt19937 &twister_engine, uint32_t size_x, uint32_t size_y)
     {
         std::uniform_int_distribution<uint32_t> random_x(1, size_x - 1);
         std::uniform_int_distribution<uint32_t> random_y(1, size_y - 1);

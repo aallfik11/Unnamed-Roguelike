@@ -11,7 +11,8 @@ public:
     Tile        tile;
     std::string sprite;
 
-    TileComponent(TileType type = TileType::SPRITE, std::string sprite = " ",
+    TileComponent(TileType     type     = TileType::SPRITE,
+                  std::string  sprite   = " ",
                   ftxui::Color color    = ftxui::Color::White,
                   ftxui::Color bg_color = ftxui::Color::Black)
     {

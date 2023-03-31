@@ -14,10 +14,10 @@ class Entity
     using Components =
         std::unordered_map<std::type_index, std::shared_ptr<Component>>;
     static uint32_t _max_id;
-    uint32_t _id;
-    Components _components;
+    uint32_t        _id;
+    Components      _components;
 
-  public:
+public:
     Entity()
     {
         _id = _max_id;
