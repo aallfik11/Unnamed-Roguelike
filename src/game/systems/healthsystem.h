@@ -7,6 +7,8 @@
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
+#include <vector>
 
 class HealthSystem
 {
@@ -18,6 +20,16 @@ class HealthSystem
     std::unordered_set<EntityPtr> health_register_;
 
 public:
+    HealthSystem() {}
+
+    HealthSystem(const std::initializer_list<EntityPtr> &entities)
+    {
+        for (auto &entity : entities)
+        {
+            health_register_.emplace(entity);
+        }
+    }
+
     void addEntity(EntityPtr &entity) { health_register_.emplace(entity); }
 
     void deleteEntity(EntityPtr &entity) { health_register_.erase(entity); }
@@ -35,7 +47,7 @@ public:
             return health;
         }
         deleteEntity(entity);
-        return 0;
+        return ~0;
     }
 
     void updateHealth(EntityPtr &entity, uint16_t amount, HealthAction action)
