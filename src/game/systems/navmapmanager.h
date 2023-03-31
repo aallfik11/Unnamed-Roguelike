@@ -37,8 +37,11 @@ class NavMapManager
         }
     }
 
-    void bfsNavMap(uint16_t target_x, uint16_t target_y, uint16_t priority,
-                   double multiplier, NavMap &nav_map)
+    void bfsNavMap(uint16_t target_x,
+                   uint16_t target_y,
+                   uint16_t priority,
+                   double   multiplier,
+                   NavMap  &nav_map)
     {
         int16_t                                   vector_x[] = {-1, 0, 1, 0};
         int16_t                                   vector_y[] = {0, 1, 0, -1};
@@ -104,8 +107,10 @@ public:
 
         for (auto i = 0; i < targets.size(); i++)
         {
-            bfsNavMap(std::get<0>(targets[i]), std::get<1>(targets[i]),
-                      std::get<2>(targets[i]), std::get<3>(targets[i]),
+            bfsNavMap(std::get<0>(targets[i]),
+                      std::get<1>(targets[i]),
+                      std::get<2>(targets[i]),
+                      std::get<3>(targets[i]),
                       nav_maps[i]);
         }
         auto    navmap_x_size = nav_maps[0].size();
@@ -140,20 +145,28 @@ public:
                                                        Destination destination)
     {
         auto nav_map = entity->getComponent<NavMapComponent>()->nav_map;
+
         auto current_coordinates = entity->getComponent<Coordinates>();
         auto current_x           = current_coordinates->x;
         auto current_y           = current_coordinates->y;
 
+        if (nav_map[current_x][current_y].score == 0)
+        {
+            return std::make_tuple(current_x, current_y);
+        }
+
         using NavTuple = std::tuple<uint16_t, uint16_t, NavCell>;
 
-        NavTuple up    = {current_x, current_y - 1,
-                          nav_map[current_x][current_y - 1]};
-        NavTuple down  = {current_x, current_y + 1,
-                          nav_map[current_x][current_y + 1]};
-        NavTuple left  = {current_x - 1, current_y,
-                          nav_map[current_x - 1][current_y]};
-        NavTuple right = {current_x + 1, current_y,
-                          nav_map[current_x + 1][current_y]};
+        NavTuple up = {
+            current_x, current_y - 1, nav_map[current_x][current_y - 1]};
+        NavTuple down = {
+            current_x, current_y + 1, nav_map[current_x][current_y + 1]};
+        NavTuple left = {
+            current_x - 1, current_y, nav_map[current_x - 1][current_y]};
+        NavTuple right = {
+            current_x + 1, current_y, nav_map[current_x + 1][current_y]};
+
+        NavTuple result;
 
         auto compare_higher = [](const NavTuple &nt1, const NavTuple &nt2)
         {
@@ -174,16 +187,26 @@ public:
 
         if (destination == Destination::AWAY_FROM)
         {
-            NavTuple result =
-                std::max(std::max(up, down, compare_higher),
-                         std::max(left, right, compare_higher), compare_higher);
+            result = std::max(std::max(up, down, compare_higher),
+                              std::max(left, right, compare_higher),
+                              compare_higher);
+
+            if (nav_map[current_x][current_y].score >
+                nav_map[std::get<0>(result)][std::get<1>(result)].score)
+                return std::make_tuple(current_x, current_y);
+
             return (std::make_tuple(get<0>(result), get<1>(result)));
         }
         else
         {
-            NavTuple result =
-                std::min(std::min(up, down, compare_lower),
-                         std::min(left, right, compare_lower), compare_lower);
+            result = std::min(std::min(up, down, compare_lower),
+                              std::min(left, right, compare_lower),
+                              compare_lower);
+
+            if (nav_map[current_x][current_y].score <
+                nav_map[std::get<0>(result)][std::get<1>(result)].score)
+                return std::make_tuple(current_x, current_y);
+
             return (std::make_tuple(get<0>(result), get<1>(result)));
         }
     }
