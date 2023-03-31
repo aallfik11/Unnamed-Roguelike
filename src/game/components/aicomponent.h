@@ -31,6 +31,7 @@ public:
                 AIState ai_state = AIState::WANDER_AROUND)
     {
         this->ai_type = ai_type;
+        this->ai_state = ai_state;
         last_target_x = 0;
         last_target_y = 0;
     }
