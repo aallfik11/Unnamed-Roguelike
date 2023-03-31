@@ -1,9 +1,10 @@
-#include "src/game/component.h"
 #include "src/game/components/components_all.h"
 #include "src/game/entity.h"
 #include "src/game/globals.h"
+#include "src/game/systems/aisystem.h"
 #include "src/game/systems/generators/cavegenerator.h"
 #include "src/game/systems/generators/debugmapgenerator.h"
+#include "src/game/systems/healthsystem.h"
 #include "src/game/systems/mapmanager.h"
 #include "src/game/systems/navmapmanager.h"
 #include "src/game/systems/positionsystem.h"
@@ -24,25 +25,21 @@ int main()
     std::mt19937       mt(rd());
     auto               map = *CaveGenerator::generate(mt, 100, 50);
     PositionSystem     pos_sys(map);
+    NavMapManager      nav_test(map);
+    HealthSystem       health_sys;
 
-    // map[10][10].type = WALL;
-
-    // map[10][11].type = WALL;
-    // map[10][12].type = WALL;
-
-    // map[10][13].type = WALL;
-    NavMapManager                    nav_test(map);
-    std::shared_ptr<Entity>          entity(new Entity({new TileComponent()}));
+    std::shared_ptr<Entity>          entity(new Entity({new TileComponent(),
+                                                        new Health(),
+                                                        new Coordinates(33, 33),
+                                                        new AIComponent()}));
     std::shared_ptr<NavMapComponent> navmap(new NavMapComponent());
-    entity->addComponent(new Coordinates(34, 33));
-    entity->addComponent(navmap);
     pos_sys.addEntity(entity);
-    // entity->addComponent(new NavMapComponent());
+    health_sys.addEntity(entity);
+    entity->addComponent(new NavMapComponent());
 
-    int breakpoint;
-
-    nav_test.calculateNavMap(entity, {
-                                         {5, 5, 0, .3},
+    nav_test.calculateNavMap(entity,
+                             {
+                                 {5, 5, 0, 1},
     });
     auto nav_map_ptr = entity->getComponent<NavMapComponent>();
 
@@ -68,39 +65,46 @@ int main()
                     uint8_t red   = 0;
                     uint8_t green = 0;
                     uint8_t blue  = 0;
-                    if (score <= 255)
+                    if (score != ~0)
                     {
-                        red   = 255;
-                        green = score;
-                    }
-                    else if (score > 255 && score <= 511)
-                    {
-                        red   = 255 - score % 256;
-                        green = 255;
-                        blue  = score % 256;
-                    }
-                    else if (score > 511 && score <= 767)
-                    {
-                        green = 255 - score % 256;
-                        blue  = 255;
-                    }
-                    else
-                        blue = 255;
+                        auto score_backup = score;
+                        score             /= 3;
+                        if (score <= 255)
+                        {
+                            red   = 255;
+                            green = score;
+                        }
+                        else if (score > 255 && score <= 511)
+                        {
+                            red   = 255 - score % 256;
+                            green = 255;
+                            blue  = score % 256;
+                        }
+                        else if (score > 511 && score <= 767)
+                        {
+                            green = 255 - score % 256;
+                            blue  = 255;
+                        }
+                        else
+                            blue = 255;
 
-                    if (score == 0)
-                        rows.push_back(text("$") |
-                                       bgcolor(Color::RGB(red, green, blue)));
-                    else if (score == ~0)
-                    {
-                        rows.push_back(text(" ") | bgcolor(Color::GrayDark));
+                        score = score_backup;
                     }
-                    else if (x == x_coord && y == y_coord)
+
+                    if (x == x_coord && y == y_coord)
                     {
                         rows.push_back(
                             text("@") |
                             color(entity->getComponent<TileComponent>()
                                       ->tile.color) |
                             bgcolor(Color::Black));
+                    }
+                    else if (score == 0)
+                        rows.push_back(text("$") |
+                                       bgcolor(Color::RGB(red, green, blue)));
+                    else if (score == ~0)
+                    {
+                        rows.push_back(text(" ") | bgcolor(Color::GrayDark));
                     }
                     else
                         rows.push_back(text(std::to_string(score % 9 + 1)) |
