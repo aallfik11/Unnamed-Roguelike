@@ -12,5 +12,6 @@
 #include "navmapcomponent.h"
 #include "stackable.h"
 #include "tilecomponent.h"
+#include "weaponcomponent.h"
 
 #endif /*COMPONENTS_ALL*/

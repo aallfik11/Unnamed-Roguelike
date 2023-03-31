@@ -6,6 +6,7 @@
 #include "../components/coordinates.h"
 #include "../components/health.h"
 #include "../components/lineofsightcomponent.h"
+#include "../components/weaponcomponent.h"
 #include "../entity.h"
 #include "../globals.h"
 #include "../health_enum.h"
@@ -149,6 +150,7 @@ public: // temporary
         double current_hp_percentage =
             (static_cast<double>(caller_health->current_health_points) /
              static_cast<double>(caller_health->max_health_points));
+
         if (current_hp_percentage > run_threshold)
         {
             if (LOS->has_LOS_to_player == true)
@@ -180,9 +182,9 @@ public: // temporary
             return runAway(caller, target);
         }
 
-        caller_health->current_health_points +=
-            1; // might want to add a regen_amount component (or a field to
-               // Health component) later
+        caller_health->current_health_points += 1;
+        // might want to add a regen_amount component (or a field to
+        // Health component) later
     }
     Action attack(EntityPtr &caller, EntityPtr &target)
     {
@@ -193,6 +195,7 @@ public: // temporary
         auto caller_health   = caller->getComponent<Health>();
         auto caller_position = caller->getComponent<Coordinates>();
         auto target_position = caller->getComponent<Coordinates>();
+
         auto abs_dist_x = std::abs(caller_position->x - target_position->x);
         auto abs_dist_y = std::abs(caller_position->y - target_position->y);
 
@@ -200,20 +203,23 @@ public: // temporary
         double current_hp_percentage =
             (static_cast<double>(caller_health->current_health_points) /
              static_cast<double>(caller_health->max_health_points));
+
         if (current_hp_percentage <= run_threshold)
         {
             caller_brain->ai_state = AIState::RUN_AWAY;
             return runAway(caller, target);
         }
+
         if (abs_dist_x > 1 || abs_dist_y > 1)
         {
             caller_brain->ai_state = AIState::APPROACH_TARGET;
             return approachTarget(caller, target);
         }
+
+        auto weapon_damage = caller->getComponent<WeaponComponent>()->damage;
+
         health_system_.updateHealth(
-            target,
-            /*WEAPON OR DAMAGE COMPONENT GOES HERE, THIS IS A PLACEHOLDER*/ 5,
-            HealthAction::DEDUCE);
+            target, weapon_damage, HealthAction::DEDUCE);
     }
     Action interactWithObject(EntityPtr &caller, EntityPtr &target)
     {
@@ -229,12 +235,14 @@ public: // temporary
 
         if (LOS->has_LOS_to_player == true)
         {
-            auto   caller_brain  = caller->getComponent<AIComponent>();
-            auto   caller_health = caller->getComponent<Health>();
+            auto caller_brain  = caller->getComponent<AIComponent>();
+            auto caller_health = caller->getComponent<Health>();
+
             double run_threshold = getRunThreshold(caller_brain->ai_type);
             double current_hp_percentage =
                 (static_cast<double>(caller_health->current_health_points) /
                  static_cast<double>(caller_health->max_health_points));
+
             if (current_hp_percentage > run_threshold)
             {
                 caller_brain->ai_state = AIState::APPROACH_TARGET;
@@ -319,9 +327,9 @@ public:
         // /*SPECIAL*/
     }
 
-    void addEntityAI(EntityPtr &entity) { ais_.emplace(entity); }
+    void addEntity(EntityPtr &entity) { ais_.emplace(entity); }
 
-    void deleteEntityAI(EntityPtr &entity) { ais_.erase(entity); }
+    void deleteEntity(EntityPtr &entity) { ais_.erase(entity); }
 
     Action runAI(EntityPtr &entity)
     {

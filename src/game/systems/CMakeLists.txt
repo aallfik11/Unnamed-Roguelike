@@ -12,6 +12,7 @@ add_library(systems
     healthsystem.h
     aisystem.h
     navmapmanager.h
+    lineofsightsystem.h
 )
 target_link_libraries(systems
     PUBLIC factories
