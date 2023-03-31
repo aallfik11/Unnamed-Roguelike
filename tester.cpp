@@ -27,19 +27,29 @@ int main()
     PositionSystem     pos_sys(map);
     NavMapManager      nav_test(map);
     HealthSystem       health_sys;
+    AISystem           ai_sys(map, pos_sys, health_sys, nav_test);
 
-    std::shared_ptr<Entity>          entity(new Entity({new TileComponent(),
-                                                        new Health(),
-                                                        new Coordinates(33, 33),
-                                                        new AIComponent()}));
+    std::shared_ptr<Entity> entity(new Entity({new TileComponent(),
+                                               new Health(),
+                                               new Coordinates(33, 33),
+                                               new AIComponent()}));
+    std::shared_ptr<Entity> target(
+        new Entity({new TileComponent(),
+                    new Health(100, 100, /*alive*/ true),
+                    new Coordinates(89, 23)}));
+
     std::shared_ptr<NavMapComponent> navmap(new NavMapComponent());
     pos_sys.addEntity(entity);
     health_sys.addEntity(entity);
     entity->addComponent(new NavMapComponent());
 
+    auto target_coords = target->getComponent<Coordinates>();
+    auto target_x      = target_coords->x;
+    auto target_y      = target_coords->y;
+
     nav_test.calculateNavMap(entity,
                              {
-                                 {5, 5, 0, 1},
+                                 {target_x, target_y, 0, 1},
     });
     auto nav_map_ptr = entity->getComponent<NavMapComponent>();
 
