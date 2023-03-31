@@ -81,17 +81,17 @@ public:
 
     void deleteEntity(EntityPtr &entity) { lines_of_sight.erase(entity); }
 
-    void calculateLOS(EntityPtr &entity)
+    void calculateLOS(EntityPtr &entity, EntityPtr &target)
     {
-        auto coord_ptr = entity->getComponent<Coordinates>();
-        auto los_ptr   = entity->getComponent<LOSComponent>();
+        auto target_coord_ptr = target->getComponent<Coordinates>();
+        auto coord_ptr        = entity->getComponent<Coordinates>();
+        auto los_ptr          = entity->getComponent<LOSComponent>();
 
-        los_ptr->has_LOS_to_player =
-            lineOfSightAlg(coord_ptr->x,
-                           coord_ptr->y,
-                           /*placeholder, here goes playerx*/ 0,
-                           /*placeholder, here goes playery*/ 0,
-                           los_ptr->seeing_distance);
+        los_ptr->has_LOS_to_player = lineOfSightAlg(coord_ptr->x,
+                                                    coord_ptr->y,
+                                                    target_coord_ptr->x,
+                                                    target_coord_ptr->y,
+                                                    los_ptr->seeing_distance);
     }
 
     void calculateAllLinesOfSight()
