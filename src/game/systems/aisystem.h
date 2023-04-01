@@ -221,11 +221,7 @@ public: // temporary
         health_system_.updateHealth(
             target, weapon_damage, HealthAction::DEDUCE);
     }
-    void interactWithObject(EntityPtr &caller, EntityPtr &target)
-    {
-        /*unused for now
-         */
-    }
+
     void wanderAround(EntityPtr &caller, EntityPtr &target)
     {
         /*if player enters LOS, approach/run away
@@ -253,11 +249,18 @@ public: // temporary
             return runAway(caller, target);
         }
     }
-    void special(EntityPtr &caller, EntityPtr &target)
-    {
-        /*unused for now
-         */
-    }
+
+    // void special(EntityPtr &caller, EntityPtr &target)
+    // {
+    //     /*unused for now
+    //      */
+    // }
+
+    // void interactWithObject(EntityPtr &caller, EntityPtr &target)
+    // {
+    //     /*unused for now
+    //      */
+    // }
 
 public:
     AISystem(GameMap        &map,

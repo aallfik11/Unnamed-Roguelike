@@ -16,9 +16,9 @@ enum class AIState : uint8_t
     RUN_AWAY,
     REST,
     ATTACK,
-    INTERACT_WITH_OBJECT,
     WANDER_AROUND,
-    SPECIAL
+    // INTERACT_WITH_OBJECT,
+    // SPECIAL
 };
 
 #endif /*AI_ENUM_H*/
