@@ -30,7 +30,7 @@ int main()
     NavMapManager      nav_test(map);
     HealthSystem       health_sys;
     LOS_System         LOS_sys(map);
-    AISystem           ai_sys(map, pos_sys, health_sys, nav_test);
+    AISystem           ai_sys(pos_sys, health_sys, nav_test);
 
     std::shared_ptr<Entity> entity(new Entity({new TileComponent(),
                                                new Health(100, 100, true),
