@@ -64,11 +64,11 @@ class CaveGenerator
         uint32_t max_iterations = 15;
         GameMap  map_cpy(map);
 
-        for (auto iteration = 0; iteration < max_iterations; iteration++)
+        for (uint32_t iteration = 0; iteration < max_iterations; iteration++)
         {
-            for (auto x = 1; x < size_x - 1; x++)
+            for (uint32_t x = 1; x < size_x - 1; x++)
             {
-                for (auto y = 1; y < size_y - 1; y++)
+                for (uint32_t y = 1; y < size_y - 1; y++)
                 {
                     auto walls = checkNeighbors(map, x, y);
                     if ((map[x][y].type & WALL) && walls <= 2)

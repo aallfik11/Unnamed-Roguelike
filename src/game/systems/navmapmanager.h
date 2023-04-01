@@ -26,9 +26,9 @@ class NavMapManager
     {
         if (auto nav_map_component = entity->getComponent<NavMapComponent>())
         {
-            for (auto column : nav_map_component->nav_map)
+            for (auto &column : nav_map_component->nav_map)
             {
-                for (auto cell : column)
+                for (auto &cell : column)
                 {
                     cell.score   = ~0;
                     cell.visited = false;
@@ -105,7 +105,7 @@ public:
         std::vector<NavMap> nav_maps(
             targets.size(), nav_map); // for each target there's a navmap
 
-        for (auto i = 0; i < targets.size(); i++)
+        for (size_t i = 0; i < targets.size(); i++)
         {
             bfsNavMap(std::get<0>(targets[i]),
                       std::get<1>(targets[i]),
@@ -119,14 +119,14 @@ public:
 
         // combining all targets together, monsters will act on their most
         // pressing desire
-        for (auto navmap_id = 1; navmap_id < nav_maps.size(); navmap_id++)
+        for (size_t navmap_id = 1; navmap_id < nav_maps.size(); navmap_id++)
         {
             auto &navmap_secondary = nav_maps[navmap_id];
-            for (auto x = 0; x < navmap_x_size; x++)
+            for (size_t x = 0; x < navmap_x_size; x++)
             {
-                for (auto y = 0; y < navmap_y_size; y++)
+                for (size_t y = 0; y < navmap_y_size; y++)
                 {
-                    if (main_navmap[x][y].score == ~0)
+                    if (main_navmap[x][y].score == static_cast<uint32_t>(~0))
                         continue;
 
                     main_navmap[x][y].score = std::min(
