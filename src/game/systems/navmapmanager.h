@@ -8,6 +8,7 @@
 #include <cmath>
 #include <memory>
 #include <queue>
+#include <random>
 #include <unordered_map>
 #include <vector>
 
@@ -18,9 +19,22 @@ class NavMapManager
     using NavMap    = std::vector<std::vector<NavCell>>;
     using EntityId  = uint32_t;
     using EntityPtr = std::shared_ptr<Entity>;
+    using RandomTargets =
+        std::queue<std::pair</*random x*/ uint16_t, /*random y*/ uint16_t>>;
+    using TargetTuple =
+        std::vector<std::tuple</*target's x coordinate*/ uint16_t,
+                               /*target's y coordinate*/ uint16_t,
+                               /*target's initial score value*/ uint16_t,
+                               /*target's score multiplier */ double>>;
+
+    GameMap                                &map_;
+    RandomTargets                           random_targets_;
+    std::random_device                      rd_;
+    std::mt19937                            mt_engine_;
+    std::uniform_int_distribution<uint16_t> distro_x_;
+    std::uniform_int_distribution<uint16_t> distro_y_;
 
     // std::unordered_map<EntityPtr, NavMap> nav_maps_;
-    GameMap &map_;
 
     void resetNavMap(EntityPtr &entity)
     {
@@ -43,10 +57,12 @@ class NavMapManager
                    double   multiplier,
                    NavMap  &nav_map)
     {
-        int16_t                                   vector_x[] = {-1, 0, 1, 0};
-        int16_t                                   vector_y[] = {0, 1, 0, -1};
+        int16_t vector_x[] = {-1, 0, 1, 0};
+        int16_t vector_y[] = {0, 1, 0, -1};
+
         std::queue<std::pair<uint16_t, uint16_t>> queue;
         queue.push({target_x, target_y});
+
         nav_map[target_x][target_y].visited = true;
         nav_map[target_x][target_y].score   = priority;
         uint32_t score                      = priority;
@@ -63,6 +79,7 @@ class NavMapManager
             {
                 uint16_t adjx = x + vector_x[i];
                 uint16_t adjy = y + vector_y[i];
+
                 if (!(adjx == 0 || adjx == map_.size() - 1 || adjy == 0 ||
                       adjy == map_[0].size() - 1 ||
                       map_[adjx][adjy].type == TileType::WALL ||
@@ -74,6 +91,7 @@ class NavMapManager
                 }
             }
         }
+
         if ((std::fabs(multiplier - 1.0)) >=
             std::numeric_limits<double>::epsilon())
         {
@@ -86,6 +104,22 @@ class NavMapManager
         }
     }
 
+    void fillRandomTargets()
+    {
+        while (random_targets_.size() <= 200)
+        {
+            auto random_target_x = distro_x_(mt_engine_);
+            auto random_target_y = distro_y_(mt_engine_);
+            while ((map_[random_target_x][random_target_y].type &
+                    TRAVERSIBLE) == false)
+            {
+                random_target_x = distro_x_(mt_engine_);
+                random_target_y = distro_y_(mt_engine_);
+            }
+            random_targets_.push({random_target_x, random_target_y});
+        }
+    }
+
 public:
     enum class Destination
     {
@@ -93,11 +127,30 @@ public:
         TOWARDS
     };
 
-    NavMapManager(GameMap &map) : map_(map) {}
+    NavMapManager(GameMap &map) : map_(map)
+    {
+        mt_engine_ = std::mt19937(rd_());
+        distro_x_ = std::uniform_int_distribution<uint16_t>(1, G_MAP_WIDTH - 2);
+        distro_y_ =
+            std::uniform_int_distribution<uint16_t>(1, G_MAP_HEIGHT - 2);
 
-    void calculateNavMap(
-        EntityPtr                                                    &entity,
-        std::vector<std::tuple<uint16_t, uint16_t, uint16_t, double>> targets)
+        // precomputing random targets for creatures to pick when wandering
+        // around
+        while (random_targets_.size() <= 100)
+        {
+            auto random_target_x = distro_x_(mt_engine_);
+            auto random_target_y = distro_y_(mt_engine_);
+            while ((map_[random_target_x][random_target_y].type &
+                    TRAVERSIBLE) == false)
+            {
+                random_target_x = distro_x_(mt_engine_);
+                random_target_y = distro_y_(mt_engine_);
+            }
+            random_targets_.push({random_target_x, random_target_y});
+        }
+    }
+
+    void calculateNavMap(EntityPtr &entity, TargetTuple targets)
     {
 
         NavMap &nav_map = entity->getComponent<NavMapComponent>()->nav_map;
@@ -141,6 +194,23 @@ public:
         }
     }
 
+    void assignRandomTarget(EntityPtr &entity)
+    {
+        if (random_targets_.empty())
+        {
+            fillRandomTargets();
+        }
+
+        auto random_target = random_targets_.front();
+        random_targets_.pop();
+
+        calculateNavMap(
+            entity,
+            {
+                {random_target.first, random_target.second, 1000, 1.0}
+        });
+    }
+
     std::tuple<uint16_t, uint16_t> nextBestCoordinates(EntityPtr  &entity,
                                                        Destination destination)
     {
@@ -155,9 +225,9 @@ public:
         //     return std::make_tuple(current_x, current_y);
         // }
 
-        using NavTuple = std::tuple<uint16_t, uint16_t, NavCell>;
+        using NavTuple           = std::tuple<uint16_t, uint16_t, NavCell>;
 
-        NavTuple up = {
+        NavTuple up              = {
             current_x, current_y - 1, nav_map[current_x][current_y - 1]};
         NavTuple down = {
             current_x, current_y + 1, nav_map[current_x][current_y + 1]};
