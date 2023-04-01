@@ -263,8 +263,7 @@ public: // temporary
     // }
 
 public:
-    AISystem(GameMap        &map,
-             PositionSystem &position_system,
+    AISystem(PositionSystem &position_system,
              HealthSystem   &health_system,
              NavMapManager  &nav_manager)
         : positon_system_{position_system}, health_system_{health_system},
