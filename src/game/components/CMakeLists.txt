@@ -14,6 +14,7 @@ add_library(components
     navmapcomponent.h
     lineofsightcomponent.h
     weaponcomponent.h
+    typecomponent.h
 )
 
 set_target_properties(components PROPERTIES LINKER_LANGUAGE CXX)
