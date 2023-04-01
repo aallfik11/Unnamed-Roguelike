@@ -23,14 +23,14 @@
 
 int main()
 {
-    std::random_device rd;
-    std::mt19937       mt(rd());
-    auto               map = *DebugMapGenerator::generate(mt, 100, 50);
-    PositionSystem     pos_sys(map);
-    NavMapManager      nav_test(map);
-    HealthSystem       health_sys;
-    LOS_System         LOS_sys(map);
-    AISystem           ai_sys(pos_sys, health_sys, nav_test);
+    std::random_device      rd;
+    std::mt19937            mt(rd());
+    auto                    map = *DebugMapGenerator::generate(mt, 100, 50);
+    PositionSystem          pos_sys(map);
+    NavMapManager           nav_test(map);
+    HealthSystem            health_sys;
+    LOS_System              LOS_sys(map);
+    AISystem                ai_sys(pos_sys, health_sys, nav_test);
 
     std::shared_ptr<Entity> entity(new Entity({new TileComponent(),
                                                new Health(100, 100, true),
@@ -57,7 +57,7 @@ int main()
     });
     auto nav_map_ptr = entity->getComponent<NavMapComponent>();
 
-    auto nav_map = nav_map_ptr->nav_map;
+    auto nav_map     = nav_map_ptr->nav_map;
 
     LOS_sys.addEntity(entity);
     LOS_sys.addEntity(target);
