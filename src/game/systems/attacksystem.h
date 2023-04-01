@@ -1,5 +1,0 @@
-#ifndef ATTACKSYSTEM_H
-#define ATTACKSYSTEM_H
-
-
-#endif /*ATTACKSYSTEM_H*/

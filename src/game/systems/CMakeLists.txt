@@ -4,8 +4,6 @@ add_subdirectory(factories)
 add_subdirectory(generators)
 
 add_library(systems
-    attacksystem.h
-    actionsystem.h
     entitymanager.h
     mapmanager.h
     positionsystem.h
