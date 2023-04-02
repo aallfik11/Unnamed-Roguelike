@@ -133,7 +133,8 @@ public: // temporary
         auto [x, y] = navigation_manager_.nextBestCoordinates(
             caller, NavMapManager::Destination::AWAY_FROM);
         auto caller_coordinates = caller->getComponent<Coordinates>();
-        if (caller_coordinates->x == x && caller_coordinates->y == y)
+        // if (caller_coordinates->x == x && caller_coordinates->y == y)
+        if (positon_system_.updatePosition(caller, x, y) == false)
         {
             auto caller_brain = caller->getComponent<AIComponent>();
             if (caller_brain->ai_type != AIType::AI_MONSTER_COWARDLY)
@@ -143,8 +144,8 @@ public: // temporary
                 return attack(caller, target);
             }
         }
-        positon_system_.updatePosition(caller, x, y);
     }
+
     void rest(EntityPtr &caller, EntityPtr &target)
     {
         /*if hp high enough and there's a LOS to the player, approach
@@ -160,53 +161,50 @@ public: // temporary
             (static_cast<double>(caller_health->current_health_points) /
              static_cast<double>(caller_health->max_health_points));
 
-        if (current_hp_percentage > run_threshold)
-        {
-            if (LOS->has_LOS_to_player == true)
-            {
-                caller_brain->ai_state = AIState::APPROACH_TARGET;
-                return approachTarget(caller, target);
-            }
-            else
-            {
-                auto caller_coords = caller->getComponent<Coordinates>();
-                auto [x, y]        = navigation_manager_.nextBestCoordinates(
-                    caller, NavMapManager::Destination::TOWARDS);
-                if (caller_coords->x == x && caller_coords->y == y)
-                {
-                    caller_brain->ai_state = AIState::WANDER_AROUND;
-                    return wanderAround(caller, target);
-                }
-                else
-                {
-                    caller_brain->ai_state = AIState::APPROACH_TARGET;
-                    return approachTarget(caller, target);
-                }
-            }
-        }
-
         if (LOS->has_LOS_to_player == true)
         {
-            caller_brain->ai_state = AIState::RUN_AWAY;
-            return runAway(caller, target);
+            auto caller_navmap      = caller->getComponent<NavMapComponent>();
+            auto target_coordinates = target->getComponent<Coordinates>();
+            navigation_manager_.switchToPlayerNavMap(caller_navmap->nav_map);
+
+            caller_brain->last_target_x = target_coordinates->x;
+            caller_brain->last_target_y = target_coordinates->y;
+            if (current_hp_percentage > run_threshold)
+            {
+                caller_brain->ai_state = AIState::RUN_AWAY;
+                return runAway(caller, target);
+            }
+
+            caller_brain->ai_state = AIState::APPROACH_TARGET;
+
+            return approachTarget(caller, target);
+        }
+
+        if (current_hp_percentage >= 0.99)
+        {
+            navigation_manager_.assignRandomTarget(
+                caller->getComponent<NavMapComponent>()->nav_map);
+            caller_brain->ai_state = AIState::WANDER_AROUND;
+            return wanderAround(caller, target);
         }
 
         caller_health->current_health_points += 1;
         // might want to add a regen_amount component (or a field to
         // Health component) later
     }
+
     void attack(EntityPtr &caller, EntityPtr &target)
     {
         /*if hp goes low, run away
          *if player runs away, chase,
          */
-        auto caller_brain    = caller->getComponent<AIComponent>();
-        auto caller_health   = caller->getComponent<Health>();
-        auto caller_position = caller->getComponent<Coordinates>();
-        auto target_position = target->getComponent<Coordinates>();
+        auto caller_brain       = caller->getComponent<AIComponent>();
+        auto caller_health      = caller->getComponent<Health>();
+        auto caller_position    = caller->getComponent<Coordinates>();
+        auto target_coordinates = target->getComponent<Coordinates>();
 
-        auto abs_dist_x = std::abs(caller_position->x - target_position->x);
-        auto abs_dist_y = std::abs(caller_position->y - target_position->y);
+        auto abs_dist_x = std::abs(caller_position->x - target_coordinates->x);
+        auto abs_dist_y = std::abs(caller_position->y - target_coordinates->y);
 
         double run_threshold = getRunThreshold(caller_brain->ai_type);
         double current_hp_percentage =
@@ -222,6 +220,11 @@ public: // temporary
         if (abs_dist_x > 1 || abs_dist_y > 1)
         {
             caller_brain->ai_state = AIState::APPROACH_TARGET;
+
+            navigation_manager_.switchToPlayerNavMap(
+                caller->getComponent<NavMapComponent>()->nav_map);
+            caller_brain->last_target_x = target_coordinates->x;
+            caller_brain->last_target_y = target_coordinates->y;
             return approachTarget(caller, target);
         }
 
@@ -243,23 +246,14 @@ public: // temporary
         if (LOS->has_LOS_to_player == true)
         {
             auto caller_health   = caller->getComponent<Health>();
-            auto caller_navmap = caller->getComponent<NavMapComponent>();
+            auto caller_navmap   = caller->getComponent<NavMapComponent>();
 
             double run_threshold = getRunThreshold(caller_brain->ai_type);
             double current_hp_percentage =
                 (static_cast<double>(caller_health->current_health_points) /
                  static_cast<double>(caller_health->max_health_points));
 
-            navigation_manager_.calculateNavMap( // probably better to instead
-                                                 // compute a universal navmap
-                                                 // to player whenever the
-                                                 // player moves and simply
-                                                 // assign that to whatever
-                                                 // entity that sees the player
-                caller_navmap->nav_map,
-                {
-                    {target_coordinates->x, target_coordinates->y, 0, 1.0}
-            });
+            navigation_manager_.switchToPlayerNavMap(caller_navmap->nav_map);
 
             caller_brain->last_target_x = target_coordinates->x;
             caller_brain->last_target_y = target_coordinates->y;
