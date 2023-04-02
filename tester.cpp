@@ -23,6 +23,13 @@
 
 int main()
 {
+
+    /*
+        to do:
+        - add additional "checkup maps" to easily check if moves are legal
+        - http://www.roguebasin.com/index.php/Data_structures_for_the_map
+    */
+
     std::random_device rd;
     std::mt19937       mt(rd());
     auto               map = *CaveGenerator::generate(mt, 100, 50);
@@ -84,10 +91,11 @@ int main()
     //                              {target_x, target_y, 0, 1},
     // });
 
-    nav_test.assignRandomTarget(entity->getComponent<NavMapComponent>()->nav_map);
+    nav_test.assignRandomTarget(
+        entity->getComponent<NavMapComponent>()->nav_map);
     auto nav_map_ptr = entity->getComponent<NavMapComponent>();
 
-    auto &nav_map     = nav_map_ptr->nav_map;
+    auto &nav_map    = nav_map_ptr->nav_map;
 
     LOS_sys.addEntity(entity);
     LOS_sys.addEntity(target);
