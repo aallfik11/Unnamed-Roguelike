@@ -163,6 +163,8 @@ public:
         });
     }
 
+    void switchToPlayerNavMap(NavMap &nav_map) { nav_map = nav_to_player_; }
+
     void calculateNavMap(NavMap &nav_map, TargetTuple targets)
     {
 
