@@ -1,0 +1,4 @@
+#ifndef ARMORCOMPONENT_H
+#define ARMORCOMPONENT_H
+
+#endif /*ARMORCOMPONENT_H*/

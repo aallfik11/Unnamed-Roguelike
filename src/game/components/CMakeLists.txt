@@ -10,11 +10,11 @@ add_library(components
     tilecomponent.h
     interaction.h
     aicomponent.h
-    velocitycomponent.h
     navmapcomponent.h
     lineofsightcomponent.h
     weaponcomponent.h
     typecomponent.h
+    armorcomponent.h
 )
 
 set_target_properties(components PROPERTIES LINKER_LANGUAGE CXX)
