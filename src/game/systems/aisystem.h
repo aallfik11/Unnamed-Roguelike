@@ -87,26 +87,35 @@ public: // temporary
         auto caller_coordinates = caller->getComponent<Coordinates>();
         auto target_coordinates = target->getComponent<Coordinates>();
         auto caller_brain       = caller->getComponent<AIComponent>();
+        auto caller_LOS         = caller->getComponent<LOSComponent>();
 
         // if player within range, attack
-        auto abs_distance_x =
-            std::abs(caller_coordinates->x - target_coordinates->x);
-        auto abs_distance_y =
-            std::abs(caller_coordinates->y - target_coordinates->y);
-
-        if (abs_distance_x <= 1 && abs_distance_y <= 1)
+        if (caller_LOS->has_LOS_to_player == true)
         {
-            caller_brain->ai_state = AIState::ATTACK;
-            return attack(caller, target);
+            auto abs_distance_x =
+                std::abs(caller_coordinates->x - target_coordinates->x);
+            auto abs_distance_y =
+                std::abs(caller_coordinates->y - target_coordinates->y);
+
+            if (abs_distance_x <= 1 && abs_distance_y <= 1)
+            {
+                caller_brain->ai_state = AIState::ATTACK;
+                return attack(caller, target);
+            }
         }
 
         auto [x, y] = navigation_manager_.nextBestCoordinates(
             caller, NavMapManager::Destination::TOWARDS);
-        positon_system_.updatePosition(caller, x, y);
-        if (caller_coordinates->x == x && caller_coordinates->y == y)
+
+        if (caller_coordinates->x == caller_brain->last_target_x &&
+            caller_coordinates->y == caller_brain->last_target_y)
         {
+            auto caller_navmap     = caller->getComponent<NavMapComponent>();
             caller_brain->ai_state = AIState::WANDER_AROUND;
+            navigation_manager_.assignRandomTarget(caller_navmap->nav_map);
+            return wanderAround(caller, target);
         }
+        positon_system_.updatePosition(caller, x, y);
     }
 
     void runAway(EntityPtr &caller, EntityPtr &target)
@@ -194,7 +203,7 @@ public: // temporary
         auto caller_brain    = caller->getComponent<AIComponent>();
         auto caller_health   = caller->getComponent<Health>();
         auto caller_position = caller->getComponent<Coordinates>();
-        auto target_position = caller->getComponent<Coordinates>();
+        auto target_position = target->getComponent<Coordinates>();
 
         auto abs_dist_x = std::abs(caller_position->x - target_position->x);
         auto abs_dist_y = std::abs(caller_position->y - target_position->y);
@@ -227,17 +236,33 @@ public: // temporary
         /*if player enters LOS, approach/run away
          *(depending on the circumstances)
          */
-        auto LOS = caller->getComponent<LOSComponent>();
+        auto LOS                = caller->getComponent<LOSComponent>();
+        auto caller_brain       = caller->getComponent<AIComponent>();
+        auto target_coordinates = target->getComponent<Coordinates>();
 
         if (LOS->has_LOS_to_player == true)
         {
-            auto caller_brain  = caller->getComponent<AIComponent>();
-            auto caller_health = caller->getComponent<Health>();
+            auto caller_health   = caller->getComponent<Health>();
+            auto caller_navmap = caller->getComponent<NavMapComponent>();
 
             double run_threshold = getRunThreshold(caller_brain->ai_type);
             double current_hp_percentage =
                 (static_cast<double>(caller_health->current_health_points) /
                  static_cast<double>(caller_health->max_health_points));
+
+            navigation_manager_.calculateNavMap( // probably better to instead
+                                                 // compute a universal navmap
+                                                 // to player whenever the
+                                                 // player moves and simply
+                                                 // assign that to whatever
+                                                 // entity that sees the player
+                caller_navmap->nav_map,
+                {
+                    {target_coordinates->x, target_coordinates->y, 0, 1.0}
+            });
+
+            caller_brain->last_target_x = target_coordinates->x;
+            caller_brain->last_target_y = target_coordinates->y;
 
             if (current_hp_percentage > run_threshold)
             {
@@ -248,6 +273,21 @@ public: // temporary
             caller_brain->ai_state = AIState::RUN_AWAY;
             return runAway(caller, target);
         }
+
+        // entities will have a roaming navigation map assigned by default
+        auto caller_coords = caller->getComponent<Coordinates>();
+        auto [x, y]        = navigation_manager_.nextBestCoordinates(
+            caller, NavMapManager::Destination::TOWARDS);
+        if (caller_coords->x == x && caller_coords->y == y)
+        {
+            auto caller_navmap = caller->getComponent<NavMapComponent>();
+            navigation_manager_.assignRandomTarget(caller_navmap->nav_map);
+            auto [x2, y2] = navigation_manager_.nextBestCoordinates(
+                caller, NavMapManager::Destination::TOWARDS);
+            x = x2;
+            y = y2;
+        }
+        positon_system_.updatePosition(caller, x, y);
     }
 
     // void special(EntityPtr &caller, EntityPtr &target)
@@ -274,14 +314,15 @@ public:
         // std::function<Action(EntityPtr&, EntityPtr&)>(runAway);
         // states_[WANDER_AROUND]   = std::function<Action(EntityPtr&,
         // EntityPtr&)>(wanderAround); states_[REST]            =
-        // std::function<Action(EntityPtr&, EntityPtr&)>(rest); states_[ATTACK]
-        // = std::function<Action(EntityPtr&, EntityPtr&)>(attack); This isn't
-        // necessary;
+        // std::function<Action(EntityPtr&, EntityPtr&)>(rest);
+        // states_[ATTACK] = std::function<Action(EntityPtr&,
+        // EntityPtr&)>(attack); This isn't necessary;
         // /*APPROACH TARGET*/
-        // states_[APPROACH_TARGET].emplace(ATTACK, attack); // if player close
-        // enough states_[APPROACH_TARGET].emplace(INTERACT_WITH_OBJECT,
-        // interactWithObject); states_[APPROACH_TARGET].emplace(WANDER_AROUND,
-        // wanderAround);
+        // states_[APPROACH_TARGET].emplace(ATTACK, attack); // if player
+        // close enough
+        // states_[APPROACH_TARGET].emplace(INTERACT_WITH_OBJECT,
+        // interactWithObject);
+        // states_[APPROACH_TARGET].emplace(WANDER_AROUND, wanderAround);
         // /*APPROACH TARGET*/
 
         // /*RUN_AWAY*/
@@ -290,47 +331,51 @@ public:
         // /*RUN_AWAY*/
 
         // /*REST*/
-        // states_[REST].emplace(APPROACH_TARGET, approachTarget); // if healthy
-        // enough or target has high priority states_[REST].emplace(RUN_AWAY,
-        // runAway);               // if not healthy enough to fight and/or
-        // afraid/cowardly states_[REST].emplace(WANDER_AROUND, wanderAround);
+        // states_[REST].emplace(APPROACH_TARGET, approachTarget); // if
+        // healthy enough or target has high priority
+        // states_[REST].emplace(RUN_AWAY, runAway);               // if not
+        // healthy enough to fight and/or afraid/cowardly
+        // states_[REST].emplace(WANDER_AROUND, wanderAround);
         // // if healthy and nothing else to do
         // /*REST*/
 
         // /*ATTACK*/
-        // states_[ATTACK].emplace(RUN_AWAY, runAway);               // if not
-        // healthy enough states_[ATTACK].emplace(APPROACH_TARGET,
+        // states_[ATTACK].emplace(RUN_AWAY, runAway);               // if
+        // not healthy enough states_[ATTACK].emplace(APPROACH_TARGET,
         // approachTarget); // if target runs away and healthy enough
         // states_[ATTACK].emplace(SPECIAL, special);                // if
         // special conditions apply
         // /*ATTACK*/
 
         // /*INTERACT*/
-        // states_[INTERACT_WITH_OBJECT].emplace(WANDER_AROUND, wanderAround);
+        // states_[INTERACT_WITH_OBJECT].emplace(WANDER_AROUND,
+        // wanderAround);
         // // if done interacting and nothing else to do
         // states_[INTERACT_WITH_OBJECT].emplace(APPROACH_TARGET,
         // approachTarget); // if a valid target in range
-        // states_[INTERACT_WITH_OBJECT].emplace(ATTACK, attack); // if a valid
-        // target directly near states_[INTERACT_WITH_OBJECT].emplace(RUN_AWAY,
-        // runAway);               // if not healthy enough to fight and/or
-        // afraid/cowardly
+        // states_[INTERACT_WITH_OBJECT].emplace(ATTACK, attack); // if a
+        // valid target directly near
+        // states_[INTERACT_WITH_OBJECT].emplace(RUN_AWAY, runAway); // if
+        // not healthy enough to fight and/or afraid/cowardly
         // /*INTERACT*/
 
         // /*WANDER AROUND*/
         // states_[WANDER_AROUND].emplace(INTERACT_WITH_OBJECT,
         // interactWithObject); // if stumbled upon something interactable
-        // (might not use that) states_[WANDER_AROUND].emplace(APPROACH_TARGET,
-        // approachTarget);          // if a valid target in range
-        // states_[WANDER_AROUND].emplace(RUN_AWAY, runAway); // if not healthy
-        // enough to fight and/or afraid/cowardly
+        // (might not use that)
+        // states_[WANDER_AROUND].emplace(APPROACH_TARGET, approachTarget);
+        // // if a valid target in range
+        // states_[WANDER_AROUND].emplace(RUN_AWAY, runAway); // if not
+        // healthy enough to fight and/or afraid/cowardly
         // /*WANDER AROUND*/
 
         // /*SPECIAL*/
         // states_[SPECIAL].emplace(APPROACH_TARGET, approachTarget); // if
-        // target not withing special range states_[SPECIAL].emplace(RUN_AWAY,
-        // runAway);               // depending on the special action
-        // states_[SPECIAL].emplace(ATTACK, attack);                  //
-        // depending on the special action states_[SPECIAL].emplace(REST, rest);
+        // target not withing special range
+        // states_[SPECIAL].emplace(RUN_AWAY, runAway);               //
+        // depending on the special action states_[SPECIAL].emplace(ATTACK,
+        // attack);                  // depending on the special action
+        // states_[SPECIAL].emplace(REST, rest);
         // // depending on the special action
         // /*SPECIAL*/
     }

@@ -13,70 +13,62 @@ class Entity
 {
     using Components =
         std::unordered_map<std::type_index, std::shared_ptr<Component>>;
-    static uint32_t _max_id;
-    uint32_t        _id;
-    Components      _components;
+    static uint32_t max_id_;
+    uint32_t        id_;
+    Components      components_;
 
 public:
     Entity()
     {
-        _id = _max_id;
-        _max_id++;
+        id_ = max_id_;
+        max_id_++;
     }
 
     Entity(const std::vector<Component *> &components) : Entity()
     {
         for (auto &component : components)
         {
-            _components.emplace(typeid(*component),
+            components_.emplace(typeid(*component),
                                 std::shared_ptr<Component>(component));
         }
     }
 
-    uint32_t getId() { return _id; }
+    uint32_t getId() { return id_; }
 
     void addComponent(const std::shared_ptr<Component> &component)
     {
-        _components.emplace(typeid(*(component.get())), component);
+        components_.emplace(typeid(*(component.get())), component);
     }
 
     void addComponent(Component *component)
     {
-        _components.emplace(typeid(*component),
+        components_.emplace(typeid(*component),
                             std::shared_ptr<Component>(component));
     }
 
     template <class ComponentType> void removeComponent()
     {
-        _components.erase(typeid(ComponentType));
+        components_.erase(typeid(ComponentType));
     }
 
     template <class ComponentType> bool hasComponent()
     {
-        // return std::any_of(_components.begin(), _components.end(), [](const
-        // Components::value_type &component)
-        //                    { return (typeid(ComponentType) ==
-        //                    typeid(*(component.second.get()))); });
-        return _components.contains(typeid(ComponentType));
+        return components_.contains(typeid(ComponentType));
     }
 
     template <class ComponentType> std::shared_ptr<ComponentType> getComponent()
     {
-        // auto it = std::find_if(_components.begin(), _components.end(),
-        //                        [&](const Components::value_type &component)
-        //                        { return (typeid(ComponentType) ==
-        //                        typeid(*(component.second.get()))); });
-        auto it = _components.find(typeid(ComponentType));
+        auto it = components_.find(typeid(ComponentType));
 
-        if (it == _components.end())
+        if (it == components_.end())
             return std::shared_ptr<ComponentType>(nullptr);
 
         return std::static_pointer_cast<ComponentType>(it->second);
     }
 
-    static void resetMaxId() { _max_id = 0; }
+    static void resetMaxId() { max_id_ = 0; }
 };
 
-uint32_t Entity::_max_id = 0;
+uint32_t Entity::max_id_ = 0;
 
 #endif /*ENTITY_H*/

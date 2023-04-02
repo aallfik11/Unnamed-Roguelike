@@ -4,7 +4,7 @@
 #include "../globals.h"
 #include <vector>
 
-struct NavCell //: std::pair<uint32_t, bool>
+struct NavCell        //: std::pair<uint32_t, bool>
 {
     uint32_t score;   // = this->first;
     bool     visited; // = this->second;
@@ -49,6 +49,7 @@ class NavMapComponent : public Component
 {
 public:
     std::vector<std::vector<NavCell>> nav_map;
+
     NavMapComponent()
     {
         nav_map = std::vector<std::vector<NavCell>>(
