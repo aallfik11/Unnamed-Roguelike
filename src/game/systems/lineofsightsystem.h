@@ -13,8 +13,8 @@ class LOS_System
     using EntityPtr = std::shared_ptr<Entity>;
     using GameMap   = std::vector<std::vector<Tile>>;
 
-    std::unordered_set<EntityPtr> lines_of_sight;
-    GameMap                      &map;
+    std::unordered_set<EntityPtr> lines_of_sight_;
+    GameMap                      &map_;
 
     bool lineOfSightAlg(uint16_t init_x,
                         uint16_t init_y,
@@ -40,7 +40,7 @@ class LOS_System
 
             do
             {
-                if ((map[x][y].type & TRAVERSIBLE) == false)
+                if ((map_[x][y].type & TRAVERSIBLE) == false)
                     return false;
 
                 if (t >= 0)
@@ -58,7 +58,7 @@ class LOS_System
 
             do
             {
-                if ((map[x][y].type & TRAVERSIBLE) == false)
+                if ((map_[x][y].type & TRAVERSIBLE) == false)
                     return false;
 
                 if (t >= 0)
@@ -75,17 +75,17 @@ class LOS_System
     }
 
 public:
-    LOS_System(GameMap &gamemap) : map{gamemap} {}
+    LOS_System(GameMap &gamemap) : map_{gamemap} {}
 
-    void addEntity(EntityPtr &entity) { lines_of_sight.emplace(entity); }
+    void addEntity(EntityPtr &entity) { lines_of_sight_.emplace(entity); }
 
-    void deleteEntity(EntityPtr &entity) { lines_of_sight.erase(entity); }
+    void deleteEntity(EntityPtr &entity) { lines_of_sight_.erase(entity); }
 
     void calculateLOS(EntityPtr &entity, EntityPtr &target)
     {
-        auto target_coord_ptr = target->getComponent<Coordinates>();
-        auto coord_ptr        = entity->getComponent<Coordinates>();
-        auto los_ptr          = entity->getComponent<LOSComponent>();
+        auto target_coord_ptr      = target->getComponent<Coordinates>();
+        auto coord_ptr             = entity->getComponent<Coordinates>();
+        auto los_ptr               = entity->getComponent<LOSComponent>();
 
         los_ptr->has_LOS_to_player = lineOfSightAlg(coord_ptr->x,
                                                     coord_ptr->y,
@@ -96,17 +96,24 @@ public:
 
     void calculateAllLinesOfSight()
     {
-        for (auto los_entity : lines_of_sight)
+        for (auto los_entity : lines_of_sight_)
         {
             auto coord_ptr = los_entity->getComponent<Coordinates>();
             auto los_ptr   = los_entity->getComponent<LOSComponent>();
 
+            // los_ptr->has_LOS_to_player =
+            //     lineOfSightAlg(coord_ptr->x,
+            //                    coord_ptr->y,
+            //                    /*placeholder, here goes playerx*/ 0,
+            //                    /*placeholder, here goes playery*/ 0,
+            //                    los_ptr->seeing_distance);
+
+            // simpler, if I'll want to have variable seeing distances I'll use
+            // the commented version
             los_ptr->has_LOS_to_player =
-                lineOfSightAlg(coord_ptr->x,
-                               coord_ptr->y,
-                               /*placeholder, here goes playerx*/ 0,
-                               /*placeholder, here goes playery*/ 0,
-                               los_ptr->seeing_distance);
+                (map_[coord_ptr->x][coord_ptr->y].type & TileType::VISIBLE)
+                    ? true
+                    : false;
         }
     }
 };
