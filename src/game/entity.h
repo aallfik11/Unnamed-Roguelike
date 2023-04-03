@@ -1,6 +1,7 @@
 #ifndef ENTITY_H
 #define ENTITY_H
 #include "component.h"
+#include "entitytypes.h"
 #include <algorithm>
 #include <memory>
 #include <type_traits>
@@ -15,22 +16,27 @@ class Entity
         std::unordered_map<std::type_index, std::shared_ptr<Component>>;
     static uint32_t max_id_;
     uint32_t        id_;
-    Components      components_;
 
-public:
+    Components components_;
+
     Entity()
     {
         id_ = max_id_;
         max_id_++;
     }
 
-    Entity(const std::vector<Component *> &components) : Entity()
+public:
+    EntityType type;
+
+    Entity(EntityType type, const std::vector<Component *> &components)
+        : Entity()
     {
         for (auto &component : components)
         {
             components_.emplace(typeid(*component),
                                 std::shared_ptr<Component>(component));
         }
+        this->type = type;
     }
 
     uint32_t getId() { return id_; }
