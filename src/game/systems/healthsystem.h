@@ -1,10 +1,14 @@
 #ifndef HEALTHSYSTEM_H
 #define HEALTHSYSTEM_H
+#include "../components/armorcomponent.h"
 #include "../components/health.h"
+#include "../components/weaponcomponent.h"
 #include "../entity.h"
+#include "../entitytypes.h"
 #include "../health_enum.h"
 #include <cstdint>
 #include <memory>
+#include <random>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -18,11 +22,14 @@ class HealthSystem
 
     // std::unordered_map<EntityId, std::weak_ptr<Health>> health_register_;
     std::unordered_set<EntityPtr> health_register_;
+    std::random_device            rd;
+    std::mt19937                  mt_engine;
 
 public:
-    HealthSystem() {}
+    HealthSystem() { mt_engine = std::mt19937(rd()); }
 
     HealthSystem(const std::initializer_list<EntityPtr> &entities)
+        : HealthSystem()
     {
         for (auto &entity : entities)
         {
@@ -64,10 +71,25 @@ public:
 
                 if (action & DEDUCE)
                 {
-                    if (amount >= current_health)
+                    uint16_t damage = 0;
+                    if (auto armor_ptr = entity->getComponent<ArmorComponent>())
                     {
+                        std::uniform_int_distribution miss_chance(
+                            1, 100 / armor_ptr->armor_class);
+                        if (miss_chance(mt_engine) == 1)
+                        {
+                            // message for miss goes here
+                            return;
+                        }
+                        damage = ((amount * 10) / armor_ptr->armor_class);
+                    }
+                    if (damage >= current_health)
+                    {
+
                         health_ptr->current_health_points = 0;
                         health_ptr->alive                 = false;
+                        entity->type &= ~EntityType::LIVING;
+                        entity->type |= EntityType::KILLED;
                     }
                     else
                         health_ptr->current_health_points -= amount;
