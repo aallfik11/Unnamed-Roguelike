@@ -39,14 +39,16 @@ int main()
     LOS_System         LOS_sys(map);
     AISystem           ai_sys(pos_sys, health_sys, nav_test);
 
-    std::shared_ptr<Entity> entity(new Entity({new TileComponent(),
+    std::shared_ptr<Entity> entity(new Entity(CREATURE,
+                                              {new TileComponent(),
                                                new Health(100, 100, true),
                                                new Coordinates(34, 25),
                                                new AIComponent(),
                                                new LOSComponent(1000),
                                                new WeaponComponent(10)}));
 
-    std::shared_ptr<Entity> target(new Entity({new TileComponent(),
+    std::shared_ptr<Entity> target(new Entity(PLAYER,
+                                              {new TileComponent(),
                                                new Health(100, 100, true),
                                                new Coordinates(89, 23)}));
 
@@ -135,7 +137,7 @@ int main()
                     uint8_t blue  = 0;
                     if (score != ~0)
                     {
-                        auto score_backup  = score;
+                        auto score_backup = score;
                         score             /= 3;
                         if (score <= 255)
                         {
