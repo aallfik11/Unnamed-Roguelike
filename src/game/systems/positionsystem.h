@@ -5,6 +5,7 @@
 #include "../coordhash.h"
 #include "../directions.h"
 #include "../entity.h"
+#include "../entitytypes.h"
 #include "../tile.h"
 #include <cstdint>
 #include <unordered_map>
@@ -65,31 +66,18 @@ class PositionSystem
         if (!(map_[x][y].type & TileType::TRAVERSIBLE))
             return true;
 
-        // if (coords_with_entities_.contains(Coords(x, y)))
-        // {
-        //     auto range = coords_with_entities_.equal_range(Coords(x, y));
-        //     while (range.first != range.second)
-        //     {
-        //         if (auto tile = entities_with_tiles_
-        //                             .at(range.first->second)
-        //                             .lock())
-        //         {
-        //             if ((tile->tile.type & TileType::TRAVERSIBLE) == false)
-        //                 return true;
-        //         }
-        //         range.first++;
-        //     }
-        // }
+        if (map_[x][y].type & TileType::HAS_MONSTER)
+            return true;
 
-        for (auto entity : entity_positions_)
-        {
-            auto coords        = entity->getComponent<Coordinates>();
-            auto tilecomponent = entity->getComponent<TileComponent>();
-            if (tilecomponent->tile.type & TileType::TRAVERSIBLE)
-                continue;
-            if (coords->x == x && coords->y == y)
-                return true;
-        }
+        // for (auto entity : entity_positions_)
+        // {
+        //     auto coords        = entity->getComponent<Coordinates>();
+        //     auto tilecomponent = entity->getComponent<TileComponent>();
+        //     if (tilecomponent->tile.type & TileType::TRAVERSIBLE)
+        //         continue;
+        //     if (coords->x == x && coords->y == y)
+        //         return true;
+        // }
 
         return false;
     }
@@ -118,6 +106,13 @@ public:
 
         if (auto position = entity->getComponent<Coordinates>())
         {
+            auto type = entity->type;
+            if (type & EntityType::CREATURE)
+            {
+                map_[position->x][position->y].type &= ~TileType::HAS_MONSTER;
+                map_[x][y].type                     |= TileType::HAS_MONSTER;
+            }
+
             position->x = x;
             position->y = y;
             return true;
