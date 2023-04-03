@@ -71,7 +71,7 @@ public:
 
                 if (action & DEDUCE)
                 {
-                    uint16_t damage = 0;
+                    uint16_t damage = amount;
                     if (auto armor_ptr = entity->getComponent<ArmorComponent>())
                     {
                         std::uniform_int_distribution miss_chance(
