@@ -18,6 +18,10 @@ add_library(components
     experiencecomponent.h
     hungercomponent.h
     itemcomponent.h
+    buffcomponent.h
+    amuletslot.h
+    weaponslot.h
+    armorslot.h 
 )
 
 set_target_properties(components PROPERTIES LINKER_LANGUAGE CXX)
