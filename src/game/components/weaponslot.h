@@ -9,7 +9,7 @@ class WeaponSlot : public Component
 public:
     std::shared_ptr<Entity> weapon_item;
 
-    WeaponSlot(std::shared_ptr<Entity> weapon_item)
+    WeaponSlot(std::shared_ptr<Entity> weapon_item = nullptr)
     {
         this->weapon_item = weapon_item;
     }

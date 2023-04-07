@@ -9,7 +9,10 @@ class ArmorComponent : public Component
 public:
     uint8_t armor_class; // formula: (damage*10) / armor_class, chance of
                          // deflection/evasion: armor_class/100;
-    ArmorComponent(uint8_t armor_class) { this->armor_class = armor_class; }
+    ArmorComponent(uint8_t armor_class = 10)
+    {
+        this->armor_class = armor_class;
+    }
 
     ArmorComponent *clone() { return new ArmorComponent(this->armor_class); }
 };

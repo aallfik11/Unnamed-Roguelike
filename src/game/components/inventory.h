@@ -11,6 +11,8 @@ class Inventory : public Component
 public:
     std::list<std::shared_ptr<Entity>> inventory;
 
+    Inventory(){};
+
     Inventory(std::list<std::shared_ptr<Entity>> inventory)
     {
         this->inventory = inventory;

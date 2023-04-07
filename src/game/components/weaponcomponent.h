@@ -7,7 +7,7 @@ class WeaponComponent : public Component
 {
 public:
     uint16_t damage;
-    WeaponComponent(uint16_t damage) { this->damage = damage; }
+    WeaponComponent(uint16_t damage = 1) { this->damage = damage; }
 
     WeaponComponent *clone() { return new WeaponComponent(this->damage); }
 };

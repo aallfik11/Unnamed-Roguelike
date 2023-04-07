@@ -10,7 +10,7 @@ class ArmorSlot : public Component
 public:
     std::shared_ptr<Entity> armor_item;
 
-    ArmorSlot(std::shared_ptr<Entity> armor_item)
+    ArmorSlot(std::shared_ptr<Entity> armor_item = nullptr)
     {
         this->armor_item = armor_item;
     }

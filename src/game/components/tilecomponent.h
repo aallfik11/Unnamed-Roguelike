@@ -8,12 +8,12 @@
 class TileComponent : public Component
 {
 
-    TileComponent(Tile tile, std::string sprite)
+    TileComponent(const TileComponent &tile_component)
     {
-        this->tile.type             = tile.type;
-        this->tile.color            = tile.color;
-        this->tile.background_color = tile.background_color;
-        this->sprite                = sprite;
+        this->tile.type             = tile_component.tile.type;
+        this->tile.color            = tile_component.tile.color;
+        this->tile.background_color = tile_component.tile.background_color;
+        this->sprite                = tile_component.sprite;
     }
 
 public:
@@ -31,10 +31,7 @@ public:
         this->tile.background_color = bg_color;
     }
 
-    TileComponent *clone()
-    {
-        return new TileComponent(this->tile, this->sprite);
-    }
+    TileComponent *clone() { return new TileComponent(*this); }
 };
 
 #endif /*TILECOMPONENT_H*/
