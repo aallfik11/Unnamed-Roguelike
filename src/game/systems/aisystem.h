@@ -47,7 +47,6 @@ class AISystem
                            std::function<Action(EntityPtr &, EntityPtr &)>>;
 
     PositionSystem &positon_system_;
-    HealthSystem   &health_system_;
     NavMapManager  &navigation_manager_;
 
     AISet    ais_;
@@ -230,8 +229,7 @@ public: // temporary
 
         auto weapon_damage = caller->getComponent<WeaponComponent>()->damage;
 
-        health_system_.updateHealth(
-            target, weapon_damage, HealthAction::DEDUCE);
+        HealthSystem::updateHealth(target, weapon_damage, HealthAction::DEDUCE);
     }
 
     void wanderAround(EntityPtr &caller, EntityPtr &target)
@@ -297,11 +295,8 @@ public: // temporary
     // }
 
 public:
-    AISystem(PositionSystem &position_system,
-             HealthSystem   &health_system,
-             NavMapManager  &nav_manager)
-        : positon_system_{position_system}, health_system_{health_system},
-          navigation_manager_{nav_manager}
+    AISystem(PositionSystem &position_system, NavMapManager &nav_manager)
+        : positon_system_{position_system}, navigation_manager_{nav_manager}
     {
         // states_[APPROACH_TARGET] = std::function<Action(EntityPtr&,
         // EntityPtr&)>(approachTarget); states_[RUN_AWAY]        =
