@@ -9,6 +9,6 @@ class Entity;
 class Inventory : public Component
 {
 public:
-    std::list<std::shared_ptr<Entity>> inventory_;
+    std::list<std::shared_ptr<Entity>> inventory;
 };
 #endif /*INVENTORY_H*/
