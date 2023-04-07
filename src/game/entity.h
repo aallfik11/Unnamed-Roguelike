@@ -33,8 +33,8 @@ public:
     {
         for (auto &component : components)
         {
-            components_.emplace(typeid(*component),
-                                std::shared_ptr<Component>(component));
+            components_[typeid(*component)] =
+                std::shared_ptr<Component>(component);
         }
         this->type = type;
     }
@@ -43,13 +43,12 @@ public:
 
     void addComponent(const std::shared_ptr<Component> &component)
     {
-        components_.emplace(typeid(*(component.get())), component);
+        components_[typeid(*(component.get()))] = component;
     }
 
     void addComponent(Component *component)
     {
-        components_.emplace(typeid(*component),
-                            std::shared_ptr<Component>(component));
+        components_[typeid(*component)] = std::shared_ptr<Component>(component);
     }
 
     template <class ComponentType> void removeComponent()
