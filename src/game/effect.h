@@ -6,12 +6,16 @@ enum Effect : uint16_t // doing this as a bitmask as I might want to
                        // support having multiple effects stacked into one
                        // potion
 {
-    NONE     = 0x0000,
-    HEAL     = 0x0001,
-    POISON   = 0x0002,
-    BLEED    = 0x0004,
-    IRONSKIN = 0x0008,
-    BLIND    = 0x0010
+    NONE       = 0x0000,
+    HEAL       = 0x0001,
+    POISON     = 0x0002,
+    BLEED      = 0x0004,
+    IRONSKIN   = 0x0008,
+    BLIND      = 0x0010,
+
+    APPLY_ONCE = 0x4000,
+    // in case of things that shouldn't be incremented/applied every turn, like
+    // blind or ironskin
 };
 
 inline constexpr Effect operator&(Effect effect_1, Effect effect_2)
