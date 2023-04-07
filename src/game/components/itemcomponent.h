@@ -27,6 +27,15 @@ public:
         this->rarity    = rarity;
         this->equipped  = equipped;
     }
+
+    ItemComponent *clone()
+    {
+        return new ItemComponent(this->type,
+                                 this->stack,
+                                 this->max_stack,
+                                 this->rarity,
+                                 this->equipped);
+    }
 };
 
 #endif /*ITEMCOMPONENT_H*/
