@@ -41,7 +41,7 @@ public:
 
     void deleteEntity(EntityPtr &entity) { health_register_.erase(entity); }
 
-    static uint16_t getHealth(EntityPtr &entity, HealthAction action)
+    static inline uint16_t getHealth(EntityPtr &entity, HealthAction action)
     {
         if (auto health_ptr = entity->getComponent<Health>())
         {
@@ -53,7 +53,7 @@ public:
         return ~0;
     }
 
-    static void
+    static inline void
     updateHealth(EntityPtr &entity, uint16_t amount, HealthAction action)
     {
         if (auto health_ptr = entity->getComponent<Health>())
