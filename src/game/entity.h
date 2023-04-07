@@ -39,6 +39,14 @@ public:
         this->type = type;
     }
 
+    Entity(const std::shared_ptr<Entity> &entity_ptr)
+    {
+        for (auto &component : entity_ptr->components_)
+        {
+            this->addComponent(component.second->clone());
+        }
+    }
+
     uint32_t getId() { return id_; }
 
     void addComponent(const std::shared_ptr<Component> &component)
