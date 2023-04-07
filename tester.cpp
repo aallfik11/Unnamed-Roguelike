@@ -35,9 +35,8 @@ int main()
     auto               map = *CaveGenerator::generate(mt, 100, 50);
     PositionSystem     pos_sys(map);
     NavMapManager      nav_test(map);
-    HealthSystem       health_sys;
     LOS_System         LOS_sys(map);
-    AISystem           ai_sys(pos_sys, health_sys, nav_test);
+    AISystem           ai_sys(pos_sys, nav_test);
 
     std::shared_ptr<Entity> entity(new Entity(CREATURE,
                                               {new TileComponent(),
@@ -80,8 +79,6 @@ int main()
 
     std::shared_ptr<NavMapComponent> navmap(new NavMapComponent());
     pos_sys.addEntity(entity);
-    health_sys.addEntity(entity);
-    health_sys.addEntity(target);
     entity->addComponent(new NavMapComponent());
 
     auto target_coords = target->getComponent<Coordinates>();
@@ -137,7 +134,7 @@ int main()
                     uint8_t blue  = 0;
                     if (score != ~0)
                     {
-                        auto score_backup = score;
+                        auto score_backup  = score;
                         score             /= 3;
                         if (score <= 255)
                         {
