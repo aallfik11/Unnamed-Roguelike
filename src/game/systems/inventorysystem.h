@@ -203,12 +203,12 @@ public:
     EntityPtr dropFromInventory(EntityPtr &caller, uint32_t index)
     {
         EntityPtr item;
-        auto caller_inventory = caller->getComponent<Inventory>()->inventory;
-        auto item_iterator    = iterateToItem(caller_inventory, index);
+        auto &caller_inventory = caller->getComponent<Inventory>()->inventory;
+        auto  item_iterator    = iterateToItem(caller_inventory, index);
         if (item_iterator != caller_inventory.end())
         {
-            caller_inventory.erase(item_iterator);
             item = *item_iterator;
+            caller_inventory.erase(item_iterator);
         }
 
         auto item_component = item->getComponent<ItemComponent>();
