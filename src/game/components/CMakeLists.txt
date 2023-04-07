@@ -15,6 +15,9 @@ add_library(components
     weaponcomponent.h
     typecomponent.h
     armorcomponent.h
+    experiencecomponent.h
+    hungercomponent.h
+    itemcomponent.h
 )
 
 set_target_properties(components PROPERTIES LINKER_LANGUAGE CXX)
