@@ -148,7 +148,7 @@ class InventorySystem
                 }
                 if (effect->effect & Effect::POISON)
                 {
-                    caller->getComponent<BuffComponent>()->Buffs.emplace_back(
+                    caller->getComponent<BuffComponent>()->buffs.emplace_back(
                         new EffectComponent(Effect::POISON,
                                             effect->effect_strength,
                                             effect->effect_duration));
@@ -157,7 +157,7 @@ class InventorySystem
                 }
                 if (effect->effect & Effect::BLEED)
                 {
-                    caller->getComponent<BuffComponent>()->Buffs.emplace_back(
+                    caller->getComponent<BuffComponent>()->buffs.emplace_back(
                         new EffectComponent(Effect::BLEED,
                                             effect->effect_strength,
                                             effect->effect_duration));
@@ -165,7 +165,7 @@ class InventorySystem
                 }
                 if (effect->effect & Effect::IRONSKIN)
                 {
-                    caller->getComponent<BuffComponent>()->Buffs.emplace_back(
+                    caller->getComponent<BuffComponent>()->buffs.emplace_back(
                         new EffectComponent(Effect::IRONSKIN,
                                             effect->effect_strength,
                                             effect->effect_duration));
@@ -173,7 +173,7 @@ class InventorySystem
                 }
                 if (effect->effect & Effect::BLIND)
                 {
-                    caller->getComponent<BuffComponent>()->Buffs.emplace_back(
+                    caller->getComponent<BuffComponent>()->buffs.emplace_back(
                         new EffectComponent(Effect::BLIND,
                                             effect->effect_strength,
                                             effect->effect_duration));
@@ -232,9 +232,14 @@ public:
             item_component->equipped = false;
         }
 
-        if (item_component->type &
-            STACKABLE) // rn doesn't work for stackable items
+        if (item_component->type & STACKABLE)
         {
+            item_component->stack -= 1;
+            EntityPtr                      dropped_item(new Entity(item));
+            std::shared_ptr<ItemComponent> temp(item_component->clone());
+            temp->stack = 1;
+            dropped_item->addComponent(temp);
+            return dropped_item;
         }
 
         return item;
