@@ -22,8 +22,8 @@ class HealthSystem
 
     // std::unordered_map<EntityId, std::weak_ptr<Health>> health_register_;
     std::unordered_set<EntityPtr> health_register_;
-    std::random_device            rd;
-    std::mt19937                  mt_engine;
+    static std::random_device     rd;
+    static std::mt19937           mt_engine;
 
 public:
     HealthSystem() { mt_engine = std::mt19937(rd()); }
@@ -41,11 +41,8 @@ public:
 
     void deleteEntity(EntityPtr &entity) { health_register_.erase(entity); }
 
-    uint16_t getHealth(EntityPtr &entity, HealthAction action)
+    static uint16_t getHealth(EntityPtr &entity, HealthAction action)
     {
-        if (health_register_.contains(entity) == false)
-            return 0;
-
         if (auto health_ptr = entity->getComponent<Health>())
         {
             uint16_t health = (action & CURRENT)
@@ -53,15 +50,12 @@ public:
                                   : health_ptr->max_health_points;
             return health;
         }
-        deleteEntity(entity);
         return ~0;
     }
 
-    void updateHealth(EntityPtr &entity, uint16_t amount, HealthAction action)
+    static void
+    updateHealth(EntityPtr &entity, uint16_t amount, HealthAction action)
     {
-        if (!health_register_.contains(entity))
-            return;
-
         if (auto health_ptr = entity->getComponent<Health>())
         {
             uint16_t current_health = health_ptr->current_health_points;
@@ -123,9 +117,10 @@ public:
                     health_ptr->max_health_points = max_health + amount;
             }
         }
-        else
-            deleteEntity(entity);
     }
 };
+
+std::random_device HealthSystem::rd        = std::random_device();
+std::mt19937       HealthSystem::mt_engine = std::mt19937(HealthSystem::rd());
 
 #endif /*HEALTHSYSTEM_H*/
