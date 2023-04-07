@@ -15,4 +15,4 @@ enum ItemType : uint16_t
     EQUIPABLE  = (WEAPON | ARMOR | RING),
 };
 
-#endif ITEMTYPES_H
+#endif /*ITEMTYPES_H*/
