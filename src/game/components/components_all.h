@@ -3,18 +3,22 @@
 // mainly for ease of testing
 #include "../component.h"
 #include "aicomponent.h"
-#include "armorcomponent.h"
+#include "amuletslot.h"
+#include "buffcomponent.h"
 #include "coordinates.h"
 #include "description.h"
+#include "effectcomponent.h"
+#include "experiencecomponent.h"
 #include "health.h"
+#include "hungercomponent.h"
 #include "inventory.h"
+#include "itemcomponent.h"
 #include "lineofsightcomponent.h"
 #include "name.h"
 #include "navmapcomponent.h"
-#include "stackable.h"
 #include "tilecomponent.h"
 #include "typecomponent.h"
 #include "weaponcomponent.h"
-
+#include "weaponslot.h"
 
 #endif /*COMPONENTS_ALL*/

@@ -5,6 +5,7 @@ class Component
 {
 public:
     virtual ~Component() {}
+    virtual Component* clone() = 0;
 };
 
 #endif /*COMPONENT_H*/

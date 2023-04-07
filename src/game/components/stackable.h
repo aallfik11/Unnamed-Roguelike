@@ -3,6 +3,8 @@
 #include "../component.h"
 #include <cstdint>
 
+//deprecated
+
 class Stackable : public Component
 {
 

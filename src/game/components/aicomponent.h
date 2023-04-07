@@ -21,6 +21,15 @@ class AIComponent : public Component
     //(most monsters have the same ones) and store this instead,
     //  make action system simply look at which ones have which actions defined
     //  and add them to according AI systems
+
+    AIComponent(const AIComponent &ai_component)
+    {
+        this->ai_type       = ai_component.ai_type;
+        this->ai_state      = ai_component.ai_state;
+        this->last_target_x = ai_component.last_target_x;
+        this->last_target_y = ai_component.last_target_y;
+    }
+
 public:
     AIType   ai_type;
     AIState  ai_state;
@@ -35,6 +44,8 @@ public:
         last_target_x  = 0;
         last_target_y  = 0;
     }
+
+    AIComponent *clone() { return new AIComponent(*this); }
 };
 
 #endif /*AI_COMPONENT_H*/

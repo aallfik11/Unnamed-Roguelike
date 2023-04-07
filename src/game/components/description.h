@@ -11,6 +11,8 @@ public:
     {
         this->description = description;
     }
+
+    Description *clone() { return new Description(this->description); }
 };
 
 #endif /*DESCRIPTION_H*/

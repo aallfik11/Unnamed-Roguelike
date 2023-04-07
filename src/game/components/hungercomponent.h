@@ -13,6 +13,11 @@ public:
         this->hunger     = hunger;
         this->max_hunger = max_hunger;
     }
+
+    HungerComponent *clone()
+    {
+        return new HungerComponent(this->hunger, this->max_hunger);
+    }
 };
 
 #endif /*HUNGERCOMPONENT_H*/

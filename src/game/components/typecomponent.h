@@ -3,7 +3,7 @@
 #include "../component.h"
 #include "../entitytypes.h"
 
-class Type : public Component
+class Type : public Component // unused rn
 {
 public:
     EntityType type;

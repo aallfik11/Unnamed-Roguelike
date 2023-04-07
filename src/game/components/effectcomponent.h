@@ -19,6 +19,12 @@ public:
         this->effect_strength = effect_strength;
         this->effect_duration = effect_duration;
     }
+
+    EffectComponent *clone()
+    {
+        return new EffectComponent(
+            this->effect, this->effect_strength, this->effect_duration);
+    }
 };
 
 #endif /*EFFECTCOMPONENT_H*/

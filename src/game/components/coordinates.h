@@ -13,6 +13,8 @@ public:
         this->x = x;
         this->y = y;
     }
+
+    Coordinates *clone() { return new Coordinates(this->x, this->y); }
 };
 
 #endif /*COORDINATES_H*/

@@ -12,10 +12,15 @@ public:
     // uint16_t last_player_x;
     // uint16_t last_player_y;
 
-    LOSComponent(uint16_t seeing_distance = 15)
+    LOSComponent(bool has_LOS_to_player = false, uint16_t seeing_distance = 15)
     {
-        has_LOS_to_player     = false;
-        this->seeing_distance = seeing_distance;
+        this->has_LOS_to_player = has_LOS_to_player;
+        this->seeing_distance   = seeing_distance;
+    }
+
+    LOSComponent *clone()
+    {
+        return new LOSComponent(this->has_LOS_to_player, this->seeing_distance);
     }
 };
 #endif /*LINEOFSIGHTCOMPONENT_H*/

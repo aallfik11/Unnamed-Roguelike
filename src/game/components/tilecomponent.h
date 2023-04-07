@@ -7,6 +7,15 @@
 
 class TileComponent : public Component
 {
+
+    TileComponent(Tile tile, std::string sprite)
+    {
+        this->tile.type             = tile.type;
+        this->tile.color            = tile.color;
+        this->tile.background_color = tile.background_color;
+        this->sprite                = sprite;
+    }
+
 public:
     Tile        tile;
     std::string sprite;
@@ -20,6 +29,11 @@ public:
         this->sprite                = sprite;
         this->tile.color            = color;
         this->tile.background_color = bg_color;
+    }
+
+    TileComponent *clone()
+    {
+        return new TileComponent(this->tile, this->sprite);
     }
 };
 

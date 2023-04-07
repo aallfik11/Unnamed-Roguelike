@@ -55,6 +55,16 @@ public:
         nav_map = std::vector<std::vector<NavCell>>(
             G_MAP_WIDTH, std::vector<NavCell>(G_MAP_HEIGHT));
     }
+
+    NavMapComponent(std::vector<std::vector<NavCell>> nav_map)
+    {
+        for (auto &col : nav_map)
+        {
+            this->nav_map.push_back(col);
+        }
+    }
+
+    NavMapComponent *clone() { return new NavMapComponent(this->nav_map); }
 };
 
 #endif /*NAVMAPCOMPONENT_H*/

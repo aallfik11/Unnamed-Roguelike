@@ -13,10 +13,16 @@ public:
 
     Health(uint16_t max_hp = 0, uint16_t current_hp = 0, bool alive = false)
     {
-        this->alive       = alive;
-        max_health_points = max_hp;
-        (current_hp > max_hp) ? current_health_points = max_hp
-                              : current_health_points = current_hp;
+        max_health_points     = max_hp;
+
+        current_health_points = (current_hp > max_hp) ? max_hp : current_hp;
+        this->alive           = alive;
+    }
+
+    Health *clone()
+    {
+        return new Health(
+            this->max_health_points, this->current_health_points, this->alive);
     }
 };
 
