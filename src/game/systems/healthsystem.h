@@ -54,10 +54,10 @@ public:
         return ~0;
     }
 
-    static inline void updateHealth(EntityPtr   &entity,
-                                    uint16_t     amount,
-                                    HealthAction action,
-                                    bool         ignore_armor = false)
+    static inline void updateHealth(const EntityPtr &entity,
+                                    uint16_t         amount,
+                                    HealthAction     action,
+                                    bool             ignore_armor = false)
     {
         if (auto health_ptr = entity->getComponent<Health>())
         {
