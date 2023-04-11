@@ -13,6 +13,7 @@ enum Effect : uint16_t // doing this as a bitmask as I might want to
     IRONSKIN   = 0x0008,
     BLIND      = 0x0010,
 
+    APPLIED    = 0x2000,
     APPLY_ONCE = 0x4000,
     // in case of things that shouldn't be incremented/applied every turn, like
     // blind or ironskin
