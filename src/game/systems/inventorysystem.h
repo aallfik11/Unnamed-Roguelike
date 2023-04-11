@@ -140,41 +140,41 @@ class InventorySystem
         }
         if (type & ItemType::POTION)
         {
-            auto effect = item->getComponent<EffectComponent>();
-            // todo: move the most common effects up
-            if (effect->effect & Effect::HEAL)
-            {
-                uint16_t heal_amount = effect->effect_strength * 10;
-                HealthSystem::updateHealth(caller, heal_amount, ADD | CURRENT);
-            }
-            if (effect->effect & Effect::POISON)
-            {
-                caller->getComponent<BuffComponent>()->buffs.emplace_back(
-                    new EffectComponent(Effect::POISON,
-                                        effect->effect_strength,
-                                        effect->effect_duration));
-            }
-            if (effect->effect & Effect::BLEED)
-            {
-                caller->getComponent<BuffComponent>()->buffs.emplace_back(
-                    new EffectComponent(Effect::BLEED,
-                                        effect->effect_strength,
-                                        effect->effect_duration));
-            }
-            if (effect->effect & Effect::IRONSKIN)
-            {
-                caller->getComponent<BuffComponent>()->buffs.emplace_back(
-                    new EffectComponent(Effect::IRONSKIN,
-                                        effect->effect_strength,
-                                        effect->effect_duration));
-            }
-            if (effect->effect & Effect::BLIND)
-            {
-                caller->getComponent<BuffComponent>()->buffs.emplace_back(
-                    new EffectComponent(Effect::BLIND,
-                                        effect->effect_strength,
-                                        effect->effect_duration));
-            }
+            // auto effect = item->getComponent<EffectComponent>();
+            // // todo: move the most common effects up
+            // if (effect->effect & Effect::HEAL)
+            // {
+            //     uint16_t heal_amount = effect->effect_strength * 10;
+            //     HealthSystem::updateHealth(caller, heal_amount, ADD | CURRENT);
+            // }
+            // if (effect->effect & Effect::POISON)
+            // {
+            //     caller->getComponent<BuffComponent>()->buffs.emplace_back(
+            //         new EffectComponent(Effect::POISON,
+            //                             effect->effect_strength,
+            //                             effect->effect_duration));
+            // }
+            // if (effect->effect & Effect::BLEED)
+            // {
+            //     caller->getComponent<BuffComponent>()->buffs.emplace_back(
+            //         new EffectComponent(Effect::BLEED,
+            //                             effect->effect_strength,
+            //                             effect->effect_duration));
+            // }
+            // if (effect->effect & Effect::IRONSKIN)
+            // {
+            //     caller->getComponent<BuffComponent>()->buffs.emplace_back(
+            //         new EffectComponent(Effect::IRONSKIN,
+            //                             effect->effect_strength,
+            //                             effect->effect_duration));
+            // }
+            // if (effect->effect & Effect::BLIND)
+            // {
+            //     caller->getComponent<BuffComponent>()->buffs.emplace_back(
+            //         new EffectComponent(Effect::BLIND,
+            //                             effect->effect_strength,
+            //                             effect->effect_duration));
+            // }
         }
         if (item_component->stack > 1)
         {
