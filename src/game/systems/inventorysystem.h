@@ -20,7 +20,7 @@ class InventorySystem
     using EntityPtr = std::shared_ptr<Entity>;
     using Inv       = std::list<EntityPtr>;
 
-    inline Inv::iterator iterateToItem(Inv &inventory, uint32_t index)
+    static inline Inv::iterator iterateToItem(Inv &inventory, uint32_t index)
     {
         auto it = inventory.begin();
         while (it != inventory.end() && index != 0)
@@ -31,7 +31,7 @@ class InventorySystem
         return it;
     }
 
-    inline bool stackItem(Inv &inventory, const EntityPtr &item)
+    static inline bool stackItem(Inv &inventory, const EntityPtr &item)
     {
         for (auto &inv_item : inventory)
         {
@@ -56,13 +56,15 @@ class InventorySystem
         return false;
     }
 
-    inline bool equip(EntityPtr &caller,
-                      EntityPtr &item,
-                      ItemType type) // move to private, make inline and use in
-                                     // the general "use" function
+    static inline bool
+    equip(EntityPtr    &caller,
+          Inv::iterator item_it) // move to private, make inline and
+                                 // use in the general "use" function
     {
+        auto item           = *item_it;
         auto inventory      = caller->getComponent<Inventory>()->inventory;
         auto item_component = item->getComponent<ItemComponent>();
+        auto type           = item_component->type;
         if (type & ItemType::WEAPON)
         {
             auto caller_weaponslot = caller->getComponent<WeaponSlot>();
@@ -122,8 +124,12 @@ class InventorySystem
         return false;
     }
 
-    inline void consume(EntityPtr &caller, EntityPtr &item, ItemType type)
+    static inline void consume(EntityPtr &caller, Inv::iterator item_it)
     {
+        auto item           = *item_it;
+        auto item_component = item->getComponent<ItemComponent>();
+        auto type           = item_component->type;
+
         if (type & ItemType::FOOD)
         {
             auto hunger_component = caller->getComponent<HungerComponent>();
@@ -135,57 +141,54 @@ class InventorySystem
         if (type & ItemType::POTION)
         {
             auto effect = item->getComponent<EffectComponent>();
-            while (effect->effect !=
-                   Effect::NONE) // for potential compound potions/effects later
+            // todo: move the most common effects up
+            if (effect->effect & Effect::HEAL)
             {
-                // todo: move the most common effects up
-                if (effect->effect & Effect::HEAL)
-                {
-                    uint16_t heal_amount = effect->effect_strength * 10;
-                    HealthSystem::updateHealth(
-                        caller, heal_amount, ADD | CURRENT);
-                    effect->effect &= ~Effect::HEAL;
-                }
-                if (effect->effect & Effect::POISON)
-                {
-                    caller->getComponent<BuffComponent>()->buffs.emplace_back(
-                        new EffectComponent(Effect::POISON,
-                                            effect->effect_strength,
-                                            effect->effect_duration));
-
-                    effect->effect &= ~Effect::POISON;
-                }
-                if (effect->effect & Effect::BLEED)
-                {
-                    caller->getComponent<BuffComponent>()->buffs.emplace_back(
-                        new EffectComponent(Effect::BLEED,
-                                            effect->effect_strength,
-                                            effect->effect_duration));
-                    effect->effect &= ~Effect::BLEED;
-                }
-                if (effect->effect & Effect::IRONSKIN)
-                {
-                    caller->getComponent<BuffComponent>()->buffs.emplace_back(
-                        new EffectComponent(Effect::IRONSKIN,
-                                            effect->effect_strength,
-                                            effect->effect_duration));
-                    effect->effect &= ~Effect::IRONSKIN;
-                }
-                if (effect->effect & Effect::BLIND)
-                {
-                    caller->getComponent<BuffComponent>()->buffs.emplace_back(
-                        new EffectComponent(Effect::BLIND,
-                                            effect->effect_strength,
-                                            effect->effect_duration));
-                    effect->effect &= ~Effect::BLIND;
-                }
+                uint16_t heal_amount = effect->effect_strength * 10;
+                HealthSystem::updateHealth(caller, heal_amount, ADD | CURRENT);
             }
+            if (effect->effect & Effect::POISON)
+            {
+                caller->getComponent<BuffComponent>()->buffs.emplace_back(
+                    new EffectComponent(Effect::POISON,
+                                        effect->effect_strength,
+                                        effect->effect_duration));
+            }
+            if (effect->effect & Effect::BLEED)
+            {
+                caller->getComponent<BuffComponent>()->buffs.emplace_back(
+                    new EffectComponent(Effect::BLEED,
+                                        effect->effect_strength,
+                                        effect->effect_duration));
+            }
+            if (effect->effect & Effect::IRONSKIN)
+            {
+                caller->getComponent<BuffComponent>()->buffs.emplace_back(
+                    new EffectComponent(Effect::IRONSKIN,
+                                        effect->effect_strength,
+                                        effect->effect_duration));
+            }
+            if (effect->effect & Effect::BLIND)
+            {
+                caller->getComponent<BuffComponent>()->buffs.emplace_back(
+                    new EffectComponent(Effect::BLIND,
+                                        effect->effect_strength,
+                                        effect->effect_duration));
+            }
+        }
+        if (item_component->stack > 1)
+        {
+            item_component->stack -= 1;
+        }
+        else
+        {
+            caller->getComponent<Inventory>()->inventory.erase(item_it);
         }
     }
 
 public:
-    void addToInventory(Inv                             &target_inventory,
-                        std::initializer_list<EntityPtr> items)
+    static void addToInventory(Inv &target_inventory,
+                               std::initializer_list<EntityPtr> items)
     {
         for (auto &item : items)
         {
@@ -193,14 +196,14 @@ public:
             if (item->getComponent<ItemComponent>()->type & ItemType::STACKABLE)
             {
                 if (stackItem(target_inventory, item) == true)
-                    return;
+                    continue;
             }
 
             target_inventory.emplace_back(item);
         }
     }
 
-    EntityPtr dropFromInventory(EntityPtr &caller, uint32_t index)
+    static EntityPtr dropFromInventory(EntityPtr &caller, uint32_t index)
     {
         EntityPtr item;
         auto &caller_inventory = caller->getComponent<Inventory>()->inventory;
@@ -245,7 +248,52 @@ public:
         return item;
     }
 
-    void useItem(EntityPtr &caller, uint32_t index)
+    static EntityPtr dropFromInventory(EntityPtr &caller, Inv::iterator &index)
+    {
+        EntityPtr item;
+        auto &caller_inventory = caller->getComponent<Inventory>()->inventory;
+        auto  item_iterator    = index;
+        if (item_iterator != caller_inventory.end())
+        {
+            item = *item_iterator;
+            caller_inventory.erase(item_iterator);
+        }
+
+        auto item_component = item->getComponent<ItemComponent>();
+        if (item_component->equipped)
+        {
+            if (item_component->type & ItemType::ARMOR)
+            {
+                caller->getComponent<ArmorSlot>()->armor_item = nullptr;
+            }
+            else if (item_component->type & ItemType::WEAPON)
+            {
+                caller->getComponent<WeaponSlot>()->weapon_item = nullptr;
+            }
+            else if (item_component->type & ItemType::RING)
+            {
+                auto amulet_slot = caller->getComponent<AmuletSlot>();
+                amulet_slot->amount_equipped -= 1;
+                amulet_slot->amulet_slots.erase(item);
+            }
+
+            item_component->equipped = false;
+        }
+
+        if (item_component->type & STACKABLE)
+        {
+            item_component->stack -= 1;
+            EntityPtr                      dropped_item(new Entity(item));
+            std::shared_ptr<ItemComponent> temp(item_component->clone());
+            temp->stack = 1;
+            dropped_item->addComponent(temp);
+            return dropped_item;
+        }
+
+        return item;
+    }
+
+    static void useItem(EntityPtr &caller, uint32_t index)
     {
         auto inventory = caller->getComponent<Inventory>()->inventory;
         auto item      = iterateToItem(inventory, index);
@@ -253,11 +301,27 @@ public:
         auto item_type = (*item)->getComponent<ItemComponent>()->type;
         if (item_type & ItemType::EQUIPABLE)
         {
-            equip(caller, *item, item_type);
+            equip(caller, item);
         }
         else if (item_type & ItemType::CONSUMABLE)
         {
-            consume(caller, *item, item_type);
+            consume(caller, item);
+        }
+    }
+
+    static void useItem(EntityPtr &caller, Inv::iterator &index)
+    {
+        auto inventory = caller->getComponent<Inventory>()->inventory;
+        // auto item      = index;
+
+        auto item_type = (*index)->getComponent<ItemComponent>()->type;
+        if (item_type & ItemType::EQUIPABLE)
+        {
+            equip(caller, index);
+        }
+        else if (item_type & ItemType::CONSUMABLE)
+        {
+            consume(caller, index);
         }
     }
 };
