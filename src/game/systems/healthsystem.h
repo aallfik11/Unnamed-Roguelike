@@ -7,6 +7,7 @@
 #include "../entitytypes.h"
 #include "../health_enum.h"
 #include <cstdint>
+#include <iostream>
 #include <memory>
 #include <random>
 #include <unordered_map>
@@ -53,8 +54,10 @@ public:
         return ~0;
     }
 
-    static inline void
-    updateHealth(EntityPtr &entity, uint16_t amount, HealthAction action)
+    static inline void updateHealth(EntityPtr   &entity,
+                                    uint16_t     amount,
+                                    HealthAction action,
+                                    bool         ignore_armor = false)
     {
         if (auto health_ptr = entity->getComponent<Health>())
         {
@@ -65,19 +68,24 @@ public:
 
                 if (action & DEDUCE)
                 {
-                    uint16_t damage = amount;
-                    if (auto armor_ptr = entity->getComponent<ArmorComponent>())
+                    // uint16_t damage = amount;
+                    // todo: change to account for the way equipment works
+                    if (ignore_armor == true)
                     {
-                        std::uniform_int_distribution miss_chance(
-                            1, 100 / armor_ptr->armor_class);
-                        if (miss_chance(mt_engine) == 1)
+                        if (auto armor_ptr =
+                                entity->getComponent<ArmorComponent>())
                         {
-                            // message for miss goes here
-                            return;
+                            std::uniform_int_distribution miss_chance(
+                                1, 100 / armor_ptr->armor_class);
+                            if (miss_chance(mt_engine) == 1)
+                            {
+                                // message for miss goes here
+                                return;
+                            }
+                            amount = ((amount * 10) / armor_ptr->armor_class);
                         }
-                        damage = ((amount * 10) / armor_ptr->armor_class);
                     }
-                    if (damage >= current_health)
+                    if (amount >= current_health)
                     {
 
                         health_ptr->current_health_points = 0;
@@ -91,9 +99,9 @@ public:
                 else
                 {
                     health_ptr->current_health_points =
-                        (amount + current_health >= max_health)
+                        ((amount + current_health) >= max_health)
                             ? max_health
-                            : amount + current_health;
+                            : (amount + current_health);
                 }
             }
             else
