@@ -25,7 +25,7 @@ enable_testing()
 # set(GAMEHEADERS src/game)
 add_subdirectory(src)
 
-add_executable(Unnamed-Roguelike mockinventory.cpp)
+add_executable(Unnamed-Roguelike effecttest.cpp)
 
 # target_include_directories(Unnamed-Roguelike PRIVATE ${GAMEHEADERS})
 target_link_libraries(Unnamed-Roguelike PUBLIC source)
