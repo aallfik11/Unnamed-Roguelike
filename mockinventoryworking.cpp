@@ -17,9 +17,13 @@ int main()
 {
 
     using namespace ftxui;
+    ftxui::Component a;
 
     int  index    = 0;
     auto cont     = Container::Vertical({MenuEntry("test")}, &index);
     auto renderer = Renderer(cont, [&] { return cont->Render(); });
     auto wrap     = CatchEvent(cont, [&](Event event) { return true; });
+
+    auto scr = ScreenInteractive::Fullscreen();
+    scr.Loop(wrap);
 }
