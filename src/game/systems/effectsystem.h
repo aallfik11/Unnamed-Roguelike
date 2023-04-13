@@ -85,10 +85,20 @@ public:
         auto entity_buffs = entity->getComponent<BuffComponent>();
         for (auto &buff : buffs_ptr->buffs)
         {
-            entity_buffs->buffs[buff.second->effect] = buff.second;
+            entity_buffs->buffs[buff.first] = buff.second;
         }
     }
-    void cleanseEffect(EntityPtr &entity, Effect effect) {}
+    void cleanseEffect(EntityPtr &entity, Effect effect)
+    {
+
+        if (buffable_entities_.contains(entity) == false)
+        {
+            return;
+        }
+
+        auto entity_buffs = entity->getComponent<BuffComponent>();
+        entity_buffs->buffs.erase(effect);
+    }
 };
 
 #endif /*EFFECTSYSTEM_H*/
