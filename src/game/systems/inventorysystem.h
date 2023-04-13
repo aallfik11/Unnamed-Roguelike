@@ -129,7 +129,6 @@ class InventorySystem
     {
         auto item           = *item_it;
         auto item_component = item->getComponent<ItemComponent>();
-        auto type           = item_component->type;
 
         if (auto food_component = item->getComponent<HungerComponent>())
         {
@@ -177,47 +176,49 @@ public:
 
     static EntityPtr dropFromInventory(EntityPtr &caller, uint32_t index)
     {
-        EntityPtr item;
+        // EntityPtr item;
         auto &caller_inventory = caller->getComponent<Inventory>()->inventory;
-        auto  item_iterator    = iterateToItem(caller_inventory, index);
-        if (item_iterator != caller_inventory.end())
-        {
-            item = *item_iterator;
-            caller_inventory.erase(item_iterator);
-        }
+        auto  item_iterator    = caller_inventory.begin();
+        std::advance(item_iterator, index);
+        return dropFromInventory(caller, item_iterator);
+        // if (item_iterator != caller_inventory.end())
+        // {
+        //     item = *item_iterator;
+        //     caller_inventory.erase(item_iterator);
+        // }
 
-        auto item_component = item->getComponent<ItemComponent>();
-        if (item_component->equipped)
-        {
-            if (item_component->type & ItemType::ARMOR)
-            {
-                caller->getComponent<ArmorSlot>()->armor_item = nullptr;
-            }
-            else if (item_component->type & ItemType::WEAPON)
-            {
-                caller->getComponent<WeaponSlot>()->weapon_item = nullptr;
-            }
-            else if (item_component->type & ItemType::RING)
-            {
-                auto amulet_slot = caller->getComponent<AmuletSlot>();
-                amulet_slot->amount_equipped -= 1;
-                amulet_slot->amulet_slots.erase(item);
-            }
+        // auto item_component = item->getComponent<ItemComponent>();
+        // if (item_component->equipped)
+        // {
+        //     if (item_component->type & ItemType::ARMOR)
+        //     {
+        //         caller->getComponent<ArmorSlot>()->armor_item = nullptr;
+        //     }
+        //     else if (item_component->type & ItemType::WEAPON)
+        //     {
+        //         caller->getComponent<WeaponSlot>()->weapon_item = nullptr;
+        //     }
+        //     else if (item_component->type & ItemType::RING)
+        //     {
+        //         auto amulet_slot = caller->getComponent<AmuletSlot>();
+        //         amulet_slot->amount_equipped -= 1;
+        //         amulet_slot->amulet_slots.erase(item);
+        //     }
 
-            item_component->equipped = false;
-        }
+        //     item_component->equipped = false;
+        // }
 
-        if (item_component->type & STACKABLE)
-        {
-            item_component->stack -= 1;
-            EntityPtr                      dropped_item(new Entity(item));
-            std::shared_ptr<ItemComponent> temp(item_component->clone());
-            temp->stack = 1;
-            dropped_item->addComponent(temp);
-            return dropped_item;
-        }
+        // if (item_component->type & STACKABLE)
+        // {
+        //     item_component->stack -= 1;
+        //     EntityPtr                      dropped_item(new Entity(item));
+        //     std::shared_ptr<ItemComponent> temp(item_component->clone());
+        //     temp->stack = 1;
+        //     dropped_item->addComponent(temp);
+        //     return dropped_item;
+        // }
 
-        return item;
+        // return item;
     }
 
     static EntityPtr dropFromInventory(EntityPtr &caller, Inv::iterator &index)
@@ -267,18 +268,10 @@ public:
 
     static void useItem(EntityPtr &caller, uint32_t index)
     {
-        auto inventory = caller->getComponent<Inventory>()->inventory;
-        auto item      = iterateToItem(inventory, index);
-
-        auto item_type = (*item)->getComponent<ItemComponent>()->type;
-        if (item_type & ItemType::EQUIPABLE)
-        {
-            equip(caller, item);
-        }
-        else if (item_type & ItemType::CONSUMABLE)
-        {
-            consume(caller, item);
-        }
+        auto inventory     = caller->getComponent<Inventory>()->inventory;
+        auto item_iterator = inventory.begin();
+        std::advance(item_iterator, index);
+        useItem(caller, item_iterator);
     }
 
     static void useItem(EntityPtr &caller, Inv::iterator &index)
