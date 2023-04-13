@@ -13,7 +13,7 @@ public:
 
     EffectComponent(Effect  effect          = Effect::NONE,
                     uint8_t effect_strength = 1,
-                    uint8_t effect_duration = 0)
+                    uint8_t effect_duration = 1)
     {
         this->effect          = effect;
         this->effect_strength = effect_strength;
