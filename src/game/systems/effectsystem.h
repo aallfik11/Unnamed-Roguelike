@@ -1,5 +1,5 @@
 #ifndef EFFECTSYSTEM_H
-#define EFFECYSYSTEM_H
+#define EFFECTSYSTEM_H
 #include "../components/armorslot.h"
 #include "../components/buffcomponent.h"
 #include "../components/effectcomponent.h"
@@ -9,6 +9,7 @@
 #include "../effect.h"
 #include "../entity.h"
 #include "healthsystem.h"
+#include <list>
 #include <unordered_set>
 
 class EffectSystem
@@ -29,35 +30,44 @@ public:
     }
     void applyEffect(const EntityPtr &caller, EffectPtr &effect_ptr)
     {
-        switch (effect_ptr->effect)
+
+        if (effect_ptr->effect & HEAL)
         {
-        case HEAL:
             HealthSystem::updateHealth(
                 caller, effect_ptr->effect_strength * 5, ADD | CURRENT);
             if (effect_ptr->effect & APPLY_ONCE)
             {
                 effect_ptr->effect |= APPLIED;
             }
-            break;
+            return;
+        }
 
-        case POISON:
+        if (effect_ptr->effect & POISON)
+        {
             HealthSystem::updateHealth(caller,
                                        effect_ptr->effect_strength,
                                        DEDUCE | CURRENT,
                                        /*ignore_armor*/ true);
-            break;
-        case BLEED:
+            return;
+        }
+
+        if (effect_ptr->effect & BLEED)
+        {
             HealthSystem::updateHealth(caller,
                                        effect_ptr->effect_strength * 2,
                                        DEDUCE | CURRENT,
                                        /*ignore_armor*/ true);
-            break;
-        case IRONSKIN:
+            return;
+        }
+        if (effect_ptr->effect & IRONSKIN)
+        {
             effect_ptr->effect |= Effect::APPLIED;
-            break;
-        case BLIND:
-            /*implementation goes here :^ )*/
-            break;
+            return;
+        }
+
+        if (effect_ptr->effect & BLIND)
+        { /*implementation goes here :^ )*/
+            return;
         }
     }
     void updateEffects()
@@ -65,13 +75,41 @@ public:
         for (auto &entity : buffable_entities_)
         {
             auto buffs_ptr = entity->getComponent<BuffComponent>();
-            for (auto &buff : buffs_ptr->buffs)
+            std::list<BuffComponent::BuffMap::iterator> to_be_removed;
+            // for (auto &buff : buffs_ptr->buffs)
+
+            for (auto buff_iterator = buffs_ptr->buffs.begin();
+                 buff_iterator != buffs_ptr->buffs.end();
+                 buff_iterator++)
             {
-                buff.second->effect_duration -= 1;
-                if ((buff.second->effect & APPLIED) == false)
+                if (buff_iterator->second->effect_duration == 0)
                 {
-                    applyEffect(entity, buff.second);
+                    to_be_removed.emplace_back(buff_iterator);
+                    continue;
                 }
+
+                if ((buff_iterator->second->effect & APPLIED) == false)
+                {
+                    applyEffect(entity, buff_iterator->second);
+                }
+                buff_iterator->second->effect_duration -= 1;
+            }
+
+            for (auto &effect : to_be_removed)
+            {
+                buffs_ptr->buffs.erase(effect);
+            }
+        }
+    }
+    void updateEffects(EntityPtr &entity)
+    {
+        auto buffs_ptr = entity->getComponent<BuffComponent>();
+        for (auto &buff : buffs_ptr->buffs)
+        {
+            buff.second->effect_duration -= 1;
+            if ((buff.second->effect & APPLIED) == false)
+            {
+                applyEffect(entity, buff.second);
             }
         }
     }
