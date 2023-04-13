@@ -12,6 +12,7 @@
 #include "../entity.h"
 #include "../entitytypes.h"
 #include "../itemtypes.h"
+#include "effectsystem.h"
 #include "healthsystem.h"
 #include <list>
 
@@ -130,51 +131,22 @@ class InventorySystem
         auto item_component = item->getComponent<ItemComponent>();
         auto type           = item_component->type;
 
-        if (type & ItemType::FOOD)
+        if (auto food_component = item->getComponent<HungerComponent>())
         {
             auto hunger_component = caller->getComponent<HungerComponent>();
-            auto food_component   = item->getComponent<HungerComponent>();
+
             (food_component->hunger >= hunger_component->max_hunger)
-                  ? hunger_component->hunger  = hunger_component->max_hunger
-                  : hunger_component->hunger += food_component->hunger;
+                ? hunger_component->hunger = hunger_component->max_hunger
+                : hunger_component->hunger += food_component->hunger;
         }
-        if (type & ItemType::POTION)
+
+        if (auto buff_component = item->getComponent<BuffComponent>())
         {
-            // auto effect = item->getComponent<EffectComponent>();
-            // // todo: move the most common effects up
-            // if (effect->effect & Effect::HEAL)
-            // {
-            //     uint16_t heal_amount = effect->effect_strength * 10;
-            //     HealthSystem::updateHealth(caller, heal_amount, ADD | CURRENT);
-            // }
-            // if (effect->effect & Effect::POISON)
-            // {
-            //     caller->getComponent<BuffComponent>()->buffs.emplace_back(
-            //         new EffectComponent(Effect::POISON,
-            //                             effect->effect_strength,
-            //                             effect->effect_duration));
-            // }
-            // if (effect->effect & Effect::BLEED)
-            // {
-            //     caller->getComponent<BuffComponent>()->buffs.emplace_back(
-            //         new EffectComponent(Effect::BLEED,
-            //                             effect->effect_strength,
-            //                             effect->effect_duration));
-            // }
-            // if (effect->effect & Effect::IRONSKIN)
-            // {
-            //     caller->getComponent<BuffComponent>()->buffs.emplace_back(
-            //         new EffectComponent(Effect::IRONSKIN,
-            //                             effect->effect_strength,
-            //                             effect->effect_duration));
-            // }
-            // if (effect->effect & Effect::BLIND)
-            // {
-            //     caller->getComponent<BuffComponent>()->buffs.emplace_back(
-            //         new EffectComponent(Effect::BLIND,
-            //                             effect->effect_strength,
-            //                             effect->effect_duration));
-            // }
+            auto caller_buffs = caller->getComponent<BuffComponent>();
+            for (auto &buff : buff_component->buffs)
+            {
+                caller_buffs->buffs[buff.first] = buff.second;
+            }
         }
         if (item_component->stack > 1)
         {
