@@ -7,15 +7,33 @@
 
 class BuffComponent : public Component
 {
+
 public:
-    std::unordered_map<Effect, std::shared_ptr<EffectComponent>> buffs;
+    using BuffMap =
+        std::unordered_map<Effect, std::shared_ptr<EffectComponent>>;
+
+    BuffMap buffs;
 
     BuffComponent() {}
 
+    BuffComponent(BuffMap buffs) { this->buffs = buffs; }
+
     BuffComponent(
-        std::unordered_map<Effect, std::shared_ptr<EffectComponent>> buffs)
+        std::initializer_list<std::shared_ptr<EffectComponent>> buffs_list)
     {
-        this->buffs = buffs;
+        for (auto &buff : buffs_list)
+        {
+            buffs[(buff->effect & ~(APPLIED | APPLY_ONCE))] = buff;
+        }
+    }
+
+    BuffComponent(std::initializer_list<EffectComponent *> buffs_list)
+    {
+        for (auto &buff : buffs_list)
+        {
+            buffs[(buff->effect & ~(APPLIED | APPLY_ONCE))] =
+                std::shared_ptr<EffectComponent>(buff);
+        }
     }
 
     BuffComponent *clone() { return new BuffComponent(this->buffs); }
