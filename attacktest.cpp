@@ -15,12 +15,13 @@ std::shared_ptr<Entity> attacker(new Entity(PLAYER,
                                              new ArmorComponent(),
                                              new WeaponComponent(5),
                                              new CritComponent(5, 1.5),
-                                             new Inventory()}));
+                                             new Inventory(),
+                                             new AmuletSlot()}));
 
 std::shared_ptr<Entity> defender(new Entity(CREATURE,
                                             {new Health(50, 50),
                                              new BuffComponent(),
-                                             new ArmorComponent(50),
+                                             new ArmorComponent(10),
                                              new WeaponComponent(5),
                                              new Inventory()}));
 
@@ -46,12 +47,28 @@ int main()
         new EffectComponent(IRONSKIN, 1, 10));
     std::shared_ptr<EffectComponent> blind(new EffectComponent(BLIND, 1, 10));
     std::shared_ptr<BuffComponent>   buffs(new BuffComponent());
-    buffs->buffs[blind->effect]   = blind;
+
+    std::shared_ptr<Entity> str_ring(new Entity(
+        ITEM,
+        {new ItemComponent(ItemType::RING, 1, 1, RARE),
+         new BuffComponent({new EffectComponent(STRENGTH | PERMANENT, 2)})}));
+
+    std::shared_ptr<Entity> str_ring2(new Entity(
+        ITEM,
+        {new ItemComponent(ItemType::RING, 1, 1, RARE),
+         new BuffComponent({new EffectComponent(STRENGTH | PERMANENT, 3)})}));
+
+    // buffs->buffs[blind->effect]   = blind;
     // buffs->buffs[str->effect]     = str;
-    buffs->buffs[irnskin->effect] = irnskin;
+    // buffs->buffs[irnskin->effect] = irnskin;
     // es.addEffects(attacker, buffs);
-    es.addEffects(defender, buffs);
-    es.addEffects(attacker, buffs);
+    // es.addEffects(defender, buffs);
+    // es.addEffects(attacker, buffs);
+    InventorySystem::addToInventory(
+        attacker->getComponent<Inventory>()->inventory, {str_ring, str_ring2});
+    InventorySystem::useItem(attacker, 0);
+    InventorySystem::useItem(attacker, 1);
+    InventorySystem::useItem(attacker, 0);
 
     auto defender_hp = defender->getComponent<Health>();
 
@@ -82,4 +99,5 @@ int main()
     }
     std::cout << "\nHit percentage in " << iterations << " iterations: "
               << (double)hits * double(100) / (double)iterations << " %";
+    std::cout << "\n defender HP: " << defender_hp->current_health_points;
 }
