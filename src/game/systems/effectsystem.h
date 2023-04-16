@@ -61,12 +61,18 @@ public:
         }
         if (effect_ptr->effect & IRONSKIN)
         {
-            effect_ptr->effect |= Effect::APPLIED;
+            effect_ptr->effect |= APPLIED;
             return;
         }
 
         if (effect_ptr->effect & BLIND)
         { /*implementation goes here :^ )*/
+            return;
+        }
+
+        if (effect_ptr->effect & STRENGTH)
+        {
+            effect_ptr->effect |= APPLIED;
             return;
         }
     }
@@ -92,7 +98,10 @@ public:
                 {
                     applyEffect(entity, buff_iterator->second);
                 }
-                buff_iterator->second->effect_duration -= 1;
+                if ((buff_iterator->first & PERMANENT) == false)
+                {
+                    buff_iterator->second->effect_duration -= 1;
+                }
             }
 
             for (auto &effect : to_be_removed)
@@ -123,9 +132,11 @@ public:
         auto entity_buffs = entity->getComponent<BuffComponent>();
         for (auto &buff : buffs_ptr->buffs)
         {
-            entity_buffs->buffs[buff.first] = buff.second;
+            entity_buffs->buffs[buff.first] = std::shared_ptr<EffectComponent>(buff.second->clone());
         }
     }
+
+    
     void cleanseEffect(EntityPtr &entity, Effect effect)
     {
 
