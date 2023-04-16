@@ -9,11 +9,11 @@ class EffectComponent : public Component
 public:
     Effect  effect;
     uint8_t effect_strength;
-    uint8_t effect_duration; // in turns
+    uint16_t effect_duration;
 
     EffectComponent(Effect  effect          = Effect::NONE,
                     uint8_t effect_strength = 1,
-                    uint8_t effect_duration = 1)
+                    uint16_t effect_duration = 1)
     {
         this->effect          = effect;
         this->effect_strength = effect_strength;
