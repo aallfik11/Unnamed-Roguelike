@@ -12,6 +12,8 @@ add_library(systems
     navmapmanager.h
     lineofsightsystem.h
     inventorysystem.h
+    attacksystem.h
+    effectsystem.h
 )
 target_link_libraries(systems
     PUBLIC factories
