@@ -10,6 +10,7 @@
 #include "../entity.h"
 #include "../globals.h"
 #include "../health_enum.h"
+#include "attacksystem.h"
 #include "healthsystem.h"
 #include "navmapmanager.h"
 #include "positionsystem.h"
@@ -19,6 +20,7 @@
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
+
 
 class AISystem
 {
@@ -227,9 +229,7 @@ public: // temporary
             return approachTarget(caller, target);
         }
 
-        auto weapon_damage = caller->getComponent<WeaponComponent>()->damage;
-
-        HealthSystem::updateHealth(target, weapon_damage, HealthAction::DEDUCE);
+        AttackSystem::attack(caller, target);
     }
 
     void wanderAround(EntityPtr &caller, EntityPtr &target)
