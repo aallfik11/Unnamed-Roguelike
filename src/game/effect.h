@@ -12,7 +12,9 @@ enum Effect : uint16_t // doing this as a bitmask as I might want to
     BLEED      = 0x0004,
     IRONSKIN   = 0x0008,
     BLIND      = 0x0010,
+    STRENGTH   = 0x0020,
 
+    PERMANENT  = 0x1000,
     APPLIED    = 0x2000,
     APPLY_ONCE = 0x4000,
     // in case of things that shouldn't be incremented/applied every turn, like
