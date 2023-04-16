@@ -44,7 +44,7 @@ class InventorySystem
                     item_buff.second->effect_strength;
             }
             else
-                caller_buffs->buffs[item_buff.first] = std::shared_ptr<EffectComponent>(item_buff.second);
+                caller_buffs->buffs[item_buff.first] = std::shared_ptr<EffectComponent>(item_buff.second->clone());
         }
     }
 
