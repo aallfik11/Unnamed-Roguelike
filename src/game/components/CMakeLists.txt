@@ -23,6 +23,7 @@ add_library(components
     weaponslot.h
     armorslot.h 
     buffcomponent.h
+    critcomponent.h
 )
 
 set_target_properties(components PROPERTIES LINKER_LANGUAGE CXX)
