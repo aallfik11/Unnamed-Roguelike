@@ -39,8 +39,8 @@ void iterate()
 
 int main()
 {
-    EffectSystem                     es;
-    
+    EffectSystem es;
+
     std::shared_ptr<EffectComponent> str(new EffectComponent(STRENGTH, 4, 10));
     std::shared_ptr<EffectComponent> irnskin(
         new EffectComponent(IRONSKIN, 1, 10));
