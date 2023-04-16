@@ -32,6 +32,39 @@ class InventorySystem
         return it;
     }
 
+    static inline void
+    addEquipmentBuff(std::shared_ptr<BuffComponent> &caller_buffs,
+                     std::shared_ptr<BuffComponent> &item_buffs)
+    {
+        for (auto &item_buff : item_buffs->buffs)
+        {
+            if (caller_buffs->buffs.contains(item_buff.first))
+            {
+                caller_buffs->buffs.at(item_buff.first)->effect_strength +=
+                    item_buff.second->effect_strength;
+            }
+            else
+                caller_buffs->buffs[item_buff.first] = std::shared_ptr<EffectComponent>(item_buff.second);
+        }
+    }
+
+    static inline void
+    removeEquipmentBuff(std::shared_ptr<BuffComponent> &caller_buffs,
+                        std::shared_ptr<BuffComponent> &item_buffs)
+    {
+        for (auto &item_buff : item_buffs->buffs)
+        {
+            if (caller_buffs->buffs.at(item_buff.first)->effect_strength ==
+                item_buff.second->effect_strength)
+            {
+                caller_buffs->buffs.erase(item_buff.first);
+            }
+            else
+                caller_buffs->buffs.at(item_buff.first)->effect_strength -=
+                    item_buff.second->effect_strength;
+        }
+    }
+
     static inline bool stackItem(Inv &inventory, const EntityPtr &item)
     {
         for (auto &inv_item : inventory)
@@ -65,7 +98,10 @@ class InventorySystem
         auto item           = *item_it;
         auto inventory      = caller->getComponent<Inventory>()->inventory;
         auto item_component = item->getComponent<ItemComponent>();
+        auto item_buffs     = item->getComponent<BuffComponent>();
+        auto caller_buffs   = caller->getComponent<BuffComponent>();
         auto type           = item_component->type;
+
         if (type & ItemType::WEAPON)
         {
             auto caller_weaponslot = caller->getComponent<WeaponSlot>();
@@ -75,15 +111,31 @@ class InventorySystem
             {
                 item_component->equipped       = false;
                 caller_weaponslot->weapon_item = nullptr;
+                if (item_buffs != nullptr)
+                {
+                    removeEquipmentBuff(caller_buffs, item_buffs);
+                }
                 return true;
             }
 
             if (caller_weaponslot->weapon_item != nullptr)
+            {
                 caller_weaponslot->weapon_item->getComponent<ItemComponent>()
                     ->equipped = false;
 
+                if (auto weapon_buffs = caller_weaponslot->weapon_item
+                                            ->getComponent<BuffComponent>())
+                {
+                    removeEquipmentBuff(caller_buffs, weapon_buffs);
+                }
+            }
+
             item_component->equipped       = true;
             caller_weaponslot->weapon_item = item;
+            if (item_buffs != nullptr)
+            {
+                addEquipmentBuff(caller_buffs, item_buffs);
+            }
             return true;
         }
         else if (type & ItemType::ARMOR)
@@ -95,15 +147,31 @@ class InventorySystem
             {
                 item_component->equipped     = false;
                 caller_armorslot->armor_item = nullptr;
+                if (item_buffs != nullptr)
+                {
+                    removeEquipmentBuff(caller_buffs, item_buffs);
+                }
                 return true;
             }
 
             if (caller_armorslot->armor_item != nullptr)
+            {
                 caller_armorslot->armor_item->getComponent<ItemComponent>()
                     ->equipped = false;
 
+                if (auto armor_buffs = caller_armorslot->armor_item
+                                           ->getComponent<BuffComponent>())
+                {
+                    removeEquipmentBuff(caller_buffs, armor_buffs);
+                }
+            }
+
             item_component->equipped     = true;
             caller_armorslot->armor_item = item;
+            if (item_buffs != nullptr)
+            {
+                addEquipmentBuff(caller_buffs, item_buffs);
+            }
             return true;
         }
         else if (type & ItemType::RING)
@@ -115,11 +183,19 @@ class InventorySystem
             if (caller_amulets->amulet_slots.contains(item))
             {
                 item_component->equipped = false;
+                if (item_buffs != nullptr)
+                {
+                    removeEquipmentBuff(caller_buffs, item_buffs);
+                }
                 caller_amulets->amulet_slots.erase(item);
                 return true;
             }
 
             caller_amulets->amulet_slots.emplace(item);
+            if (item_buffs != nullptr)
+            {
+                addEquipmentBuff(caller_buffs, item_buffs);
+            }
             return true;
         }
         return false;
@@ -135,7 +211,7 @@ class InventorySystem
             auto hunger_component = caller->getComponent<HungerComponent>();
 
             (food_component->hunger >= hunger_component->max_hunger)
-                ? hunger_component->hunger = hunger_component->max_hunger
+                ? hunger_component->hunger  = hunger_component->max_hunger
                 : hunger_component->hunger += food_component->hunger;
         }
 
@@ -144,7 +220,7 @@ class InventorySystem
             auto caller_buffs = caller->getComponent<BuffComponent>();
             for (auto &buff : buff_component->buffs)
             {
-                caller_buffs->buffs[buff.first] = buff.second;
+                caller_buffs->buffs[buff.first] = std::shared_ptr<EffectComponent>(buff.second->clone());
             }
         }
         if (item_component->stack > 1)
@@ -181,44 +257,6 @@ public:
         auto  item_iterator    = caller_inventory.begin();
         std::advance(item_iterator, index);
         return dropFromInventory(caller, item_iterator);
-        // if (item_iterator != caller_inventory.end())
-        // {
-        //     item = *item_iterator;
-        //     caller_inventory.erase(item_iterator);
-        // }
-
-        // auto item_component = item->getComponent<ItemComponent>();
-        // if (item_component->equipped)
-        // {
-        //     if (item_component->type & ItemType::ARMOR)
-        //     {
-        //         caller->getComponent<ArmorSlot>()->armor_item = nullptr;
-        //     }
-        //     else if (item_component->type & ItemType::WEAPON)
-        //     {
-        //         caller->getComponent<WeaponSlot>()->weapon_item = nullptr;
-        //     }
-        //     else if (item_component->type & ItemType::RING)
-        //     {
-        //         auto amulet_slot = caller->getComponent<AmuletSlot>();
-        //         amulet_slot->amount_equipped -= 1;
-        //         amulet_slot->amulet_slots.erase(item);
-        //     }
-
-        //     item_component->equipped = false;
-        // }
-
-        // if (item_component->type & STACKABLE)
-        // {
-        //     item_component->stack -= 1;
-        //     EntityPtr                      dropped_item(new Entity(item));
-        //     std::shared_ptr<ItemComponent> temp(item_component->clone());
-        //     temp->stack = 1;
-        //     dropped_item->addComponent(temp);
-        //     return dropped_item;
-        // }
-
-        // return item;
     }
 
     static EntityPtr dropFromInventory(EntityPtr &caller, Inv::iterator &index)
