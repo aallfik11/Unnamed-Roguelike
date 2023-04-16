@@ -20,5 +20,6 @@
 #include "typecomponent.h"
 #include "weaponcomponent.h"
 #include "weaponslot.h"
+#include "critcomponent.h"
 
 #endif /*COMPONENTS_ALL*/
