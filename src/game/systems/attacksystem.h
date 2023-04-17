@@ -37,7 +37,9 @@ bool attack(EntityPtr &attacker, EntityPtr &defender)
     auto attacker_base_damage = attacker_base_weapon->damage;
     if (attacker_weapon != nullptr)
     {
-        attacker_weapon->weapon_item->getComponent<WeaponComponent>()->damage;
+        attacker_base_damage =
+            attacker_weapon->weapon_item->getComponent<WeaponComponent>()
+                ->damage;
     }
 
     auto defender_base_AC = defender_base_armor->armor_class;
