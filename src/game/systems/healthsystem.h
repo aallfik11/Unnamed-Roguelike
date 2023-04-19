@@ -1,90 +1,36 @@
 #ifndef HEALTHSYSTEM_H
 #define HEALTHSYSTEM_H
-#include "../components/armorcomponent.h"
 #include "../components/health.h"
-#include "../components/weaponcomponent.h"
 #include "../entity.h"
 #include "../entitytypes.h"
-#include "../health_enum.h"
+#include "../system.h"
 #include <cstdint>
-#include <iostream>
+#include <list>
 #include <memory>
 #include <random>
-#include <unordered_map>
-#include <unordered_set>
 #include <utility>
-#include <vector>
 
-class HealthSystem
+class HealthSystem : public System
 {
-    using EntityId  = uint32_t;
-    using HealthPtr = std::shared_ptr<Health>;
     using EntityPtr = std::shared_ptr<Entity>;
 
-    // std::unordered_map<EntityId, std::weak_ptr<Health>> health_register_;
-    std::unordered_set<EntityPtr> health_register_;
-    static std::random_device     rd;
-    static std::mt19937           mt_engine;
+    using Message   = std::tuple<EntityPtr, uint16_t, SystemAction::HEALTH>;
+    std::list<Message> messages_;
 
 public:
-    HealthSystem() { mt_engine = std::mt19937(rd()); }
-
-    HealthSystem(const std::initializer_list<EntityPtr> &entities)
-        : HealthSystem()
-    {
-        for (auto &entity : entities)
-        {
-            health_register_.emplace(entity);
-        }
-    }
-
-    void addEntity(EntityPtr &entity) { health_register_.emplace(entity); }
-
-    void deleteEntity(EntityPtr &entity) { health_register_.erase(entity); }
-
-    static inline uint16_t getHealth(EntityPtr &entity, HealthAction action)
-    {
-        if (auto health_ptr = entity->getComponent<Health>())
-        {
-            uint16_t health = (action & CURRENT)
-                                  ? health_ptr->current_health_points
-                                  : health_ptr->max_health_points;
-            return health;
-        }
-        return ~0;
-    }
-
-    static inline void updateHealth(const EntityPtr &entity,
-                                    uint16_t         amount,
-                                    HealthAction     action,
-                                    bool             ignore_armor = false)
+    inline void updateHealth(const EntityPtr     &entity,
+                             uint16_t             amount,
+                             SystemAction::HEALTH action)
     {
         if (auto health_ptr = entity->getComponent<Health>())
         {
             uint16_t current_health = health_ptr->current_health_points;
             uint16_t max_health     = health_ptr->max_health_points;
-            if (action & CURRENT)
+            if (action & SystemAction::HEALTH::CURRENT)
             {
 
-                if (action & DEDUCE)
+                if (action & SystemAction::HEALTH::DAMAGE)
                 {
-                    // uint16_t damage = amount;
-                    // todo: change to account for the way equipment works
-                    if (ignore_armor == true)
-                    {
-                        if (auto armor_ptr =
-                                entity->getComponent<ArmorComponent>())
-                        {
-                            std::uniform_int_distribution miss_chance(
-                                1, 100 / armor_ptr->armor_class);
-                            if (miss_chance(mt_engine) == 1)
-                            {
-                                // message for miss goes here
-                                return;
-                            }
-                            amount = ((amount * 10) / armor_ptr->armor_class);
-                        }
-                    }
                     if (amount >= current_health)
                     {
 
@@ -106,7 +52,7 @@ public:
             }
             else
             {
-                if (action & DEDUCE)
+                if (action & SystemAction::HEALTH::DAMAGE)
                 {
                     if (amount >= max_health)
                     {
@@ -126,9 +72,36 @@ public:
             }
         }
     }
-};
 
-std::random_device HealthSystem::rd        = std::random_device();
-std::mt19937       HealthSystem::mt_engine = std::mt19937(HealthSystem::rd());
+    virtual void updateData()
+    {
+        for (auto &message : messages_)
+        {
+            updateHealth(std::get<0>(message),
+                         std::get<1>(message),
+                         std::get<2>(message));
+        }
+    }
+    virtual void readSystemMessages()
+    {
+        for (auto message : (*system_messages_)[SystemType::HEALTH])
+        {
+            auto message_iterator = message.begin();
+            auto entity           = std::any_cast<EntityPtr>(*message_iterator);
+            ++message_iterator;
+            auto amount = std::any_cast<uint16_t>(*message_iterator);
+            ++message_iterator;
+            auto action =
+                std::any_cast<SystemAction::HEALTH>(*message_iterator);
+
+            messages_.emplace_back(std::make_tuple(entity, amount, action));
+        }
+    }
+    virtual void clearSystemMessages()
+    {
+        messages_.clear();
+        (*system_messages_)[SystemType::HEALTH].clear();
+    }
+};
 
 #endif /*HEALTHSYSTEM_H*/

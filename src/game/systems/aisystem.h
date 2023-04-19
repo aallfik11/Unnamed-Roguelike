@@ -9,7 +9,8 @@
 #include "../components/weaponcomponent.h"
 #include "../entity.h"
 #include "../globals.h"
-#include "../health_enum.h"
+// #include "../health_enum.h"
+#include "../system.h"
 #include "attacksystem.h"
 #include "healthsystem.h"
 #include "navmapmanager.h"
@@ -21,8 +22,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
-
-class AISystem
+class AISystem : public System
 {
 
     /* In order to work correctly, an entity in the AI System is required
@@ -189,7 +189,14 @@ public: // temporary
             return wanderAround(caller, target);
         }
 
-        caller_health->current_health_points += 1;
+        // caller_health->current_health_points += 1;
+        auto message = {
+            std::make_any<SystemAction::HEALTH>(SystemAction::HEALTH::UPDATE),
+            std::make_any<EntityPtr>(caller),
+            std::make_any<uint16_t>(1),
+            std::make_any<SystemAction::HEALTH>(SystemAction::HEALTH::HEAL |
+                                                SystemAction::HEALTH::CURRENT)};
+        (*system_messages_)[SystemType::HEALTH].emplace_back(message);
         // might want to add a regen_amount component (or a field to
         // Health component) later
     }
@@ -229,7 +236,8 @@ public: // temporary
             return approachTarget(caller, target);
         }
 
-        AttackSystem::attack(caller, target);
+        // AttackSystem::attack(caller, target);
+        (*system_messages_)[SystemType::ATTACK].emplace_back(caller, target);
     }
 
     void wanderAround(EntityPtr &caller, EntityPtr &target)
@@ -279,7 +287,14 @@ public: // temporary
             x = x2;
             y = y2;
         }
-        positon_system_.updatePosition(caller, x, y);
+        // positon_system_.updatePosition(caller, x, y);
+
+        auto message = {std::make_any<SystemAction::POSITION>(
+                            SystemAction::POSITION::UPDATE),
+                        std::make_any<EntityPtr>(caller),
+                        std::make_any<uint16_t>(x),
+                        std::make_any<uint16_t>(y)};
+        (*system_messages_)[SystemType::POSITION].emplace_back(message);
     }
 
     // void special(EntityPtr &caller, EntityPtr &target)

@@ -6,29 +6,24 @@
 #include "../directions.h"
 #include "../entity.h"
 #include "../entitytypes.h"
+#include "../system.h"
 #include "../tile.h"
+#include <any>
 #include <cstdint>
 #include <unordered_map>
 #include <unordered_set>
 
-class PositionSystem
+class PositionSystem : public System
 {
-    using EntityId       = uint32_t;
-    using Coords         = std::pair<uint16_t, uint16_t>;
-    using CoordEntityMap = std::unordered_multimap<Coords, EntityId>;
-    using GameMap        = std::vector<std::vector<Tile>>;
-    using EntityPtr      = std::shared_ptr<Entity>;
-    using EntityTileMap =
-        std::unordered_map<EntityId, std::weak_ptr<TileComponent>>;
-    using EntityCoordMap =
-        std::unordered_map<EntityId, std::weak_ptr<Coordinates>>;
+    using EntityId  = uint32_t;
 
-    // using EntityPositions = std::unordered_set<EntityPtr>;
+    using GameMap   = std::vector<std::vector<Tile>>;
+    using EntityPtr = std::shared_ptr<Entity>;
+    using Message =
+        std::tuple<SystemAction::POSITION, EntityPtr, uint16_t, uint16_t>;
 
-    CoordEntityMap                coords_with_entities_;
-    EntityTileMap                 entities_with_tiles_;
-    EntityCoordMap                entities_with_coords_;
     std::unordered_set<EntityPtr> entity_positions_;
+    std::list<Message>            messages_;
     GameMap                      &map_;
 
     /**
@@ -66,23 +61,14 @@ class PositionSystem
         if (!(map_[x][y].type & TileType::TRAVERSIBLE))
             return true;
 
-        if (map_[x][y].type & TileType::HAS_MONSTER)
+        if (map_[x][y].type & TileType::HAS_CREATURE)
             return true;
-
-        // for (auto entity : entity_positions_)
-        // {
-        //     auto coords        = entity->getComponent<Coordinates>();
-        //     auto tilecomponent = entity->getComponent<TileComponent>();
-        //     if (tilecomponent->tile.type & TileType::TRAVERSIBLE)
-        //         continue;
-        //     if (coords->x == x && coords->y == y)
-        //         return true;
-        // }
 
         return false;
     }
 
 public:
+    PositionSystem() = delete;
     PositionSystem(GameMap &given_map) : map_{given_map} {}
 
     /**
@@ -98,52 +84,32 @@ public:
     {
         if (entity_positions_.contains(entity) == false)
         {
-            return false;
+            entity_positions_.insert(entity);
         }
 
         if (checkCollision(x, y))
             return false;
 
-        if (auto position = entity->getComponent<Coordinates>())
+        if (entity->hasComponent<Coordinates>() == false)
+            entity->addComponent(new Coordinates(x, y));
+
+        auto position = entity->getComponent<Coordinates>();
+
+        auto type     = entity->type;
+        if (type & (EntityType::CREATURE | EntityType::PLAYER))
         {
-            auto type = entity->type;
-            if (type & EntityType::CREATURE)
-            {
-                map_[position->x][position->y].type &= ~TileType::HAS_MONSTER;
-                map_[x][y].type                     |= TileType::HAS_MONSTER;
-            }
-
-            position->x = x;
-            position->y = y;
-            return true;
+            map_[position->x][position->y].type &= ~TileType::HAS_CREATURE;
+            map_[x][y].type                     |= TileType::HAS_CREATURE;
         }
-        return false;
+        else if (type & (EntityType::CONTAINER | EntityType::ITEM))
+        {
+            map_[position->x][position->y].type &= ~TileType::HAS_ITEM;
+            map_[x][y].type                     |= TileType::HAS_ITEM;
+        }
 
-        // if (auto coord_ptr = entities_with_coords_.at(entity).lock())
-        // {
-
-        //     auto range =
-        //     coords_with_entities_.equal_range(Coords(coord_ptr->x,
-        //     coord_ptr->y)); while (range.first != range.second)
-        //     {
-        //         if (range.first->second == entity)
-        //         {
-        //             coords_with_entities_.erase(range.first);
-        //             break;
-        //         }
-
-        //         range.first++;
-        //     }
-        //     coord_ptr->x = x;
-        //     coord_ptr->y = y;
-        //     coords_with_entities_.emplace(std::make_pair(Coords(x, y),
-        //     entity));
-        // }
-        // else
-        // {
-        //     deleteEntity(entity);
-        //     return false;
-        // }
+        position->x = x;
+        position->y = y;
+        return true;
     }
 
     /**
@@ -158,10 +124,6 @@ public:
      */
     bool updatePosition(const EntityPtr &entity, Direction direction)
     {
-
-        if (entity_positions_.contains(entity) == false)
-            return false;
-
         if (auto position = entity->getComponent<Coordinates>())
         {
             auto x = position->x;
@@ -188,85 +150,22 @@ public:
             return true;
         }
         return false;
-
-        // if (auto coord_ptr = entities_with_coords_.at(entity).lock())
-        // {
-        //     auto x = coord_ptr->x;
-        //     auto y = coord_ptr->y;
-        //     switch (direction)
-        //     {
-        //     case Direction::UP:
-        //         return updatePosition(entity, x, y - 1);
-
-        //     case Direction::DOWN:
-        //         return updatePosition(entity, x, y + 1);
-
-        //     case Direction::LEFT:
-        //         return updatePosition(entity, x - 1, y);
-
-        //     case Direction::RIGHT:
-        //         return updatePosition(entity, x + 1, y);
-        //     default:
-        //         return false;
-        //     }
-        // }
-        // else
-        // {
-        //     deleteEntity(entity);
-        //     return false;
-        // }
     }
 
-    /**
-     * @brief (DO NOT USE) Gets all entity ids at given coordinates
-     *
-     * @param x Coordinate x
-     * @param y Coordinate y
-     * @return std::vector<EntityId>
-     */
-    std::vector<EntityId> getEntityIds(uint16_t x, uint16_t y)
+    std::list<EntityPtr> getEntitiesAtCoordinates(uint16_t x, uint16_t y)
     {
-        std::vector<EntityId> potential_ids;
-        if (coords_with_entities_.contains(Coords(x, y)))
+        std::list<EntityPtr> entitiesAtCoordinates;
+        for (auto &entity : entity_positions_)
         {
-            auto range = coords_with_entities_.equal_range(Coords(x, y));
-            while (range.first != range.second)
+            if (auto coords_ptr = entity->getComponent<Coordinates>())
             {
-                potential_ids.emplace_back(range.first->second);
-                range.first++;
+                if (coords_ptr->x == x && coords_ptr->y == y)
+                {
+                    entitiesAtCoordinates.emplace_back(entity);
+                }
             }
         }
-        return potential_ids;
-    }
-
-    /**
-     * @brief (DO NOT USE) Gets all entity ids currently stored in the system
-     *
-     * @return std::optional<std::vector<EntityId>>
-     */
-    std::vector<EntityId> getAllEntityIds()
-    {
-        std::vector<EntityId> potential_ids;
-        for (auto &entity : entities_with_coords_)
-        {
-            potential_ids.emplace_back(entity.first);
-        }
-        return potential_ids;
-    }
-
-    /**
-     * @brief (DO NOT USE) Gets a given entities' "Coordinates" component
-     *
-     * @param entity
-     * @return std::shared_ptr<Coordinates>
-     */
-    std::shared_ptr<Coordinates> getEntityCoordinates(EntityId entity)
-    {
-        if (entities_with_coords_.contains(entity))
-        {
-            return entities_with_coords_.at(entity).lock();
-        }
-        return std::shared_ptr<Coordinates>(nullptr);
+        return entitiesAtCoordinates;
     }
 
     /**
@@ -277,20 +176,6 @@ public:
     void addEntity(const EntityPtr &entity)
     {
         entity_positions_.emplace(entity);
-        // if (auto coord_ptr = entity->getComponent<Coordinates>())
-        // {
-        //     entities_with_coords_.emplace(entity->getId(),
-        //                                   coord_ptr);
-
-        //     coords_with_entities_.emplace(Coords(coord_ptr->x, coord_ptr->y),
-        //                                   entity->getId());
-        // }
-
-        // if (auto tile_ptr = entity->getComponent<TileComponent>())
-        // {
-        //     entities_with_tiles_.emplace(entity->getId(),
-        //                                  tile_ptr);
-        // }
     }
 
     /**
@@ -302,29 +187,48 @@ public:
     void deleteEntity(const EntityPtr &entity)
     {
         entity_positions_.erase(entity);
-        // if (entities_with_coords_.contains(entity) == false)
-        //     return;
+    }
 
-        // if (auto coord_ptr = entities_with_coords_.at(entity).lock())
-        // {
-        //     auto range =
-        //     coords_with_entities_.equal_range(Coords(coord_ptr->x,
-        //     coord_ptr->y)); while (range.first != range.second)
-        //     {
-        //         if (range.first->second == entity)
-        //         {
-        //             coords_with_entities_.erase(range.first);
-        //             break;
-        //         }
-        //         range.first++;
-        //     }
-        //     entities_with_coords_.erase(entity);
-        // }
+    void updateData() override
+    {
+        for (auto &message : messages_)
+        {
 
-        // if (entities_with_tiles_.contains(entity))
-        // {
-        //     entities_with_tiles_.erase(entity);
-        // }
+            auto x = std::get<2>(message);
+            auto y = std::get<3>(message);
+            if (std::get<0>(message) == SystemAction::POSITION::UPDATE)
+            {
+                auto entity = std::get<1>(message);
+                updatePosition(entity, x, y);
+            }
+            else
+            {
+                getEntitiesAtCoordinates(x, y);
+            }
+        }
+    }
+
+    void readSystemMessages()
+        override // todo: change to make this a parallel listener;
+    {
+        for (auto &message : (*system_messages_)[SystemType::POSITION])
+        {
+            auto message_iterator = message.begin();
+
+            // true -> update position
+            // false -> get entities
+            auto update_or_get =
+                std::any_cast<SystemAction::POSITION>(*message_iterator);
+            auto entity = std::any_cast<EntityPtr>(*(message_iterator + 1));
+            auto x      = std::any_cast<uint16_t>(*(message_iterator + 2));
+            auto y      = std::any_cast<uint16_t>(*(message_iterator + 3));
+            messages_.emplace_back(update_or_get, entity, x, y);
+        }
+    }
+
+    void clearSystemMessages() override
+    {
+        (*system_messages_)[SystemType::POSITION].clear();
     }
 };
 

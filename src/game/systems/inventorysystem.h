@@ -12,11 +12,12 @@
 #include "../entity.h"
 #include "../entitytypes.h"
 #include "../itemtypes.h"
+#include "../system.h"
 #include "effectsystem.h"
 #include "healthsystem.h"
 #include <list>
 
-class InventorySystem
+class InventorySystem : public System
 {
     using EntityPtr = std::shared_ptr<Entity>;
     using Inv       = std::list<EntityPtr>;
@@ -44,7 +45,8 @@ class InventorySystem
                     item_buff.second->effect_strength;
             }
             else
-                caller_buffs->buffs[item_buff.first] = std::shared_ptr<EffectComponent>(item_buff.second->clone());
+                caller_buffs->buffs[item_buff.first] =
+                    std::shared_ptr<EffectComponent>(item_buff.second->clone());
         }
     }
 
@@ -220,7 +222,8 @@ class InventorySystem
             auto caller_buffs = caller->getComponent<BuffComponent>();
             for (auto &buff : buff_component->buffs)
             {
-                caller_buffs->buffs[buff.first] = std::shared_ptr<EffectComponent>(buff.second->clone());
+                caller_buffs->buffs[buff.first] =
+                    std::shared_ptr<EffectComponent>(buff.second->clone());
             }
         }
         if (item_component->stack > 1)
@@ -234,19 +237,23 @@ class InventorySystem
     }
 
 public:
-    static void addToInventory(Inv &target_inventory,
+    static void addToInventory(EntityPtr                       &caller,
                                std::initializer_list<EntityPtr> items)
     {
+        auto target_inventory = caller->getComponent<Inventory>();
+        if (target_inventory == nullptr)
+            caller->addComponent(new Inventory());
+
         for (auto &item : items)
         {
             // figure out how to add stackable stuff
             if (item->getComponent<ItemComponent>()->type & ItemType::STACKABLE)
             {
-                if (stackItem(target_inventory, item) == true)
+                if (stackItem(target_inventory->inventory, item) == true)
                     continue;
             }
 
-            target_inventory.emplace_back(item);
+            target_inventory->inventory.emplace_back(item);
         }
     }
 
@@ -326,6 +333,54 @@ public:
         {
             consume(caller, index);
         }
+    }
+
+    void updateData()
+    {
+        for (auto &message : (*system_messages_)[SystemType::INVENTORY])
+        {
+            auto message_iterator = message.begin();
+            auto action =
+                std::any_cast<SystemAction::INVENTORY>(*message_iterator);
+            ++message_iterator;
+            auto entity = std::any_cast<EntityPtr>(*message_iterator);
+            ++message_iterator;
+            switch (action)
+            {
+            case SystemAction::INVENTORY::ADD:
+            {
+                auto items = std::any_cast<std::initializer_list<EntityPtr>>(
+                    *message_iterator);
+                addToInventory(entity, items);
+                break;
+            }
+            case SystemAction::INVENTORY::DROP:
+            {
+                auto index = std::any_cast<uint32_t>(*message_iterator);
+                dropFromInventory(entity, index);
+                break;
+            }
+            case SystemAction::INVENTORY::TRANSFER:
+            {
+                auto index = std::any_cast<uint32_t>(*message_iterator);
+                ++message_iterator;
+                auto target = std::any_cast<EntityPtr>(*message_iterator);
+                addToInventory(target, {dropFromInventory(entity, index)});
+                break;
+            }
+            case SystemAction::INVENTORY::USE:
+            {
+                auto index = std::any_cast<uint32_t>(*message_iterator);
+                useItem(entity, index);
+                break;
+            }
+            }
+        }
+    }
+    void readSystemMessages() {}
+    void clearSystemMessages()
+    {
+        (*system_messages_)[SystemType::INVENTORY].clear();
     }
 };
 #endif /*INVENTORYSYSTEM_H*/
