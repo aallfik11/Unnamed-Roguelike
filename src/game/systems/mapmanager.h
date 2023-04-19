@@ -19,7 +19,9 @@ class MapManager
     MapPointer         map_;
 
 public:
-    MapManager(GeneratorFunction initial_generator = 0)
+    MapManager() = delete;
+
+    MapManager(GeneratorFunction initial_generator)
         : generator_{initial_generator}
     {
         twister_engine_ = std::mt19937(rng_());
