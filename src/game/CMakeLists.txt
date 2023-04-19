@@ -13,6 +13,7 @@ add_library(game
     health_enum.h
     tile.h
     globals.h
+    system.h
     )
 
 set_target_properties(game PROPERTIES LINKER_LANGUAGE CXX)
