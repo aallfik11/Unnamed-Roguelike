@@ -11,7 +11,7 @@ enum TileType : uint16_t
     TRAVERSIBLE = 0x0008,
     CHECKED     = 0x0010, // used in map generation
 
-    HAS_MONSTER = 0x0020,
+    HAS_CREATURE = 0x0020,
     HAS_ITEM    = 0x0040,
     HAS_STAIRS  = 0x0080,
 
