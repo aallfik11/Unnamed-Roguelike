@@ -73,7 +73,7 @@ public:
         }
     }
 
-    virtual void updateData()
+    void updateData()
     {
         for (auto &message : messages_)
         {
@@ -82,7 +82,7 @@ public:
                          std::get<2>(message));
         }
     }
-    virtual void readSystemMessages()
+    void readSystemMessages()
     {
         for (auto message : (*system_messages_)[SystemType::HEALTH])
         {
@@ -97,7 +97,7 @@ public:
             messages_.emplace_back(std::make_tuple(entity, amount, action));
         }
     }
-    virtual void clearSystemMessages()
+    void clearSystemMessages()
     {
         messages_.clear();
         (*system_messages_)[SystemType::HEALTH].clear();
