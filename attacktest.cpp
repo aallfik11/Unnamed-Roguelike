@@ -7,10 +7,11 @@
 #include "src/game/systems/healthsystem.h"
 #include "src/game/systems/inventorysystem.h"
 #include "src/game/systems/mapmanager.h"
+#include "src/game/systems/playerinputsystem.h"
 #include "src/game/systems/positionsystem.h"
 #include <chrono>
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <memory>
 #include <thread>
 
