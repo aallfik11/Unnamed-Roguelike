@@ -10,6 +10,7 @@
 
 enum class SystemType
 {
+    PLAYER,
     AI,
     ATTACK,
     EFFECT,
@@ -19,11 +20,17 @@ enum class SystemType
     LINE_OF_SIGHT,
     MAP_MANAGER,
     NAVMAP_MANAGER,
-    POSITION
+    POSITION,
 };
 
 namespace SystemAction
 {
+enum class PLAYER
+{
+    ADD_TO_MOVEMENT_QUEUE,
+    CLEAR_MOVEMENT_QUEUE,
+    SYSTEM_TICK_FORWARD,
+};
 enum class AI
 {
 };
@@ -83,8 +90,7 @@ class System
 {
 public:
     using MessageMap =
-        std::unordered_map<SystemType,
-                           std::list<std::vector<std::any>>>;
+        std::unordered_map<SystemType, std::list<std::vector<std::any>>>;
 
     static std::shared_ptr<MessageMap> system_messages_;
 
