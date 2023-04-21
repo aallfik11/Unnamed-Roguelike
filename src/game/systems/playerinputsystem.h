@@ -13,6 +13,7 @@
 #include "../itemtypes.h"
 #include "../rarity.h"
 #include "../system.h"
+#include <cstdint>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
@@ -24,9 +25,11 @@
 class PlayerControlSystem : public System
 {
     using EntityPtr = std::shared_ptr<Entity>;
-    EntityPtr        player_;
-    ftxui::Component inv_renderer_;
-    ftxui::Component inv_input_handler_;
+    EntityPtr                                    player_;
+    ftxui::Component                             inv_renderer_;
+    ftxui::Component                             inv_input_handler_;
+    int                                          inv_index_;
+    std::list<std::shared_ptr<Entity>>::iterator inv_iterator_;
 
     inline void determineNextAction(const ftxui::Event &event)
     {
@@ -79,7 +82,7 @@ class PlayerControlSystem : public System
         }
     }
 
-    inline ftxui::Color getColor(Rarity &rarity)
+    inline ftxui::Color getItemColor(const Rarity &rarity) const
     {
         switch (rarity)
         {
@@ -98,20 +101,15 @@ class PlayerControlSystem : public System
         }
     }
 
-    inline ftxui::MenuEntryOption
-    getItemAppearance(const std::shared_ptr<ItemComponent> &item_component)
+    inline ftxui::MenuEntryOption getItemAppearance(
+        const std::shared_ptr<ItemComponent> &item_component) const
     {
         using namespace ftxui;
-        Color col = getColor(item_component->rarity);
+        Color col = getItemColor(item_component->rarity);
 
         MenuEntryOption option;
         option.animated_colors.foreground.enabled = true;
         option.animated_colors.background.enabled = true;
-        // option.animated_colors.foreground.active   = col;
-        // option.animated_colors.foreground.inactive = col;
-        // option.animated_colors.background.active   =
-        // ftxui::Color::DarkSlateGray1;
-        // option.animated_colors.background.inactive = ftxui::Color::Black;
 
         option.transform = [&item_component, col](EntryState state)
         {
@@ -139,26 +137,79 @@ public:
 
         using namespace ftxui;
 
-        inv_renderer_ =
-            Renderer(main_screen,
-                     [&]
-                     {
-                         auto &player_inventory =
-                             player_->getComponent<Inventory>()->inventory;
+        inv_renderer_ = Renderer(
+            main_screen,
+            [&]
+            {
+                auto &player_inventory =
+                    player_->getComponent<Inventory>()->inventory;
 
-                         Components entries;
-                         for (auto &item : player_inventory)
-                         {
-                             auto &name = item->getComponent<Name>()->name;
-                             auto &description =
-                                 item->getComponent<Description>()->description;
-                             auto item_component =
-                                 item->getComponent<ItemComponent>();
-                             entries.push_back(MenuEntry(name, getItemAppearance(item_component)));
-                         }
+                inv_iterator_ = player_inventory.begin();
+                inv_index_    = 0;
 
-                         return dbox(main_screen->Render());
-                     });
+                Components entries;
+                for (auto &item : player_inventory)
+                {
+                    auto &name           = item->getComponent<Name>()->name;
+                    auto  item_component = item->getComponent<ItemComponent>();
+                    entries.emplace_back(
+                        MenuEntry(name, getItemAppearance(item_component)));
+                }
+
+                auto inv_container = Container::Vertical(entries, &inv_index_);
+
+                return dbox(main_screen->Render(),
+                            inv_container->Render() | center | flex_shrink |
+                                clear_under);
+            });
+
+        auto iterateToItem = [&](int8_t n)
+        {
+            auto size = player_->getComponent<Inventory>()->inventory.size();
+
+            if (inv_index_ + n < size && inv_index_ + n >= 0)
+            {
+                (n > 0) ? inv_iterator_++ : inv_iterator_--;
+                inv_index_ += n;
+            }
+        };
+
+        inv_input_handler_ = CatchEvent(inv_renderer_,
+                                        [&](Event event)
+                                        {
+                                            if (event.is_mouse())
+                                                return false;
+
+                                            if (event == Event::ArrowUp)
+                                            {
+                                                iterateToItem(-1);
+                                                return true;
+                                            }
+
+                                            if (event == Event::ArrowDown)
+                                            {
+                                                iterateToItem(1);
+                                                return true;
+                                            }
+
+                                            if (event == Event::Character('d'))
+                                            {
+                                                iterateToItem(1);
+                                                return true;
+                                            }
+                                            if (event == Event::Character('s'))
+                                            {
+                                                iterateToItem(1);
+                                                return true;
+                                            }
+
+                                            if (event == Event::Character('r'))
+                                            {
+                                                // drop item
+                                                return true;
+                                            }
+                                            return false;
+                                        });
     }
     void updateData() override {}
     void readSystemMessages() override {}
