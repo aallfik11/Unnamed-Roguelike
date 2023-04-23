@@ -46,6 +46,8 @@ enum class EFFECT
 };
 enum class ENTITY
 {
+    ADD,
+    PURGE,
 };
 
 enum HEALTH : uint8_t

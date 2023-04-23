@@ -17,7 +17,6 @@
 #include "name.h"
 #include "navmapcomponent.h"
 #include "tilecomponent.h"
-#include "typecomponent.h"
 #include "weaponcomponent.h"
 #include "weaponslot.h"
 #include "critcomponent.h"

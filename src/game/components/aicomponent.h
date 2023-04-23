@@ -5,6 +5,8 @@
 #include "../component.h"
 #include <cstdint>
 #include <functional>
+#include <memory>
+
 
 /*
  * Probably one of the only few components that will break the rule of being
@@ -29,6 +31,7 @@ class AIComponent : public Component
         this->last_target_x = ai_component.last_target_x;
         this->last_target_y = ai_component.last_target_y;
     }
+    AIComponent *cloneImpl() const override { return new AIComponent(*this); }
 
 public:
     AIType   ai_type;
@@ -45,7 +48,10 @@ public:
         last_target_y  = 0;
     }
 
-    AIComponent *clone() { return new AIComponent(*this); }
+    std::unique_ptr<AIComponent> clone() const
+    {
+        return std::unique_ptr<AIComponent>(this->cloneImpl());
+    }
 };
 
 #endif /*AI_COMPONENT_H*/

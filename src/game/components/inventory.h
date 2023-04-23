@@ -8,16 +8,22 @@ class Entity;
 
 class Inventory : public Component
 {
+
+    Inventory *cloneImpl() const override { return new Inventory(*this); }
+
 public:
-    std::list<std::shared_ptr<Entity>> inventory;
+    std::list<Entity *> inventory;
 
     Inventory(){};
 
-    Inventory(std::list<std::shared_ptr<Entity>> inventory)
+    Inventory(const Inventory &inventory_component)
     {
-        this->inventory = inventory;
+        this->inventory = inventory_component.inventory;
     }
 
-    Inventory *clone() { return new Inventory(this->inventory); }
+    std::unique_ptr<Inventory> clone() const
+    {
+        return std::unique_ptr<Inventory>(this->cloneImpl());
+    }
 };
 #endif /*INVENTORY_H*/

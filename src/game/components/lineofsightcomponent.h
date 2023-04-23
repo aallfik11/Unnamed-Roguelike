@@ -2,9 +2,15 @@
 #define LINEOFSIGHTCOMPONENT_H
 #include "../component.h"
 #include <cstdint>
+#include <memory>
 
 class LOSComponent : public Component
 {
+    LOSComponent *cloneImpl() const override
+    {
+        return new LOSComponent(this->has_LOS_to_player, this->seeing_distance);
+    }
+
 public:
     // I want to make it work for other entities later on
     bool     has_LOS_to_player;
@@ -18,9 +24,9 @@ public:
         this->seeing_distance   = seeing_distance;
     }
 
-    LOSComponent *clone()
+    std::unique_ptr<LOSComponent> clone() const
     {
-        return new LOSComponent(this->has_LOS_to_player, this->seeing_distance);
+        return std::unique_ptr<LOSComponent>(this->cloneImpl());
     }
 };
 #endif /*LINEOFSIGHTCOMPONENT_H*/

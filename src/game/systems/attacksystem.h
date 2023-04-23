@@ -14,10 +14,11 @@
 #include <cstdint>
 #include <list>
 #include <random>
+#include <ranges>
 
 class AttackSystem : public System
 {
-    using EntityPtr = std::shared_ptr<Entity>;
+    using EntityPtr = Entity *;
 
     std::random_device                         rd_;
     std::mt19937                               mt_engine_;
@@ -31,7 +32,7 @@ public:
         roll_chance_ = std::uniform_int_distribution<uint8_t>(0, 100);
     }
 
-    bool attack(EntityPtr &attacker, EntityPtr &defender)
+    bool attack(Entity *const attacker, Entity *const defender)
     {
 
         // move it down later, as if the attack misses there's no point
@@ -91,17 +92,23 @@ public:
             {
                 for (auto &effect : attacker_crit->crit_effects->buffs)
                 {
-                    if (defender_effects->buffs.contains(effect.first))
+                    if (defender_effects->buffs.contains(effect.first) == false)
                     {
-                        if (defender_effects->buffs.at(effect.first)
-                                ->effect_strength <
-                            effect.second->effect_strength)
-                        {
-                            defender_effects->buffs[effect.first] =
-                                std::shared_ptr<EffectComponent>(
-                                    effect.second->clone());
-                        }
+                        continue;
                     }
+                    if (defender_effects->buffs[effect.first]->effect_strength >
+                        effect.second->effect_strength)
+                    {
+                        continue;
+                    }
+                    // defender_effects->buffs[effect.first] =
+                    //     effect.second->clone();
+                    auto message = {
+                        std::make_any<SystemAction::EFFECT>(
+                            SystemAction::EFFECT::ADD),
+                        std::make_any<Entity *>(defender),
+                        std::make_any<BuffComponent *>(defender_effects)};
+                    sendSystemMessage(SystemType::EFFECT, message);
                 }
             }
         }
@@ -135,12 +142,13 @@ public:
             (attacker_base_damage * 10) / (defender_base_AC + ac_modifier);
 
         auto message = {
-            std::make_any<EntityPtr>(defender),
+            std::make_any<Entity *>(defender),
             std::make_any<uint16_t>(damage),
             std::make_any<SystemAction::HEALTH>(SystemAction::HEALTH::DAMAGE |
                                                 SystemAction::HEALTH::CURRENT)};
 
-        (*system_messages_)[SystemType::HEALTH].emplace_back(message);
+        // (*system_messages_)[SystemType::HEALTH].emplace_back(message);
+        sendSystemMessage(SystemType::HEALTH, message);
 
         return true;
     }

@@ -15,7 +15,7 @@
 #include <memory>
 #include <thread>
 
-std::shared_ptr<Entity> attacker(new Entity(PLAYER,
+std::unique_ptr<Entity> attacker(new Entity(PLAYER,
                                             {new Health(50, 50),
                                              new BuffComponent(),
                                              new ArmorComponent(),
@@ -24,7 +24,7 @@ std::shared_ptr<Entity> attacker(new Entity(PLAYER,
                                              new Inventory(),
                                              new AmuletSlot()}));
 
-std::shared_ptr<Entity> defender(new Entity(CREATURE,
+std::unique_ptr<Entity> defender(new Entity(CREATURE,
                                             {new Health(50, 50),
                                              new BuffComponent(),
                                              new ArmorComponent(10),
@@ -42,26 +42,27 @@ void iterate()
     uint64_t it = iterations / 12;
     for (uint64_t i = 0; i < it; i++)
     {
-        (att.attack(attacker, defender)) ? hits++ : misses++;
+        (att.attack(attacker.get(), defender.get())) ? hits++ : misses++;
     }
 }
 
 int main()
 {
-    EffectSystem es;
+    EffectSystem    es;
+    InventorySystem inv;
 
-    std::shared_ptr<EffectComponent> str(new EffectComponent(STRENGTH, 4, 10));
-    std::shared_ptr<EffectComponent> irnskin(
+    std::unique_ptr<EffectComponent> str(new EffectComponent(STRENGTH, 4, 10));
+    std::unique_ptr<EffectComponent> irnskin(
         new EffectComponent(IRONSKIN, 1, 10));
-    std::shared_ptr<EffectComponent> blind(new EffectComponent(BLIND, 1, 10));
-    std::shared_ptr<BuffComponent>   buffs(new BuffComponent());
+    std::unique_ptr<EffectComponent> blind(new EffectComponent(BLIND, 1, 10));
+    std::unique_ptr<BuffComponent>   buffs(new BuffComponent());
 
-    std::shared_ptr<Entity> str_ring(new Entity(
+    std::unique_ptr<Entity> str_ring(new Entity(
         ITEM,
         {new ItemComponent(ItemType::RING, 1, 1, RARE),
          new BuffComponent({new EffectComponent(STRENGTH | PERMANENT, 2)})}));
 
-    std::shared_ptr<Entity> str_ring2(new Entity(
+    std::unique_ptr<Entity> str_ring2(new Entity(
         ITEM,
         {new ItemComponent(ItemType::RING, 1, 1, RARE),
          new BuffComponent({new EffectComponent(STRENGTH | PERMANENT, 3)})}));
@@ -72,10 +73,10 @@ int main()
     // es.addEffects(attacker, buffs);
     // es.addEffects(defender, buffs);
     // es.addEffects(attacker, buffs);
-    InventorySystem::addToInventory(attacker, {str_ring, str_ring2});
-    InventorySystem::useItem(attacker, 0);
-    InventorySystem::useItem(attacker, 1);
-    InventorySystem::useItem(attacker, 0);
+    inv.addToInventory(attacker.get(), {str_ring.get(), str_ring2.get()});
+    inv.useItem(attacker.get(), 0);
+    inv.useItem(attacker.get(), 1);
+    inv.useItem(attacker.get(), 0);
 
     auto       defender_hp = defender->getComponent<Health>();
     MapManager m(DebugMapGenerator::generate);
@@ -85,11 +86,12 @@ int main()
 
     auto x = {
         std::make_any<SystemAction::POSITION>(SystemAction::POSITION::UPDATE),
-        std::make_any<std::shared_ptr<Entity>>(attacker),
+        std::make_any<Entity *>(attacker.get()),
         std::make_any<uint16_t>(25),
         std::make_any<uint16_t>(25)};
 
     (*System::system_messages_)[SystemType::POSITION].emplace_back(x);
+    // System::sendSystemMessage(SystemType::POSITION, xunique_ptr
     p.readSystemMessages();
     p.updateData();
 
@@ -101,7 +103,7 @@ int main()
     HealthSystem hpsys;
 
     auto y = {
-        std::make_any<std::shared_ptr<Entity>>(defender),
+        std::make_any<Entity *>(defender.get()),
         std::make_any<uint16_t>(23),
         std::make_any<SystemAction::HEALTH>(SystemAction::HEALTH::DAMAGE |
                                             SystemAction::HEALTH::CURRENT)};
@@ -117,7 +119,7 @@ int main()
     {
         for (uint64_t i = 0; i < iterations; i++)
         {
-            (att.attack(attacker, defender)) ? hits++ : misses++;
+            (att.attack(attacker.get(), defender.get())) ? hits++ : misses++;
         }
     }
     else

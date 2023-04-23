@@ -7,6 +7,12 @@
 
 class CritComponent : public Component
 {
+
+    CritComponent *cloneImpl() const override
+    {
+        return new CritComponent(*this);
+    }
+
 public:
     uint8_t                        crit_chance;
     double                         crit_multiplier;
@@ -21,10 +27,16 @@ public:
         this->crit_effects    = std::unique_ptr<BuffComponent>(crit_effects);
     }
 
-    CritComponent *clone()
+    CritComponent(const CritComponent &crit_component)
     {
-        return new CritComponent(
-            crit_chance, crit_multiplier, crit_effects->clone());
+        this->crit_chance     = crit_component.crit_chance;
+        this->crit_multiplier = crit_component.crit_multiplier;
+        this->crit_effects    = crit_component.crit_effects->clone();
+    }
+
+    std::unique_ptr<CritComponent> clone() const
+    {
+        return std::unique_ptr<CritComponent>(this->cloneImpl());
     }
 };
 

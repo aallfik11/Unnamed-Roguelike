@@ -8,7 +8,6 @@ add_library(components
     name.h
     stackable.h
     tilecomponent.h
-    interaction.h
     aicomponent.h
     navmapcomponent.h
     lineofsightcomponent.h

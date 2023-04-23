@@ -8,22 +8,24 @@
 class BuffComponent : public Component
 {
 
+    BuffComponent *cloneImpl() const override
+    {
+        return new BuffComponent(*this);
+    }
+
 public:
     using BuffMap =
-        std::unordered_map<Effect, std::shared_ptr<EffectComponent>>;
-
+        std::unordered_map<Effect, std::unique_ptr<EffectComponent>>;
     BuffMap buffs;
 
     BuffComponent() {}
 
-    BuffComponent(BuffMap buffs) { this->buffs = buffs; }
-
-    BuffComponent(
-        std::initializer_list<std::shared_ptr<EffectComponent>> buffs_list)
+    BuffComponent(const BuffComponent &buff_component)
     {
-        for (auto &buff : buffs_list)
+        for (auto &buff : buff_component.buffs)
         {
-            buffs[(buff->effect & ~(APPLIED | APPLY_ONCE))] = buff;
+            this->buffs[buff.first] =
+                std::unique_ptr<EffectComponent>(buff.second->clone());
         }
     }
 
@@ -32,11 +34,14 @@ public:
         for (auto &buff : buffs_list)
         {
             buffs[(buff->effect & ~(APPLIED | APPLY_ONCE))] =
-                std::shared_ptr<EffectComponent>(buff);
+                std::unique_ptr<EffectComponent>(buff);
         }
     }
 
-    BuffComponent *clone() { return new BuffComponent(this->buffs); }
+    std::unique_ptr<BuffComponent> clone() const
+    {
+        return std::unique_ptr<BuffComponent>(this->cloneImpl());
+    }
 };
 
 #endif /*BUFFCOMPONENT_H*/

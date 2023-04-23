@@ -7,15 +7,20 @@
 class ArmorSlot : public Component
 {
 
-public:
-    std::shared_ptr<Entity> armor_item;
-
-    ArmorSlot(std::shared_ptr<Entity> armor_item = nullptr)
+    ArmorSlot *cloneImpl() const override
     {
-        this->armor_item = armor_item;
+        return new ArmorSlot(this->armor_item);
     }
 
-    ArmorSlot *clone() { return new ArmorSlot(this->armor_item); }
+public:
+    Entity *armor_item;
+
+    ArmorSlot(Entity *armor_item = nullptr) { this->armor_item = armor_item; }
+
+    std::unique_ptr<ArmorSlot> clone() const
+    {
+        return std::unique_ptr<ArmorSlot>(this->cloneImpl());
+    }
 };
 
 #endif /*ARMORSLOT_H*/

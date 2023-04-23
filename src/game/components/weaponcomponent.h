@@ -2,14 +2,24 @@
 #define WEAPONCOMPONENT_H
 #include "../component.h"
 #include <cstdint>
+#include <memory>
 
 class WeaponComponent : public Component
 {
+
+    WeaponComponent *cloneImpl() const override
+    {
+        return new WeaponComponent(this->damage);
+    }
+
 public:
     uint16_t damage;
     WeaponComponent(uint16_t damage = 1) { this->damage = damage; }
 
-    WeaponComponent *clone() { return new WeaponComponent(this->damage); }
+    std::unique_ptr<WeaponComponent> clone() const
+    {
+        return std::unique_ptr<WeaponComponent>(this->cloneImpl());
+    }
 };
 
 #endif /*WEAPONCOMPONENT_H*/

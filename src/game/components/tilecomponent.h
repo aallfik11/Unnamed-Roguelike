@@ -3,17 +3,15 @@
 #include "../component.h"
 #include "../tile.h"
 #include <ftxui/screen/color.hpp>
+#include <memory>
 #include <string>
 
 class TileComponent : public Component
 {
 
-    TileComponent(const TileComponent &tile_component)
+    TileComponent *cloneImpl() const override
     {
-        this->tile.type             = tile_component.tile.type;
-        this->tile.color            = tile_component.tile.color;
-        this->tile.background_color = tile_component.tile.background_color;
-        this->sprite                = tile_component.sprite;
+        return new TileComponent(*this);
     }
 
 public:
@@ -31,7 +29,18 @@ public:
         this->tile.background_color = bg_color;
     }
 
-    TileComponent *clone() { return new TileComponent(*this); }
+    TileComponent(const TileComponent &tile_component)
+    {
+        this->tile.type             = tile_component.tile.type;
+        this->tile.color            = tile_component.tile.color;
+        this->tile.background_color = tile_component.tile.background_color;
+        this->sprite                = tile_component.sprite;
+    }
+
+    std::unique_ptr<TileComponent> clone() const
+    {
+        return std::unique_ptr<TileComponent>(this->cloneImpl());
+    }
 };
 
 #endif /*TILECOMPONENT_H*/

@@ -4,10 +4,20 @@
 #include "../itemtypes.h"
 #include "../rarity.h"
 #include <cstdint>
-#include <string>
+#include <memory>
 
 class ItemComponent : public Component
 {
+
+    ItemComponent *cloneImpl() const override
+    {
+        return new ItemComponent(this->type,
+                                 this->stack,
+                                 this->max_stack,
+                                 this->rarity,
+                                 this->equipped);
+    }
+
 public:
     ItemType type;
     uint16_t stack;
@@ -28,13 +38,9 @@ public:
         this->equipped  = equipped;
     }
 
-    ItemComponent *clone()
+    std::unique_ptr<ItemComponent> clone() const
     {
-        return new ItemComponent(this->type,
-                                 this->stack,
-                                 this->max_stack,
-                                 this->rarity,
-                                 this->equipped);
+        return std::unique_ptr<ItemComponent>(this->cloneImpl());
     }
 };
 

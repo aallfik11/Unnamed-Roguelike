@@ -24,12 +24,12 @@
 
 class PlayerControlSystem : public System
 {
-    using EntityPtr = std::shared_ptr<Entity>;
-    EntityPtr                                    player_;
-    ftxui::Component                             inv_renderer_;
-    ftxui::Component                             inv_input_handler_;
-    int                                          inv_index_;
-    std::list<std::shared_ptr<Entity>>::iterator inv_iterator_;
+    // using EntityPtr = std::shared_ptr<Entity>;
+    Entity                       *player_;
+    ftxui::Component              inv_renderer_;
+    ftxui::Component              inv_input_handler_;
+    int                           inv_index_;
+    std::list<Entity *>::iterator inv_iterator_;
 
     inline void determineNextAction(const ftxui::Event &event)
     {
@@ -47,7 +47,7 @@ class PlayerControlSystem : public System
             if (event == Event::Character("r") ||
                 event == Event::Character("R"))
             {
-                auto message = {std::make_any<EntityPtr>(player_),
+                auto message = {std::make_any<Entity *>(player_),
                                 std::make_any<uint16_t>(1),
                                 std::make_any<SystemAction::HEALTH>(
                                     SystemAction::HEALTH::HEAL |
@@ -66,6 +66,11 @@ class PlayerControlSystem : public System
                 event == Event::Character("S"))
             {
                 /*SAVE SYSTEM GOES HERE*/
+                /* in order to save, first have all entites stored in a file,
+                 * when reading put them into a map by their entity id, and then
+                 * wherever else they were stored, put their entity id instead
+                 * of the entity again.
+                 */
             }
         }
         if (event == Event::ArrowDown)
@@ -101,8 +106,8 @@ class PlayerControlSystem : public System
         }
     }
 
-    inline ftxui::MenuEntryOption getItemAppearance(
-        const std::shared_ptr<ItemComponent> &item_component) const
+    inline ftxui::MenuEntryOption
+    getItemAppearance(const ItemComponent *const item_component) const
     {
         using namespace ftxui;
         Color col = getItemColor(item_component->rarity);
@@ -130,8 +135,7 @@ class PlayerControlSystem : public System
     void openInventory() {}
 
 public:
-    PlayerControlSystem(const EntityPtr        &player,
-                        const ftxui::Component &main_screen)
+    PlayerControlSystem(Entity *const player, ftxui::Component &main_screen)
     {
         player_ = player;
 

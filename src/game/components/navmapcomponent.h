@@ -2,6 +2,8 @@
 #define NAVMAPCOMPONENT_H
 #include "../component.h"
 #include "../globals.h"
+#include <memory>
+#include <ranges>
 #include <vector>
 
 struct NavCell        //: std::pair<uint32_t, bool>
@@ -47,6 +49,11 @@ bool operator!=(const NavCell &nc1, const NavCell &nc2)
 
 class NavMapComponent : public Component
 {
+    NavMapComponent *cloneImpl() const override
+    {
+        return new NavMapComponent(this->nav_map);
+    }
+
 public:
     std::vector<std::vector<NavCell>> nav_map;
 
@@ -56,15 +63,30 @@ public:
             G_MAP_WIDTH, std::vector<NavCell>(G_MAP_HEIGHT));
     }
 
-    NavMapComponent(std::vector<std::vector<NavCell>> nav_map)
+    NavMapComponent(const std::vector<std::vector<NavCell>> &nav_map)
+        : NavMapComponent()
     {
-        for (auto &col : nav_map)
+        if (nav_map.empty() == false)
         {
-            this->nav_map.push_back(col);
+            if (nav_map.size() == G_MAP_WIDTH &&
+                nav_map.at(0).size() == G_MAP_HEIGHT)
+            {
+                std::ranges::for_each(std::ranges::views::all(nav_map),
+                                      [&](const std::vector<NavCell> &n)
+                                      { this->nav_map.emplace_back(n); });
+            }
         }
     }
 
-    NavMapComponent *clone() { return new NavMapComponent(this->nav_map); }
+    NavMapComponent(const NavMapComponent &nav_map_component)
+        : NavMapComponent(nav_map_component.nav_map)
+    {
+    }
+
+    std::unique_ptr<NavMapComponent> clone() const
+    {
+        return std::unique_ptr<NavMapComponent>(this->cloneImpl());
+    }
 };
 
 #endif /*NAVMAPCOMPONENT_H*/

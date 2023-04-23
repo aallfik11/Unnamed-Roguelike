@@ -15,21 +15,19 @@
 
 class EffectSystem : public System
 {
-    using BuffPtr   = std::shared_ptr<BuffComponent>;
-    using EffectPtr = std::shared_ptr<EffectComponent>;
-    using EntityPtr = std::shared_ptr<Entity>;
-    std::unordered_set<EntityPtr> buffable_entities_;
+
+    std::unordered_set<Entity *> buffable_entities_;
 
 public:
-    void addEntity(EntityPtr &entity) { buffable_entities_.insert(entity); }
-    void addEntity(std::initializer_list<EntityPtr> &entities)
+    void addEntity(Entity *const entity) { buffable_entities_.insert(entity); }
+    void addEntity(std::initializer_list<Entity *> &entities)
     {
         for (auto &entity : entities)
         {
             buffable_entities_.insert(entity);
         }
     }
-    void applyEffect(const EntityPtr &caller, EffectPtr &effect_ptr)
+    void applyEffect(Entity *const caller, EffectComponent *const effect_ptr)
     {
         using SystemAction::HEALTH::CURRENT;
         using SystemAction::HEALTH::DAMAGE;
@@ -44,11 +42,12 @@ public:
             auto message = {
                 std::make_any<SystemAction::HEALTH>(
                     SystemAction::HEALTH::UPDATE),
-                std::make_any<EntityPtr>(caller),
+                std::make_any<Entity *>(caller),
                 std::make_any<uint16_t>(effect_ptr->effect_strength * 5),
                 std::make_any<SystemAction::HEALTH>(HEAL | CURRENT)};
 
-            (*system_messages_)[SystemType::HEALTH].emplace_back(message);
+            // (*system_messages_)[SystemType::HEALTH].emplace_back(message);
+            sendSystemMessage(SystemType::HEALTH, message);
             if (effect_ptr->effect & APPLY_ONCE)
             {
                 effect_ptr->effect |= APPLIED;
@@ -64,11 +63,12 @@ public:
             auto message = {
                 std::make_any<SystemAction::HEALTH>(
                     SystemAction::HEALTH::UPDATE),
-                std::make_any<EntityPtr>(caller),
+                std::make_any<Entity *>(caller),
                 std::make_any<uint16_t>(effect_ptr->effect_strength),
                 std::make_any<SystemAction::HEALTH>(DAMAGE | CURRENT)};
 
-            (*system_messages_)[SystemType::HEALTH].emplace_back(message);
+            // (*system_messages_)[SystemType::HEALTH].emplace_back(message);
+            sendSystemMessage(SystemType::HEALTH, message);
             return;
         }
 
@@ -80,7 +80,8 @@ public:
                 std::make_any<uint16_t>(effect_ptr->effect_strength * 2),
                 std::make_any<SystemAction::HEALTH>(DAMAGE | CURRENT)};
 
-            (*system_messages_)[SystemType::HEALTH].emplace_back(message);
+            // (*system_messages_)[SystemType::HEALTH].emplace_back(message);
+            sendSystemMessage(SystemType::HEALTH, message);
             return;
         }
         if (effect_ptr->effect & IRONSKIN)
@@ -121,7 +122,7 @@ public:
 
                 if ((buff_iterator->second->effect & APPLIED) == false)
                 {
-                    applyEffect(entity, buff_iterator->second);
+                    applyEffect(entity, buff_iterator->second.get());
                 }
                 if ((buff_iterator->first & PERMANENT) == false)
                 {
@@ -135,7 +136,7 @@ public:
             }
         }
     }
-    void updateEffects(EntityPtr &entity)
+    void updateEffects(Entity *const entity)
     {
         if (auto buffs_ptr = entity->getComponent<BuffComponent>())
         {
@@ -144,12 +145,12 @@ public:
                 buff.second->effect_duration -= 1;
                 if ((buff.second->effect & APPLIED) == false)
                 {
-                    applyEffect(entity, buff.second);
+                    applyEffect(entity, buff.second.get());
                 }
             }
         }
     }
-    void addEffects(EntityPtr &entity, BuffPtr &buffs_ptr)
+    void addEffects(Entity *const entity, const BuffComponent *const buffs_ptr)
     {
         if (buffable_entities_.contains(entity) == false)
         {
@@ -165,12 +166,12 @@ public:
         auto entity_buffs = entity->getComponent<BuffComponent>();
         for (auto &buff : buffs_ptr->buffs)
         {
-            entity_buffs->buffs[buff.first] =
-                std::shared_ptr<EffectComponent>(buff.second->clone());
+            entity_buffs->buffs[buff.first] = buff.second->clone();
         }
     }
 
-    void cleanseEffects(EntityPtr &entity, BuffPtr effects)
+    void cleanseEffects(Entity *const              entity,
+                        const BuffComponent *const effects)
     {
         if (effects == nullptr)
         {
@@ -190,7 +191,7 @@ public:
             }
         }
     }
-    void cleanseEffects(EntityPtr &entity)
+    void cleanseEffects(Entity *const entity)
     {
         if (auto entity_buffs = entity->getComponent<BuffComponent>())
         {
@@ -219,25 +220,26 @@ public:
             auto message_iterator = message.begin();
             auto action =
                 std::any_cast<SystemAction::EFFECT>(*message_iterator);
-            auto entity = std::any_cast<EntityPtr>(*(message_iterator + 1));
+            auto entity = std::any_cast<Entity *>(*(message_iterator + 1));
             auto argument_iterator = message_iterator + 2;
             switch (action)
             {
             case SystemAction::EFFECT::ADD:
             {
-                auto buffs = std::any_cast<BuffPtr>(*argument_iterator);
+                auto buffs = std::any_cast<BuffComponent *>(*argument_iterator);
                 addEffects(entity, buffs);
                 break;
             }
             case SystemAction::EFFECT::APPLY:
             {
-                auto effect = std::any_cast<EffectPtr>(*argument_iterator);
+                auto effect =
+                    std::any_cast<EffectComponent *>(*argument_iterator);
                 applyEffect(entity, effect);
                 break;
             }
             case SystemAction::EFFECT::CLEANSE:
             {
-                auto buffs = std::any_cast<BuffPtr>(*argument_iterator);
+                auto buffs = std::any_cast<BuffComponent *>(*argument_iterator);
                 cleanseEffects(entity, buffs);
                 break;
             }
