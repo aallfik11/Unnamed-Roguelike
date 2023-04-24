@@ -2,25 +2,32 @@
 #define ARMORSLOT_H
 #include "../component.h"
 #include "../entity.h"
+#include "../system.h"
+#include <any>
 #include <memory>
 
 class ArmorSlot : public Component
 {
-
-    ArmorSlot *cloneImpl() const override
-    {
-        return new ArmorSlot(this->armor_item);
-    }
 
 public:
     Entity *armor_item;
 
     ArmorSlot(Entity *armor_item = nullptr) { this->armor_item = armor_item; }
 
-    std::unique_ptr<ArmorSlot> clone() const
+    ArmorSlot(const ArmorSlot &armor_slot)
     {
-        return std::unique_ptr<ArmorSlot>(this->cloneImpl());
+        auto entity  = new Entity(*(armor_slot.armor_item));
+        auto message = {
+            std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::ADD),
+            std::make_any<Entity *>(entity)};
+        System::sendSystemMessage(SystemType::ENTITY, message);
+        this->armor_item = entity;
     }
+    ArmorSlot *clone() const override { return new ArmorSlot(*this); }
+    // std::unique_ptr<ArmorSlot> clone() const
+    // {
+    //     return std::unique_ptr<ArmorSlot>(this->cloneImpl());
+    // }
 };
 
 #endif /*ARMORSLOT_H*/

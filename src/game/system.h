@@ -101,7 +101,7 @@ public:
     virtual void readSystemMessages()  = 0;
     virtual void clearSystemMessages() = 0;
 
-    virtual void
+    static void
     sendSystemMessage(SystemType                      receiver,
                       std::initializer_list<std::any> message_parameters)
     {

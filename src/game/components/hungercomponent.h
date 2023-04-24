@@ -7,10 +7,7 @@
 class HungerComponent : public Component
 {
 
-    HungerComponent *cloneImpl() const override
-    {
-        return new HungerComponent(this->hunger, this->max_hunger);
-    }
+
 
 public:
     uint8_t hunger; // can be used both by as hunger and as food value
@@ -21,10 +18,20 @@ public:
         this->max_hunger = max_hunger;
     }
 
-    std::unique_ptr<HungerComponent> clone() const
+    HungerComponent(const HungerComponent& hunger_component)
     {
-        return std::unique_ptr<HungerComponent>(this->cloneImpl());
+        this->hunger = hunger_component.hunger;
+        this->max_hunger = hunger_component.max_hunger;
     }
+
+    HungerComponent *clone() const override
+    {
+        return new HungerComponent(*this);
+    }
+    // std::unique_ptr<HungerComponent> clone() const
+    // {
+    //     return std::unique_ptr<HungerComponent>(this->cloneImpl());
+    // }
 };
 
 #endif /*HUNGERCOMPONENT_H*/

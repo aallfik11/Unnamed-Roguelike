@@ -1,6 +1,6 @@
 // #include "src/game/components/components_all.h"
 #include "src/game/components/buffcomponent.h"
-// #include "src/game/entity.h"
+#include "src/game/entity.h"
 // #include "src/game/system.h"
 // #include "src/game/systems/attacksystem.h"
 // #include "src/game/systems/effectsystem.h"
@@ -20,8 +20,10 @@
 int main()
 {
     // std::unordered_map<Effect, std::unique_ptr<EffectComponent>> map;
-    std::cout << "HELLO!";
+    std::cout << "HELLO!" << std::endl;
     std::unique_ptr<BuffComponent>  i(new BuffComponent());
+    auto b = i->clone();
+    std::cerr << "HeLLO AGAIN";
     // std::unique_ptr<EffectComponent> eff =
     //     std::make_unique<EffectComponent>(Effect::HEAL, 1, 1);
     // std::unique_ptr<Entity> e(

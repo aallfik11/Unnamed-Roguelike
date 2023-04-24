@@ -5,10 +5,6 @@
 
 class ArmorComponent : public Component
 {
-    ArmorComponent *cloneImpl() const override
-    {
-        return new ArmorComponent(this->armor_class);
-    }
 
 public:
     uint8_t armor_class; // formula: (damage*10) / armor_class, chance of
@@ -18,10 +14,15 @@ public:
         this->armor_class = armor_class;
     }
 
-    std::unique_ptr<ArmorComponent> clone()
+    ArmorComponent(const ArmorComponent &armor_component)
     {
-        return std::unique_ptr<ArmorComponent>(this->cloneImpl());
+        this->armor_class = armor_component.armor_class;
     }
+    ArmorComponent *clone() const override { return new ArmorComponent(*this); }
+    // std::unique_ptr<ArmorComponent> clone()
+    // {
+    //     return std::unique_ptr<ArmorComponent>(this->cloneImpl());
+    // }
 };
 
 #endif /*ARMORCOMPONENT_H*/

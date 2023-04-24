@@ -4,14 +4,8 @@
 #include <cstdint>
 #include <memory>
 
-
 class ExperienceComponent : public Component
 {
-
-    ExperienceComponent *cloneImpl() const override
-    {
-        return new ExperienceComponent(this->level, this->current_experience);
-    }
 
 public:
     uint8_t  level;
@@ -24,10 +18,20 @@ public:
         this->current_experience = current_experience;
     }
 
-    std::unique_ptr<ExperienceComponent> clone() const
+    ExperienceComponent(const ExperienceComponent &exp)
     {
-        return std::unique_ptr<ExperienceComponent>(this->cloneImpl());
+        this->level              = exp.level;
+        this->current_experience = exp.current_experience;
     }
+
+    ExperienceComponent *clone() const override
+    {
+        return new ExperienceComponent(*this);
+    }
+    // std::unique_ptr<ExperienceComponent> clone() const
+    // {
+    //     return std::unique_ptr<ExperienceComponent>(this->cloneImpl());
+    // }
 };
 
 #endif /*EXPERIENCECOMPONENT_H*/

@@ -7,10 +7,7 @@
 class Coordinates : public Component
 {
 
-    Coordinates *cloneImpl() const override
-    {
-        return new Coordinates(this->x, this->y);
-    }
+
 
 public:
     uint16_t x, y;
@@ -21,10 +18,20 @@ public:
         this->y = y;
     }
 
-    std::unique_ptr<Coordinates> clone() const
+    Coordinates(const Coordinates& coordinates)
     {
-        return std::unique_ptr<Coordinates>(this->cloneImpl());
+        this->x = coordinates.x;
+        this->y = coordinates.y;
     }
+
+    Coordinates *clone() const override
+    {
+        return new Coordinates(this->x, this->y);
+    }
+    // std::unique_ptr<Coordinates> clone() const
+    // {
+    //     return std::unique_ptr<Coordinates>(this->cloneImpl());
+    // }
 };
 
 #endif /*COORDINATES_H*/

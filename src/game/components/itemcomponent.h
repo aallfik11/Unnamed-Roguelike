@@ -9,15 +9,6 @@
 class ItemComponent : public Component
 {
 
-    ItemComponent *cloneImpl() const override
-    {
-        return new ItemComponent(this->type,
-                                 this->stack,
-                                 this->max_stack,
-                                 this->rarity,
-                                 this->equipped);
-    }
-
 public:
     ItemType type;
     uint16_t stack;
@@ -38,10 +29,20 @@ public:
         this->equipped  = equipped;
     }
 
-    std::unique_ptr<ItemComponent> clone() const
+    ItemComponent(const ItemComponent &item_component)
     {
-        return std::unique_ptr<ItemComponent>(this->cloneImpl());
+        this->type      = item_component.type;
+        this->stack     = item_component.stack;
+        this->max_stack = item_component.max_stack;
+        this->rarity    = item_component.rarity;
+        this->equipped  = item_component.rarity;
     }
+
+    ItemComponent *clone() const override { return new ItemComponent(*this); }
+    // std::unique_ptr<ItemComponent> clone() const
+    // {
+    //     return std::unique_ptr<ItemComponent>(this->cloneImpl());
+    // }
 };
 
 #endif /*ITEMCOMPONENT_H*/

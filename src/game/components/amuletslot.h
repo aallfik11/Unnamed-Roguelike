@@ -2,6 +2,8 @@
 #define AMULETSLOT_H
 #include "../component.h"
 #include "../entity.h"
+#include "../system.h"
+#include <any>
 #include <cstdint>
 #include <memory>
 #include <unordered_set>
@@ -12,14 +14,6 @@
  */
 class AmuletSlot : public Component
 {
-    AmuletSlot(const AmuletSlot &amulet_slot)
-    {
-        this->amount_equipped = amulet_slot.amount_equipped;
-        this->max_slots       = amulet_slot.max_slots;
-        this->amulet_slots    = amulet_slot.amulet_slots;
-    }
-
-    AmuletSlot *cloneImpl() const override { return new AmuletSlot(*this); }
 
 public:
     uint8_t                            amount_equipped;
@@ -33,10 +27,27 @@ public:
         // sake of saving and loading a game later
     }
 
-    std::unique_ptr<AmuletSlot> clone() const
+    AmuletSlot(const AmuletSlot &amulet_slot)
     {
-        return std::unique_ptr<AmuletSlot>(this->cloneImpl());
+        this->amount_equipped = amulet_slot.amount_equipped;
+        this->max_slots       = amulet_slot.max_slots;
+        for (auto &amulet : amulet_slot.amulet_slots)
+        {
+            auto new_amulet = new Entity(*amulet);
+            auto message    = {
+                std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::ADD),
+                std::make_any<Entity *>(new_amulet)};
+            System::sendSystemMessage(SystemType::ENTITY, message);
+            this->amulet_slots.emplace(new_amulet);
+        }
+        // this->amulet_slots    = amulet_slot.amulet_slots;
     }
+
+    AmuletSlot *clone() const override { return new AmuletSlot(*this); }
+    // std::unique_ptr<AmuletSlot> clone() const
+    // {
+    //     return std::unique_ptr<AmuletSlot>(this->cloneImpl());
+    // }
 };
 
 #endif /*AMULETSLOT_H*/

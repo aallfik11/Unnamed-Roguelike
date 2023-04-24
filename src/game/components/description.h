@@ -6,10 +6,6 @@
 
 class Description : public Component
 {
-    Description *cloneImpl() const override
-    {
-        return new Description(this->description);
-    }
 
 public:
     std::string description;
@@ -17,11 +13,18 @@ public:
     {
         this->description = description;
     }
-
-    std::unique_ptr<Description> clone() const
+    Description(const Description &desc)
     {
-        return std::unique_ptr<Description>(this->cloneImpl());
+        this->description = desc.description;
     }
+    Description *clone() const override
+    {
+        return new Description(*this);
+    }
+    // std::unique_ptr<Description> clone() const
+    // {
+    //     return std::unique_ptr<Description>(this->cloneImpl());
+    // }
 };
 
 #endif /*DESCRIPTION_H*/

@@ -6,10 +6,6 @@
 
 class LOSComponent : public Component
 {
-    LOSComponent *cloneImpl() const override
-    {
-        return new LOSComponent(this->has_LOS_to_player, this->seeing_distance);
-    }
 
 public:
     // I want to make it work for other entities later on
@@ -24,9 +20,16 @@ public:
         this->seeing_distance   = seeing_distance;
     }
 
-    std::unique_ptr<LOSComponent> clone() const
+    LOSComponent(const LOSComponent &los)
     {
-        return std::unique_ptr<LOSComponent>(this->cloneImpl());
+        this->has_LOS_to_player = los.has_LOS_to_player;
+        this->seeing_distance   = los.seeing_distance;
     }
+
+    LOSComponent *clone() const override { return new LOSComponent(*this); }
+    // std::unique_ptr<LOSComponent> clone() const
+    // {
+    //     return std::unique_ptr<LOSComponent>(this->cloneImpl());
+    // }
 };
 #endif /*LINEOFSIGHTCOMPONENT_H*/

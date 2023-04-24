@@ -7,12 +7,6 @@
 class Health : public Component
 {
 
-    Health *cloneImpl() const override
-    {
-        return new Health(
-            this->max_health_points, this->current_health_points, this->alive);
-    }
-
 public:
     uint16_t max_health_points; // get increased based on level, formula is:
                                 // base max_hp +  base_max_hp * level /2
@@ -27,10 +21,18 @@ public:
         this->alive           = alive;
     }
 
-    std::unique_ptr<Health> clone() const
+    Health(const Health &hp)
     {
-        return std::unique_ptr<Health>(this->cloneImpl());
+        this->max_health_points     = hp.max_health_points;
+        this->current_health_points = hp.current_health_points;
+        this->alive                 = hp.alive;
     }
+
+    Health *clone() const override { return new Health(*this); }
+    // std::unique_ptr<Health> clone() const
+    // {
+    //     return std::unique_ptr<Health>(this->cloneImpl());
+    // }
 };
 
 #endif /*HEALTH_H*/
