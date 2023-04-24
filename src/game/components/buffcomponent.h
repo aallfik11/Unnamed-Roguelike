@@ -8,11 +8,6 @@
 class BuffComponent : public Component
 {
 
-    BuffComponent *cloneImpl() const override
-    {
-        return new BuffComponent(*this);
-    }
-
 public:
     using BuffMap =
         std::unordered_map<Effect, std::unique_ptr<EffectComponent>>;
@@ -38,10 +33,12 @@ public:
         }
     }
 
-    std::unique_ptr<BuffComponent> clone() const
-    {
-        return std::unique_ptr<BuffComponent>(this->cloneImpl());
-    }
+    // std::unique_ptr<Component> clone() const override
+    // {
+    //     return std::unique_ptr<BuffComponent>(this->cloneImpl());
+    // }
+
+    BuffComponent *clone() const override { return new BuffComponent(*this); }
 };
 
 #endif /*BUFFCOMPONENT_H*/

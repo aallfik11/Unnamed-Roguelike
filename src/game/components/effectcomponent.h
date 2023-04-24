@@ -8,12 +8,6 @@
 class EffectComponent : public Component
 {
 
-    EffectComponent *cloneImpl() const override
-    {
-        return new EffectComponent(
-            this->effect, this->effect_strength, this->effect_duration);
-    }
-
 public:
     Effect   effect;
     uint8_t  effect_strength;
@@ -28,9 +22,20 @@ public:
         this->effect_duration = effect_duration;
     }
 
-    std::unique_ptr<EffectComponent> clone() const
+    EffectComponent(const EffectComponent &effect_component)
+        : EffectComponent(effect_component.effect,
+                          effect_component.effect_duration,
+                          effect_component.effect_strength)
     {
-        return std::unique_ptr<EffectComponent>(this->cloneImpl());
+    }
+    // std::unique_ptr<Component> clone() const override
+    // {
+    //     return std::unique_ptr<EffectComponent>(this->cloneImpl());
+    // }
+
+    EffectComponent *clone() const override
+    {
+        return new EffectComponent(*this);
     }
 };
 

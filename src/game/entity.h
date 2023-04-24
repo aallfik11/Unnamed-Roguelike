@@ -5,16 +5,15 @@
 #include <algorithm>
 #include <memory>
 #include <ranges>
-#include <type_traits>
-#include <typeindex>
-#include <typeinfo>
-#include <unordered_map>
+// #include <type_traits>
+// #include <typeindex>
+// #include <typeinfo>
+#include <unordered_set>
 #include <vector>
 
 class Entity
 {
-    using Components =
-        std::unordered_map<std::type_index, std::unique_ptr<Component>>;
+    using Components = std::unordered_set<std::unique_ptr<Component>>;
     static uint32_t max_id_;
     uint32_t        id_;
 
@@ -29,13 +28,14 @@ class Entity
 public:
     EntityType type;
 
-    Entity(EntityType type, const std::vector<Component *> &components)
+    Entity(EntityType type) : Entity() { this->type = type; }
+
+    Entity(EntityType type, std::initializer_list<Component *> components)
         : Entity()
     {
         for (auto &component : components)
         {
-            components_[typeid(*component)] =
-                std::unique_ptr<Component>(component);
+            components_.emplace(component);
         }
         this->type = type;
     }
@@ -52,7 +52,7 @@ public:
     {
         for (auto &component : entity.components_)
         {
-            this->addComponent(component.second->clone());
+            this->addComponent(component->clone());
         }
     }
 
@@ -63,35 +63,32 @@ public:
     //     components_[typeid(*(component.get()))] = component;
     // }
 
-    void addComponent(Component *component)
-    {
-        components_[typeid(*component)] = std::unique_ptr<Component>(component);
-    }
+    void addComponent(Component *component) { components_.emplace(component); }
 
     void addComponent(std::unique_ptr<Component> &&component)
     {
-        components_[typeid(*component)] = std::move(component);
+        components_.emplace(std::move(component));
     }
 
-    template <class ComponentType> void removeComponent()
-    {
-        components_.erase(typeid(ComponentType));
-    }
+    // template <class ComponentType> void removeComponent()
+    // {
+    //     components_.erase(std::unique_ptr<ComponentType>);
+    // }
 
-    template <class ComponentType> bool hasComponent() const
-    {
-        return components_.contains(typeid(ComponentType));
-    }
+    // template <class ComponentType> bool hasComponent() const
+    // {
+    //     return components_.contains(std::unique_ptr<ComponentType>);
+    // }
 
-    template <class ComponentType> ComponentType *getComponent()
-    {
-        auto it = components_.find(typeid(ComponentType));
+    // template <class ComponentType> ComponentType *getComponent()
+    // {
+    //     auto it = components_.find(std::unique_ptr<ComponentType>);
 
-        if (it == components_.end())
-            return nullptr;
+    //     if (it == components_.end())
+    //         return nullptr;
 
-        return static_cast<ComponentType *>(it->second.get());
-    }
+    //     return static_cast<ComponentType *>(it->second.get());
+    // }
 
     static void resetMaxId() { max_id_ = 0; }
 };

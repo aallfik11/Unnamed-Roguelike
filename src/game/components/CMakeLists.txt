@@ -6,13 +6,11 @@ add_library(components
     health.h
     inventory.h
     name.h
-    stackable.h
     tilecomponent.h
     aicomponent.h
     navmapcomponent.h
     lineofsightcomponent.h
     weaponcomponent.h
-    typecomponent.h
     armorcomponent.h
     experiencecomponent.h
     hungercomponent.h

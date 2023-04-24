@@ -7,7 +7,6 @@
 #include <functional>
 #include <memory>
 
-
 /*
  * Probably one of the only few components that will break the rule of being
  * nothing but "data buckets" however, due to the fact that some entities might
@@ -31,7 +30,6 @@ class AIComponent : public Component
         this->last_target_x = ai_component.last_target_x;
         this->last_target_y = ai_component.last_target_y;
     }
-    AIComponent *cloneImpl() const override { return new AIComponent(*this); }
 
 public:
     AIType   ai_type;
@@ -48,10 +46,11 @@ public:
         last_target_y  = 0;
     }
 
-    std::unique_ptr<AIComponent> clone() const
-    {
-        return std::unique_ptr<AIComponent>(this->cloneImpl());
-    }
+    AIComponent *clone() const override { return new AIComponent(*this); }
+    // std::unique_ptr<AIComponent> clone() const
+    // {
+    //     return std::unique_ptr<AIComponent>(this->cloneImpl());
+    // }
 };
 
 #endif /*AI_COMPONENT_H*/
