@@ -20,10 +20,20 @@ public:
         this->weapon_item = weapon_item;
     }
 
-    std::unique_ptr<WeaponSlot> clone() const
+    WeaponSlot(const WeaponSlot &weapon_slot)
     {
-        return std::unique_ptr<WeaponSlot>(this->cloneImpl());
+        auto entity  = new Entity(*(weapon_slot.weapon_item));
+        auto message = {
+            std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::ADD),
+            std::make_any<Entity *>(entity)};
+        System::sendSystemMessage(SystemType::ENTITY, message);
+        this->weapon_item = entity;
     }
+
+    // std::unique_ptr<WeaponSlot> clone() const
+    // {
+    //     return std::unique_ptr<WeaponSlot>(this->cloneImpl());
+    // }
 };
 
 #endif /*WEAPONSLOT_H*/

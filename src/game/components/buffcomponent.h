@@ -7,6 +7,10 @@
 
 class BuffComponent : public Component
 {
+    BuffComponent *cloneImpl() const override
+    {
+        return new BuffComponent(*this);
+    }
 
 public:
     using BuffMap =
@@ -20,7 +24,7 @@ public:
         for (auto &buff : buff_component.buffs)
         {
             this->buffs[buff.first] =
-                std::unique_ptr<EffectComponent>(buff.second->clone());
+                castToComponent<EffectComponent>(buff.second->clone());
         }
     }
 
@@ -37,8 +41,6 @@ public:
     // {
     //     return std::unique_ptr<BuffComponent>(this->cloneImpl());
     // }
-
-    BuffComponent *clone() const override { return new BuffComponent(*this); }
 };
 
 #endif /*BUFFCOMPONENT_H*/

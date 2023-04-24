@@ -6,7 +6,7 @@
 #include <ranges>
 #include <vector>
 
-struct NavCell //: std::pair<uint32_t, bool>
+struct NavCell        //: std::pair<uint32_t, bool>
 {
     uint32_t score;   // = this->first;
     bool     visited; // = this->second;
@@ -49,6 +49,10 @@ bool operator!=(const NavCell &nc1, const NavCell &nc2)
 
 class NavMapComponent : public Component
 {
+    NavMapComponent *cloneImpl() const override
+    {
+        return new NavMapComponent(*this);
+    }
 
 public:
     std::vector<std::vector<NavCell>> nav_map;
@@ -78,10 +82,7 @@ public:
         : NavMapComponent(nav_map_component.nav_map)
     {
     }
-    NavMapComponent *clone() const override
-    {
-        return new NavMapComponent(*this);
-    }
+
     // std::unique_ptr<NavMapComponent> clone() const
     // {
     //     return std::unique_ptr<NavMapComponent>(this->cloneImpl());

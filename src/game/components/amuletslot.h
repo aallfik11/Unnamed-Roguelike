@@ -14,6 +14,7 @@
  */
 class AmuletSlot : public Component
 {
+    AmuletSlot *cloneImpl() const override { return new AmuletSlot(*this); }
 
 public:
     uint8_t                            amount_equipped;
@@ -40,10 +41,8 @@ public:
             System::sendSystemMessage(SystemType::ENTITY, message);
             this->amulet_slots.emplace(new_amulet);
         }
-        // this->amulet_slots    = amulet_slot.amulet_slots;
     }
 
-    AmuletSlot *clone() const override { return new AmuletSlot(*this); }
     // std::unique_ptr<AmuletSlot> clone() const
     // {
     //     return std::unique_ptr<AmuletSlot>(this->cloneImpl());
