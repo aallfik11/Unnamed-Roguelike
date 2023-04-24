@@ -4,15 +4,14 @@
 
 class Component
 {
+    virtual Component *cloneImpl() const = 0;
 
 public:
-    virtual Component *clone()
-        const = 0; // make sure to always wrap this in a proper smart pointer
+    std::unique_ptr<Component> clone() const
+    {
+        return std::unique_ptr<Component>(this->cloneImpl());
+    }
     virtual ~Component() {}
-    // virtual std::unique_ptr<Component> clone() const
-    // {
-    //     return std::unique_ptr<Component>(this->cloneImpl());
-    // }
 };
 
 template <class Derived>
