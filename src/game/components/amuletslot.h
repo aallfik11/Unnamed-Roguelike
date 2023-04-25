@@ -5,7 +5,9 @@
 #include "../system.h"
 #include <any>
 #include <cstdint>
+#include <istream>
 #include <memory>
+#include <ostream>
 #include <unordered_set>
 
 /**
@@ -14,7 +16,14 @@
  */
 class AmuletSlot : public Component
 {
-    AmuletSlot *cloneImpl() const override { return new AmuletSlot(*this); }
+    AmuletSlot   *cloneImpl() const override { return new AmuletSlot(*this); }
+    std::ostream &serialize(std::ostream &os) const override
+    {
+        os << ComponentType::AMULETSLOT << ' ' << this->amount_equipped << ' '
+           << this->max_slots << ' ';
+        for (const auto &amulet : amulet_slots)
+            os << amulet->getId() << ' ';
+    }
 
 public:
     uint8_t                            amount_equipped;
@@ -43,10 +52,14 @@ public:
         }
     }
 
-    // std::unique_ptr<AmuletSlot> clone() const
-    // {
-    //     return std::unique_ptr<AmuletSlot>(this->cloneImpl());
-    // }
+    std::unique_ptr<Component> deserialize(std::istream &is) override
+    {
+        uint8_t amount_equipped;
+        uint8_t max_slots;
+        is >> amount_equipped >> max_slots;
+        auto temp_slot = std::make_unique<AmuletSlot>(amount_equipped, max_slots);
+        //get the entities somehow here:
+    }
 };
 
 #endif /*AMULETSLOT_H*/

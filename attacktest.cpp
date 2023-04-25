@@ -34,10 +34,10 @@ int main()
         std::cerr << "SAME\n";
     }
     std::cerr << "HeLLO AGAIN";
-    // std::unique_ptr<EffectComponent> eff =
-    //     std::make_unique<EffectComponent>(Effect::HEAL, 1, 1);
-    // std::unique_ptr<Entity> e(
-    //     new Entity(EntityType::PLAYER, {new Inventory()}));
+    std::unique_ptr<EffectComponent> eff =
+        std::make_unique<EffectComponent>(Effect::HEAL, 1, 1);
+    std::unique_ptr<Entity> e(
+        new Entity(EntityType::PLAYER, {new Inventory()}));
     // std::unique_ptr<int> a(new int(12));
 }
 

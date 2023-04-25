@@ -5,24 +5,12 @@
 #include "../component.h"
 #include <cstdint>
 #include <functional>
+#include <istream>
 #include <memory>
-
-/*
- * Probably one of the only few components that will break the rule of being
- * nothing but "data buckets" however, due to the fact that some entities might
- * contain different AI systems with different goals, behaviors etc. I haven't
- * come up with a better way to do this other than to just store the
- * "AI function" and make the system call it
- */
+#include <ostream>
 
 class AIComponent : public Component
 {
-    // TO DO: instead of a function, create an enum for different functions(or
-    // just whole ai systems like idk, Monster Greedy, Monster Cowardly etc)
-    //(most monsters have the same ones) and store this instead,
-    //  make action system simply look at which ones have which actions defined
-    //  and add them to according AI systems
-
     AIComponent(const AIComponent &ai_component)
     {
         this->ai_type       = ai_component.ai_type;
@@ -30,7 +18,13 @@ class AIComponent : public Component
         this->last_target_x = ai_component.last_target_x;
         this->last_target_y = ai_component.last_target_y;
     }
-    AIComponent *cloneImpl() const override { return new AIComponent(*this); }
+    AIComponent  *cloneImpl() const override { return new AIComponent(*this); }
+    std::ostream &serialize(std::ostream &os) const override
+    {
+        os << ComponentType::AI << ' ' << this->ai_type << ' ' << this->ai_state
+           << ' ' << this->last_target_x << ' ' << this->last_target_y << ' ';
+        return os;
+    }
 
 public:
     AIType   ai_type;
@@ -38,19 +32,29 @@ public:
     uint16_t last_target_x;
     uint16_t last_target_y;
 
-    AIComponent(AIType  ai_type  = AIType::AI_MONSTER_DEFAULT,
-                AIState ai_state = AIState::WANDER_AROUND)
+    AIComponent(AIType   ai_type       = AIType::AI_MONSTER_DEFAULT,
+                AIState  ai_state      = AIState::WANDER_AROUND,
+                uint16_t last_target_x = 0,
+                uint16_t last_target_y = 0)
     {
-        this->ai_type  = ai_type;
-        this->ai_state = ai_state;
-        last_target_x  = 0;
-        last_target_y  = 0;
+        this->ai_type       = ai_type;
+        this->ai_state      = ai_state;
+        this->last_target_x = last_target_x;
+        this->last_target_y = last_target_y;
     }
 
-    // std::unique_ptr<AIComponent> clone() const
-    // {
-    //     return std::unique_ptr<AIComponent>(this->cloneImpl());
-    // }
+    std::unique_ptr<Component> deserialize(std::istream &is) override
+    {
+        AIType   type{};
+        AIState  state{};
+        uint16_t x{};
+        uint16_t y{};
+
+        is >> type >> state >> x >> y;
+
+        return castToComponent<Component, AIComponent>(
+            std::make_unique<AIComponent>(type, state, x, y));
+    }
 };
 
 #endif /*AI_COMPONENT_H*/

@@ -1,6 +1,8 @@
 #ifndef AI_ENUM_H
 #define AI_ENUM_H
 #include <cstdint>
+#include <istream>
+#include <ostream>
 
 enum class AIType : uint8_t
 {
@@ -21,4 +23,31 @@ enum class AIState : uint8_t
     // SPECIAL
 };
 
+inline std::ostream &operator<<(std::ostream &os, const AIType &type)
+{
+    os << static_cast<uint8_t>(type);
+    return os;
+}
+
+inline std::istream &operator>>(std::istream &is, AIType &type)
+{
+    uint8_t temp;
+    is >> temp;
+    type = static_cast<AIType>(temp);
+    return is;
+}
+
+inline std::ostream &operator<<(std::ostream &os, const AIState &type)
+{
+    os << static_cast<uint8_t>(type);
+    return os;
+}
+
+inline std::istream &operator>>(std::istream &is, AIState &type)
+{
+    uint8_t temp;
+    is >> temp;
+    type = static_cast<AIState>(temp);
+    return is;
+}
 #endif /*AI_ENUM_H*/
