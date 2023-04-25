@@ -6,6 +6,7 @@
 
 class LOSComponent : public Component
 {
+    LOSComponent *cloneImpl() const override { return new LOSComponent(*this); }
 
 public:
     // I want to make it work for other entities later on
@@ -26,7 +27,6 @@ public:
         this->seeing_distance   = los.seeing_distance;
     }
 
-    LOSComponent *clone() const override { return new LOSComponent(*this); }
     // std::unique_ptr<LOSComponent> clone() const
     // {
     //     return std::unique_ptr<LOSComponent>(this->cloneImpl());

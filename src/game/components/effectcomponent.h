@@ -7,6 +7,10 @@
 
 class EffectComponent : public Component
 {
+    EffectComponent *cloneImpl() const override
+    {
+        return new EffectComponent(*this);
+    }
 
 public:
     Effect   effect;
@@ -32,11 +36,6 @@ public:
     // {
     //     return std::unique_ptr<EffectComponent>(this->cloneImpl());
     // }
-
-    EffectComponent *clone() const override
-    {
-        return new EffectComponent(*this);
-    }
 };
 
 #endif /*EFFECTCOMPONENT_H*/

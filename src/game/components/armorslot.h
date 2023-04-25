@@ -8,6 +8,7 @@
 
 class ArmorSlot : public Component
 {
+    ArmorSlot *cloneImpl() const override { return new ArmorSlot(*this); }
 
 public:
     Entity *armor_item;
@@ -23,7 +24,7 @@ public:
         System::sendSystemMessage(SystemType::ENTITY, message);
         this->armor_item = entity;
     }
-    ArmorSlot *clone() const override { return new ArmorSlot(*this); }
+
     // std::unique_ptr<ArmorSlot> clone() const
     // {
     //     return std::unique_ptr<ArmorSlot>(this->cloneImpl());

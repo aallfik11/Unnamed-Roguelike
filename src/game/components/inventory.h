@@ -11,6 +11,7 @@ class Entity;
 
 class Inventory : public Component
 {
+    Inventory *cloneImpl() const override { return new Inventory(*this); }
 
 public:
     std::list<Entity *> inventory;
@@ -30,7 +31,6 @@ public:
         }
     }
 
-    Inventory *clone() const override { return new Inventory(*this); }
     // std::unique_ptr<Inventory> clone() const
     // {
     //     return std::unique_ptr<Inventory>(this->cloneImpl());

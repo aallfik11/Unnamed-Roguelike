@@ -6,6 +6,10 @@
 
 class ExperienceComponent : public Component
 {
+    ExperienceComponent *cloneImpl() const override
+    {
+        return new ExperienceComponent(*this);
+    }
 
 public:
     uint8_t  level;
@@ -24,10 +28,6 @@ public:
         this->current_experience = exp.current_experience;
     }
 
-    ExperienceComponent *clone() const override
-    {
-        return new ExperienceComponent(*this);
-    }
     // std::unique_ptr<ExperienceComponent> clone() const
     // {
     //     return std::unique_ptr<ExperienceComponent>(this->cloneImpl());

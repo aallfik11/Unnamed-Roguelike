@@ -8,6 +8,10 @@
 
 class TileComponent : public Component
 {
+    TileComponent *cloneImpl() const override
+    {
+        return new TileComponent(*this);
+    }
 
 public:
     Tile        tile;
@@ -32,7 +36,6 @@ public:
         this->sprite                = tile_component.sprite;
     }
 
-    TileComponent *clone() const override { return new TileComponent(*this); }
     // std::unique_ptr<TileComponent> clone() const
     // {
     //     return std::unique_ptr<TileComponent>(this->cloneImpl());

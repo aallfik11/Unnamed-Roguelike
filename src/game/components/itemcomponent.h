@@ -8,6 +8,10 @@
 
 class ItemComponent : public Component
 {
+    ItemComponent *cloneImpl() const override
+    {
+        return new ItemComponent(*this);
+    }
 
 public:
     ItemType type;
@@ -38,7 +42,6 @@ public:
         this->equipped  = item_component.rarity;
     }
 
-    ItemComponent *clone() const override { return new ItemComponent(*this); }
     // std::unique_ptr<ItemComponent> clone() const
     // {
     //     return std::unique_ptr<ItemComponent>(this->cloneImpl());
