@@ -2,7 +2,7 @@
 #define ENTITYTYPES_H
 #include <cstdint>
 
-enum EntityType : uint16_t
+enum class EntityType : uint16_t
 {
     LIVING     = 0x001,
     KILLED     = 0x002,
