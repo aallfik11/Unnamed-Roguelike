@@ -3,7 +3,9 @@
 #include "../component.h"
 #include "../tile.h"
 #include <ftxui/screen/color.hpp>
+#include <istream>
 #include <memory>
+#include <ostream>
 #include <string>
 
 class TileComponent : public Component
@@ -13,33 +15,35 @@ class TileComponent : public Component
         return new TileComponent(*this);
     }
 
+    std::ostream &serialize(std::ostream &os) const override
+    {
+        os << ComponentType::TILE << ' ' << this->tile << ' ' << this->sprite
+           << ' ';
+        return os;
+    }
+
+    std::istream &deserialize(std::istream &is) override
+    {
+        is >> this->tile >> this->sprite;
+        return is;
+    }
+
 public:
     Tile        tile;
     std::string sprite;
 
-    TileComponent(TileType     type     = TileType::SPRITE,
-                  std::string  sprite   = " ",
-                  ftxui::Color color    = ftxui::Color::White,
-                  ftxui::Color bg_color = ftxui::Color::Black)
+    TileComponent(TileType type = TileType::SPRITE, std::string sprite = " ")
     {
-        this->tile.type             = type;
-        this->sprite                = sprite;
-        this->tile.color            = color;
-        this->tile.background_color = bg_color;
+        this->tile.type = type;
+        this->sprite    = sprite;
     }
 
     TileComponent(const TileComponent &tile_component)
     {
-        this->tile.type             = tile_component.tile.type;
-        this->tile.color            = tile_component.tile.color;
-        this->tile.background_color = tile_component.tile.background_color;
-        this->sprite                = tile_component.sprite;
-    }
+        this->tile.type = tile_component.tile.type;
 
-    // std::unique_ptr<TileComponent> clone() const
-    // {
-    //     return std::unique_ptr<TileComponent>(this->cloneImpl());
-    // }
+        this->sprite    = tile_component.sprite;
+    }
 };
 
 #endif /*TILECOMPONENT_H*/

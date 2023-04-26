@@ -25,6 +25,13 @@ class AIComponent : public Component
            << ' ' << this->last_target_x << ' ' << this->last_target_y << ' ';
         return os;
     }
+    std::istream &deserialize(std::istream &is) override
+    {
+
+        is >> this->ai_type >> this->ai_state >> this->last_target_x >>
+            this->last_target_y;
+        return is;
+    }
 
 public:
     AIType   ai_type;
@@ -41,19 +48,6 @@ public:
         this->ai_state      = ai_state;
         this->last_target_x = last_target_x;
         this->last_target_y = last_target_y;
-    }
-
-    std::unique_ptr<Component> deserialize(std::istream &is) override
-    {
-        AIType   type{};
-        AIState  state{};
-        uint16_t x{};
-        uint16_t y{};
-
-        is >> type >> state >> x >> y;
-
-        return castToComponent<Component, AIComponent>(
-            std::make_unique<AIComponent>(type, state, x, y));
     }
 };
 

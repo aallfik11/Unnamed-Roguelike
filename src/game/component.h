@@ -11,18 +11,27 @@ class Component
 protected:
     virtual Component    *cloneImpl() const                 = 0;
     virtual std::ostream &serialize(std::ostream &os) const = 0;
+    virtual std::istream &deserialize(std::istream &is)     = 0;
 
 public:
     std::unique_ptr<Component> clone() const
     {
         return std::unique_ptr<Component>(this->cloneImpl());
     }
+
     virtual ~Component() {}
-    virtual std::unique_ptr<Component> deserialize(std::istream &os) = 0;
+
+    // virtual std::unique_ptr<Component> deserialize(std::istream &os) = 0;
+
     friend std::ostream &operator<<(std::ostream &os, const Component *const c)
     {
         return c->serialize(os);
     };
+
+    friend std::istream &operator>>(std::istream &is, Component *const c)
+    {
+        return c->deserialize(is);
+    }
 };
 
 template <class Derived, class Base = Component>

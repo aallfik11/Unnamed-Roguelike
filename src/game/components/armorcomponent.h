@@ -2,12 +2,26 @@
 #define ARMORCOMPONENT_H
 #include "../component.h"
 #include <cstdint>
+#include <istream>
+#include <ostream>
 
 class ArmorComponent : public Component
 {
     ArmorComponent *cloneImpl() const override
     {
         return new ArmorComponent(*this);
+    }
+
+    virtual std::ostream &serialize(std::ostream &os) const override
+    {
+        os << ComponentType::ARMOR << ' ' << this->armor_class << ' ';
+        return os;
+    }
+
+    std::istream &deserialize(std::istream &is) override
+    {
+        is >> this->armor_class;
+        return is;
     }
 
 public:
@@ -22,11 +36,6 @@ public:
     {
         this->armor_class = armor_component.armor_class;
     }
-
-    // std::unique_ptr<ArmorComponent> clone()
-    // {
-    //     return std::unique_ptr<ArmorComponent>(this->cloneImpl());
-    // }
 };
 
 #endif /*ARMORCOMPONENT_H*/

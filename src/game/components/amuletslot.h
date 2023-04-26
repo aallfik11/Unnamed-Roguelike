@@ -2,10 +2,12 @@
 #define AMULETSLOT_H
 #include "../component.h"
 #include "../entity.h"
+#include "../entityholder.h"
 #include "../system.h"
 #include <any>
 #include <cstdint>
 #include <istream>
+#include <list>
 #include <memory>
 #include <ostream>
 #include <unordered_set>
@@ -14,15 +16,39 @@
  * @brief Holds all amulets equipped by the player
  *
  */
-class AmuletSlot : public Component
+class AmuletSlot : public Component, public EntityHolder
 {
     AmuletSlot   *cloneImpl() const override { return new AmuletSlot(*this); }
     std::ostream &serialize(std::ostream &os) const override
     {
         os << ComponentType::AMULETSLOT << ' ' << this->amount_equipped << ' '
            << this->max_slots << ' ';
-        for (const auto &amulet : amulet_slots)
+        for (const auto &amulet : this->amulet_slots)
             os << amulet->getId() << ' ';
+
+        return os;
+    }
+
+    std::istream &deserialize(std::istream &is) override
+    {
+        is >> this->amount_equipped >> this->max_slots;
+
+        std::shared_ptr<std::list<uint32_t>> entities_requested(
+            new std::list<uint32_t>);
+        for (uint8_t i = 0; i < this->amount_equipped; i++)
+        {
+            uint32_t temp_id{};
+            is >> temp_id;
+            entities_requested->push_back(temp_id);
+        }
+        auto message = {
+            std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::REQUEST),
+            std::make_any<EntityHolder *>(this),
+            std::make_any<std::shared_ptr<std::list<uint32_t>>>(
+                entities_requested)};
+
+        System::sendSystemMessage(SystemType::ENTITY, message);
+        return is;
     }
 
 public:
@@ -52,13 +78,12 @@ public:
         }
     }
 
-    std::unique_ptr<Component> deserialize(std::istream &is) override
+    void loadEntities(std::shared_ptr<std::list<Entity *>> &entities) override
     {
-        uint8_t amount_equipped;
-        uint8_t max_slots;
-        is >> amount_equipped >> max_slots;
-        auto temp_slot = std::make_unique<AmuletSlot>(amount_equipped, max_slots);
-        //get the entities somehow here:
+        for (auto entity : *entities)
+        {
+            amulet_slots.insert(entity);
+        }
     }
 };
 

@@ -2,12 +2,27 @@
 #define COORDINATES_H
 #include "../component.h"
 #include <cstdint>
+#include <istream>
 #include <memory>
+#include <ostream>
 
 class Coordinates : public Component
 {
 
     Coordinates *cloneImpl() const override { return new Coordinates(*this); }
+
+    std::ostream &serialize(std::ostream &os) const override
+    {
+        os << ComponentType::COORDINATES << ' ' << this->x << ' ' << this->y
+           << ' ';
+        return os;
+    }
+
+    std::istream &deserialize(std::istream &is) override
+    {
+        is >> this->x >> this->y;
+        return is;
+    }
 
 public:
     uint16_t x, y;
@@ -23,11 +38,6 @@ public:
         this->x = coordinates.x;
         this->y = coordinates.y;
     }
-
-    // std::unique_ptr<Coordinates> clone() const
-    // {
-    //     return std::unique_ptr<Coordinates>(this->cloneImpl());
-    // }
 };
 
 #endif /*COORDINATES_H*/

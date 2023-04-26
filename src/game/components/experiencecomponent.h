@@ -2,13 +2,28 @@
 #define EXPERIENCECOMPONENT_H
 #include "../component.h"
 #include <cstdint>
+#include <istream>
 #include <memory>
+#include <ostream>
 
 class ExperienceComponent : public Component
 {
     ExperienceComponent *cloneImpl() const override
     {
         return new ExperienceComponent(*this);
+    }
+
+    std::ostream &serialize(std::ostream &os) const override
+    {
+        os << ComponentType::EXPERIENCE << ' ' << this->level << ' '
+           << this->current_experience;
+        return os;
+    }
+
+    std::istream &deserialize(std::istream &is) override
+    {
+        is >> this->level >> this->current_experience;
+        return is;
     }
 
 public:
@@ -27,11 +42,6 @@ public:
         this->level              = exp.level;
         this->current_experience = exp.current_experience;
     }
-
-    // std::unique_ptr<ExperienceComponent> clone() const
-    // {
-    //     return std::unique_ptr<ExperienceComponent>(this->cloneImpl());
-    // }
 };
 
 #endif /*EXPERIENCECOMPONENT_H*/

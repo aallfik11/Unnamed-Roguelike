@@ -4,13 +4,30 @@
 #include "../itemtypes.h"
 #include "../rarity.h"
 #include <cstdint>
+#include <istream>
 #include <memory>
+#include <ostream>
 
 class ItemComponent : public Component
 {
     ItemComponent *cloneImpl() const override
     {
         return new ItemComponent(*this);
+    }
+
+    std::ostream &serialize(std::ostream &os) const override
+    {
+        os << ComponentType::ITEM << ' ' << this->type << ' ' << this->stack
+           << ' ' << this->max_stack << ' ' << this->rarity << ' '
+           << this->equipped << ' ';
+        return os;
+    }
+
+    std::istream &deserialize(std::istream &is) override
+    {
+        is >> this->type >> this->stack >> this->max_stack >> this->rarity >>
+            this->equipped;
+        return is;
     }
 
 public:
@@ -41,11 +58,6 @@ public:
         this->rarity    = item_component.rarity;
         this->equipped  = item_component.rarity;
     }
-
-    // std::unique_ptr<ItemComponent> clone() const
-    // {
-    //     return std::unique_ptr<ItemComponent>(this->cloneImpl());
-    // }
 };
 
 #endif /*ITEMCOMPONENT_H*/

@@ -1,13 +1,25 @@
 #ifndef DESCRIPTION_H
 #define DESCRIPTION_H
 #include "../component.h"
+#include <istream>
 #include <memory>
+#include <ostream>
 #include <string>
 
 class Description : public Component
 {
 
-    Description *cloneImpl() const override { return new Description(*this); }
+    Description  *cloneImpl() const override { return new Description(*this); }
+    std::ostream &serialize(std::ostream &os) const override
+    {
+        os << ComponentType::DESCRIPTION << ' ' << this->description << ' ';
+        return os;
+    }
+    std::istream &deserialize(std::istream &is) override
+    {
+        is >> this->description;
+        return is;
+    }
 
 public:
     std::string description;
@@ -19,11 +31,6 @@ public:
     {
         this->description = desc.description;
     }
-
-    // std::unique_ptr<Description> clone() const
-    // {
-    //     return std::unique_ptr<Description>(this->cloneImpl());
-    // }
 };
 
 #endif /*DESCRIPTION_H*/

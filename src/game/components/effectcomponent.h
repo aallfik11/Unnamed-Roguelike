@@ -3,13 +3,29 @@
 #include "../component.h"
 #include "../effect.h"
 #include <cstdint>
+#include <istream>
 #include <memory>
+#include <ostream>
 
 class EffectComponent : public Component
 {
     EffectComponent *cloneImpl() const override
     {
         return new EffectComponent(*this);
+    }
+
+    std::ostream &serialize(std::ostream &os) const override
+    {
+        os << ComponentType::EFFECT << ' ' << this->effect << ' '
+           << this->effect_strength << ' ' << this->effect_duration << ' ';
+        return os;
+    }
+
+    std::istream &deserialize(std::istream &is) override
+    {
+        is >> this->effect >> this->effect_strength >> this->effect_duration;
+
+        return is;
     }
 
 public:
@@ -32,10 +48,6 @@ public:
                           effect_component.effect_strength)
     {
     }
-    // std::unique_ptr<Component> clone() const override
-    // {
-    //     return std::unique_ptr<EffectComponent>(this->cloneImpl());
-    // }
 };
 
 #endif /*EFFECTCOMPONENT_H*/

@@ -2,7 +2,9 @@
 #define HUNGERCOMPONENT_H
 #include "../component.h"
 #include <cstdint>
+#include <istream>
 #include <memory>
+#include <ostream>
 
 class HungerComponent : public Component
 {
@@ -10,6 +12,19 @@ class HungerComponent : public Component
     HungerComponent *cloneImpl() const override
     {
         return new HungerComponent(*this);
+    }
+
+    std::ostream &serialize(std::ostream &os) const override
+    {
+        os << ComponentType::HUNGER << ' ' << this->hunger << ' '
+           << this->max_hunger << ' ';
+        return os;
+    }
+
+    std::istream &deserialize(std::istream &is) override
+    {
+        is >> this->hunger >> this->max_hunger;
+        return is;
     }
 
 public:
@@ -26,11 +41,6 @@ public:
         this->hunger     = hunger_component.hunger;
         this->max_hunger = hunger_component.max_hunger;
     }
-
-    // std::unique_ptr<HungerComponent> clone() const
-    // {
-    //     return std::unique_ptr<HungerComponent>(this->cloneImpl());
-    // }
 };
 
 #endif /*HUNGERCOMPONENT_H*/

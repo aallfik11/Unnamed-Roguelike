@@ -2,14 +2,52 @@
 #define WEAPONSLOT_H
 #include "../component.h"
 #include "../entity.h"
+#include "../entityholder.h"
+#include "../system.h"
+#include <any>
+#include <istream>
 #include <memory>
+#include <ostream>
 
-class WeaponSlot : public Component
+class WeaponSlot : public Component, public EntityHolder
 {
 
     WeaponSlot *cloneImpl() const override
     {
         return new WeaponSlot(this->weapon_item);
+    }
+
+    std::ostream &serialize(std::ostream &os) const override
+    {
+        os << ComponentType::WEAPONSLOT << ' ';
+        if (this->weapon_item == nullptr)
+        {
+            os << 0 << ' ';
+        }
+        else
+        {
+            os << this->weapon_item->getId() << ' ';
+        }
+        return os;
+    }
+
+    std::istream &deserialize(std::istream &is) override
+    {
+        uint32_t temp_entity_id{};
+        is >> temp_entity_id;
+        if (temp_entity_id != 0)
+        {
+            std::shared_ptr<std::list<uint32_t>> entities_requested(
+                new std::list<uint32_t>);
+            entities_requested->push_back(temp_entity_id);
+            auto message = {std::make_any<SystemAction::ENTITY>(
+                                SystemAction::ENTITY::REQUEST),
+                            std::make_any<EntityHolder *>(this),
+                            std::make_any<std::shared_ptr<std::list<uint32_t>>>(
+                                entities_requested)};
+            System::sendSystemMessage(SystemType::ENTITY, message);
+        }
+        return is;
     }
 
 public:
@@ -30,10 +68,10 @@ public:
         this->weapon_item = entity;
     }
 
-    // std::unique_ptr<WeaponSlot> clone() const
-    // {
-    //     return std::unique_ptr<WeaponSlot>(this->cloneImpl());
-    // }
+    void loadEntities(std::shared_ptr<std::list<Entity *>> &entities) override
+    {
+        this->weapon_item = *(entities->begin());
+    }
 };
 
 #endif /*WEAPONSLOT_H*/

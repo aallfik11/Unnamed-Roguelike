@@ -3,7 +3,9 @@
 #include "../component.h"
 #include "buffcomponent.h"
 #include <cstdint>
+#include <istream>
 #include <memory>
+#include <ostream>
 
 class CritComponent : public Component
 {
@@ -11,6 +13,21 @@ class CritComponent : public Component
     CritComponent *cloneImpl() const override
     {
         return new CritComponent(*this);
+    }
+
+    std::ostream &serialize(std::ostream &os) const override
+    {
+        os << ComponentType::CRIT << ' ' << this->crit_chance << ' '
+           << this->crit_multiplier << this->crit_effects.get() << ' ';
+        return os;
+    }
+    std::istream &deserialize(std::istream &is) override
+    {
+        ComponentType placeholder;
+        this->crit_effects = std::make_unique<BuffComponent>();
+        is >> this->crit_chance >> this->crit_multiplier >> placeholder >>
+            this->crit_effects.get();
+        return is;
     }
 
 public:
@@ -34,11 +51,6 @@ public:
         this->crit_effects    = castToComponent<BuffComponent>(
             crit_component.crit_effects->clone());
     }
-
-    // std::unique_ptr<CritComponent> clone() const
-    // {
-    //     return std::unique_ptr<CritComponent>(this->cloneImpl());
-    // }
 };
 
 #endif /*CRITCOMPONENT_H*/
