@@ -48,6 +48,7 @@ enum class ENTITY
 {
     ADD,
     PURGE,
+    REQUEST,
 };
 
 enum HEALTH : uint8_t
