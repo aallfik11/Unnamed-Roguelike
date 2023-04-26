@@ -14,6 +14,7 @@ add_library(game
     tile.h
     globals.h
     system.h
+    entityholder.h
     )
 
 set_target_properties(game PROPERTIES LINKER_LANGUAGE CXX)
