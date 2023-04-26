@@ -2,7 +2,7 @@
 #define HEALTH_ENUM_H
 #include <cstdint>
 
-enum HealthAction : uint8_t
+enum class HealthAction : uint8_t
 {
     ADD     = 0x01,
     DEDUCE  = 0x02,
