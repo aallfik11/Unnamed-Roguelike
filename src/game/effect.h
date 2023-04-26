@@ -1,6 +1,8 @@
 #ifndef EFFECT_H
 #define EFFECT_H
 #include <cstdint>
+#include <istream>
+#include <ostream>
 
 enum Effect : uint16_t // doing this as a bitmask as I might want to
                        // support having multiple effects stacked into one
@@ -60,6 +62,20 @@ inline Effect &operator^=(Effect &effect_1, Effect effect_2)
 {
     effect_1 = effect_1 ^ effect_2;
     return effect_1;
+}
+
+inline std::ostream &operator<<(std::ostream &os, const Effect &effect)
+{
+    os << static_cast<uint16_t>(effect);
+    return os;
+}
+
+inline std::istream &operator>>(std::istream &is, Effect &effect)
+{
+    uint16_t temp{};
+    is >> temp;
+    effect = static_cast<Effect>(temp);
+    return is;
 }
 
 #endif /*EFFECT_H*/
