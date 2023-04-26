@@ -89,6 +89,6 @@ public:
     static void resetMaxId() { max_id_ = 0; }
 };
 
-uint32_t Entity::max_id_ = 0;
+uint32_t Entity::max_id_ = 1;
 
 #endif /*ENTITY_H*/
