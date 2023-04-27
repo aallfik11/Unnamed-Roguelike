@@ -4,6 +4,30 @@
 #include <iostream>
 #include <memory>
 
+/*
+ * Component test status:
+ * AI
+ * AMULETSLOT
+ * ARMOR
+ * ARMORSLOT
+ * BUFF
+ * COORDINATES
+ * CRIT
+ * DESCRIPTION
+ * EFFECT
+ * EXPERIENCE
+ * HEALTH
+ * HUNGER
+ * INVENTORY - TESTED
+ * ITEM - TESTED
+ * LOS
+ * NAME
+ * NAVMAP
+ * TILE
+ * WEAPON
+ * WEAPONSLOT
+ */
+
 int main()
 {
     // std::cout << "HELLO!";
@@ -25,8 +49,8 @@ int main()
     auto x = (*System::system_messages_)[SystemType::ENTITY];
     for (auto y : x)
     {
-        auto entity_list =
-            std::any_cast<std::shared_ptr<std::list<uint32_t>>>(*(y.begin() + 2));
+        auto entity_list = std::any_cast<std::shared_ptr<std::list<uint32_t>>>(
+            *(y.begin() + 2));
         for (auto message : *entity_list)
         {
             std::cout << message << " ";
