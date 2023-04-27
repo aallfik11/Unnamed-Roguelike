@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.0.0)
 project(Unnamed-Roguelike LANGUAGES CXX VERSION 0.1.0)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_FLAGS "-Wall -Wextra ")
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # FTXUI Includes ---------------------------------------------------------------
 include(FetchContent)
@@ -25,7 +26,7 @@ enable_testing()
 # set(GAMEHEADERS src/game)
 add_subdirectory(src)
 
-add_executable(Unnamed-Roguelike attacktest.cpp)
+add_executable(Unnamed-Roguelike serializationtest.cpp)
 
 # target_include_directories(Unnamed-Roguelike PRIVATE ${GAMEHEADERS})
 target_link_libraries(Unnamed-Roguelike PUBLIC source)
