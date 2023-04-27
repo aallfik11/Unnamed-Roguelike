@@ -4,7 +4,7 @@
 #include <istream>
 #include <ostream>
 
-enum Rarity : uint8_t
+enum class Rarity : uint8_t
 {
     COMMON,
     UNCOMMON,
