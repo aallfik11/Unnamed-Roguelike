@@ -68,7 +68,7 @@ enum class ComponentType : uint8_t
 
 inline std::ostream &operator<<(std::ostream &os, const ComponentType &type)
 {
-    os << static_cast<uint8_t>(type);
+    os << +static_cast<uint8_t>(type);
     return os;
 }
 
