@@ -56,7 +56,7 @@ public:
         this->stack     = item_component.stack;
         this->max_stack = item_component.max_stack;
         this->rarity    = item_component.rarity;
-        this->equipped  = item_component.rarity;
+        this->equipped  = item_component.equipped;
     }
 };
 
