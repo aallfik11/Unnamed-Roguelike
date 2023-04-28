@@ -63,7 +63,9 @@ enum class ComponentType : uint8_t
     NAVMAP,
     TILE,
     WEAPON,
-    WEAPONSLOT
+    WEAPONSLOT,
+
+    _SIZE //DO NOT TOUCH
 };
 
 inline std::ostream &operator<<(std::ostream &os, const ComponentType &type)
