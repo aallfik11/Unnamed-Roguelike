@@ -21,8 +21,8 @@ class AmuletSlot : public Component, public EntityHolder
     AmuletSlot   *cloneImpl() const override { return new AmuletSlot(*this); }
     std::ostream &serialize(std::ostream &os) const override
     {
-        os << ComponentType::AMULETSLOT << ' ' << this->amount_equipped << ' '
-           << this->max_slots << ' ';
+        os << ComponentType::AMULETSLOT << ' ' << +this->amount_equipped << ' '
+           << +this->max_slots << ' ';
         for (const auto &amulet : this->amulet_slots)
             os << amulet->getId() << ' ';
 

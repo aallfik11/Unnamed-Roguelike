@@ -14,7 +14,7 @@ class ArmorComponent : public Component
 
     virtual std::ostream &serialize(std::ostream &os) const override
     {
-        os << ComponentType::ARMOR << ' ' << this->armor_class << ' ';
+        os << ComponentType::ARMOR << ' ' << +this->armor_class << ' ';
         return os;
     }
 
