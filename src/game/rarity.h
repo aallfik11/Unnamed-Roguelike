@@ -4,7 +4,7 @@
 #include <istream>
 #include <ostream>
 
-enum Rarity : uint8_t
+enum class Rarity : uint8_t
 {
     COMMON,
     UNCOMMON,
@@ -15,7 +15,7 @@ enum Rarity : uint8_t
 
 inline std::ostream &operator<<(std::ostream &os, const Rarity &type)
 {
-    os << static_cast<uint8_t>(type);
+    os << +static_cast<uint8_t>(type);
     return os;
 }
 

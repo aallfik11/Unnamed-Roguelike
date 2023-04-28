@@ -25,7 +25,7 @@ enum class AIState : uint8_t
 
 inline std::ostream &operator<<(std::ostream &os, const AIType &type)
 {
-    os << static_cast<uint8_t>(type);
+    os << +static_cast<uint8_t>(type);
     return os;
 }
 
@@ -39,7 +39,7 @@ inline std::istream &operator>>(std::istream &is, AIType &type)
 
 inline std::ostream &operator<<(std::ostream &os, const AIState &type)
 {
-    os << static_cast<uint8_t>(type);
+    os << +static_cast<uint8_t>(type);
     return os;
 }
 

@@ -4,7 +4,7 @@
 #include <istream>
 #include <ostream>
 
-enum ItemType : uint16_t
+enum class ItemType : uint16_t
 {
     FOOD       = 0x0001,
     WEAPON     = 0x0002,
