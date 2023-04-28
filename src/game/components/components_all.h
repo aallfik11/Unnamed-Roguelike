@@ -4,8 +4,11 @@
 #include "../component.h"
 #include "aicomponent.h"
 #include "amuletslot.h"
+#include "armorcomponent.h"
+#include "armorslot.h"
 #include "buffcomponent.h"
 #include "coordinates.h"
+#include "critcomponent.h"
 #include "description.h"
 #include "effectcomponent.h"
 #include "experiencecomponent.h"
@@ -19,6 +22,5 @@
 #include "tilecomponent.h"
 #include "weaponcomponent.h"
 #include "weaponslot.h"
-#include "critcomponent.h"
 
 #endif /*COMPONENTS_ALL*/
