@@ -1,6 +1,7 @@
 #include "src/game/components/components_all.h"
 #include "src/game/entity.h"
 #include <cstdint>
+#include <fstream>
 #include <iostream>
 #include <memory>
 
@@ -78,7 +79,7 @@ int main()
     inv.inventory.emplace_back(&c);
     inv.inventory.emplace_back(&d);
     std::cout << &inv << '\n';
-    std::cin >> &inv;
+    /* std::cin >> &inv;
     auto x = (*System::system_messages_)[SystemType::ENTITY];
     for (auto y : x)
     {
@@ -88,10 +89,12 @@ int main()
         {
             std::cout << message << " ";
         }
-    }
+    } */
     std::cout << std::endl << "\n";
+    std::ofstream f("sertest.txt");
     for (auto &component : e_map)
     {
-        std::cout << component.second << "\n";
+        // if (component.first == ComponentType::NAVMAP)
+            f << component.second << std::endl;
     }
 }
