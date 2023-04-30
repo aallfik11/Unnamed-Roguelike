@@ -17,7 +17,7 @@ class EffectComponent : public Component
     std::ostream &serialize(std::ostream &os) const override
     {
         os << ComponentType::EFFECT << ' ' << this->effect << ' '
-           << this->effect_strength << ' ' << this->effect_duration << ' ';
+           << +this->effect_strength << ' ' << this->effect_duration << ' ';
         return os;
     }
 
