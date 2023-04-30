@@ -15,7 +15,7 @@ class ExperienceComponent : public Component
 
     std::ostream &serialize(std::ostream &os) const override
     {
-        os << ComponentType::EXPERIENCE << ' ' << this->level << ' '
+        os << ComponentType::EXPERIENCE << ' ' << +this->level << ' '
            << this->current_experience;
         return os;
     }

@@ -16,8 +16,8 @@ class HungerComponent : public Component
 
     std::ostream &serialize(std::ostream &os) const override
     {
-        os << ComponentType::HUNGER << ' ' << this->hunger << ' '
-           << this->max_hunger << ' ';
+        os << ComponentType::HUNGER << ' ' << +this->hunger << ' '
+           << +this->max_hunger << ' ';
         return os;
     }
 

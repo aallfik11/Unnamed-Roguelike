@@ -17,7 +17,7 @@ class CritComponent : public Component
 
     std::ostream &serialize(std::ostream &os) const override
     {
-        os << ComponentType::CRIT << ' ' << this->crit_chance << ' '
+        os << ComponentType::CRIT << ' ' << +this->crit_chance << ' '
            << this->crit_multiplier << this->crit_effects.get() << ' ';
         return os;
     }
