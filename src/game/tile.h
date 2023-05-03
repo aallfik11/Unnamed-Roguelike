@@ -7,6 +7,7 @@
 
 enum class TileType : uint16_t
 {
+    NONE         = 0x0000,
     FLOOR        = 0x0001,
     WALL         = 0x0002,
     SPRITE       = 0x0004, // might turn out to be unnecessary

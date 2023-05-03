@@ -4,6 +4,7 @@
 
 enum class EntityType : uint16_t
 {
+    NONE       = 0x000,
     LIVING     = 0x001,
     KILLED     = 0x002,
     UNDEAD     = 0x004,
