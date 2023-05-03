@@ -6,7 +6,6 @@
 #include "../components/coordinates.h"
 #include "../components/health.h"
 #include "../components/lineofsightcomponent.h"
-#include "../components/weaponcomponent.h"
 #include "../entity.h"
 #include "../globals.h"
 // #include "../health_enum.h"
@@ -15,9 +14,9 @@
 #include "healthsystem.h"
 #include "navmapmanager.h"
 #include "positionsystem.h"
+#include <any>
 #include <array>
 #include <cstdint>
-#include <functional>
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
@@ -38,21 +37,12 @@ class AISystem : public System
 
     using EntityId  = uint32_t;
     using EntityPtr = std::shared_ptr<Entity>;
-    // using AIMap = std::unordered_map<std::shared_ptr<Entity>,
-    // std::weak_ptr<AIComponent>>;
-    using AISet     = std::unordered_set<EntityPtr>;
-    // using StateArray = std::array<std::unordered_map<AIState,
-    // std::function<Action(EntityPtr, EntityPtr)>>, 7>;
+    using AISet     = std::unordered_set<Entity *>;
     using GameMap   = std::vector<std::vector<Tile>>;
-    using StateMap =
-        std::unordered_map<AIState,
-                           std::function<Action(EntityPtr &, EntityPtr &)>>;
 
-    PositionSystem &positon_system_;
-    NavMapManager  &navigation_manager_;
-
-    AISet    ais_;
-    StateMap states_;
+    AISet          ais_;
+    GameMap        map_;
+    NavMapManager &navigation_manager_;
 
 public: // temporary
     double getRunThreshold(AIType &ai_type)
@@ -79,7 +69,7 @@ public: // temporary
     // todo: make the functions take a boolean to ignore checks (to make calling
     // them from other functions faster);
 
-    void approachTarget(EntityPtr &caller, EntityPtr &target)
+    void approachTarget(Entity *const caller, Entity *const target)
     {
         /*if player within range, attack
           if lost LOS of player, go to the last known coords
@@ -116,10 +106,16 @@ public: // temporary
             navigation_manager_.assignRandomTarget(caller_navmap->nav_map);
             return wanderAround(caller, target);
         }
-        positon_system_.updatePosition(caller, x, y);
+        // positon_system_.updatePosition(caller, x, y);
+        auto message = {std::make_any<SystemAction::POSITION>(
+                            SystemAction::POSITION::UPDATE),
+                        std::make_any<Entity *>(caller),
+                        std::make_any<uint16_t>(x),
+                        std::make_any<uint16_t>(y)};
+        System::sendSystemMessage(SystemType::POSITION, message);
     }
 
-    void runAway(EntityPtr &caller, EntityPtr &target)
+    void runAway(Entity *const caller, Entity *const target)
     {
         /*if there's a line of sight to the player, run away, else rest
          * if no way of running exists (backed into a corner),
@@ -133,9 +129,8 @@ public: // temporary
 
         auto [x, y] = navigation_manager_.nextBestCoordinates(
             caller, NavMapManager::Destination::AWAY_FROM);
-        auto caller_coordinates = caller->getComponent<Coordinates>();
-        // if (caller_coordinates->x == x && caller_coordinates->y == y)
-        if (positon_system_.updatePosition(caller, x, y) == false)
+        if ((map_[x][y].type & (TileType::HAS_CREATURE |
+                                TileType::TRAVERSIBLE)) != TileType::NONE)
         {
             auto caller_brain = caller->getComponent<AIComponent>();
             if (caller_brain->ai_type != AIType::AI_MONSTER_COWARDLY)
@@ -147,7 +142,7 @@ public: // temporary
         }
     }
 
-    void rest(EntityPtr &caller, EntityPtr &target)
+    void rest(Entity *const caller, Entity *const target)
     {
         /*if hp high enough and there's a LOS to the player, approach
          * if hp low and LOS to player then run away
@@ -201,7 +196,7 @@ public: // temporary
         // Health component) later
     }
 
-    void attack(EntityPtr &caller, EntityPtr &target)
+    void attack(Entity *const caller, Entity *const target)
     {
         /*if hp goes low, run away
          *if player runs away, chase,
@@ -240,7 +235,7 @@ public: // temporary
         (*system_messages_)[SystemType::ATTACK].emplace_back(caller, target);
     }
 
-    void wanderAround(EntityPtr &caller, EntityPtr &target)
+    void wanderAround(Entity *const caller, Entity *const target)
     {
         /*if player enters LOS, approach/run away
          *(depending on the circumstances)
@@ -297,21 +292,21 @@ public: // temporary
         (*system_messages_)[SystemType::POSITION].emplace_back(message);
     }
 
-    // void special(EntityPtr &caller, EntityPtr &target)
+    // void special(Entity * const caller, Entity * const target)
     // {
     //     /*unused for now
     //      */
     // }
 
-    // void interactWithObject(EntityPtr &caller, EntityPtr &target)
+    // void interactWithObject(Entity * const caller, Entity * const target)
     // {
     //     /*unused for now
     //      */
     // }
 
 public:
-    AISystem(PositionSystem &position_system, NavMapManager &nav_manager)
-        : positon_system_{position_system}, navigation_manager_{nav_manager}
+    AISystem(GameMap &map, NavMapManager &nav_manager)
+        : map_{map}, navigation_manager_{nav_manager}
     {
         // states_[APPROACH_TARGET] = std::function<Action(EntityPtr&,
         // EntityPtr&)>(approachTarget); states_[RUN_AWAY]        =
@@ -384,11 +379,11 @@ public:
         // /*SPECIAL*/
     }
 
-    void addEntity(const EntityPtr &entity) { ais_.emplace(entity); }
+    void addEntity(const Entity *const entity) { ais_.emplace(entity); }
 
-    void deleteEntity(EntityPtr &entity) { ais_.erase(entity); }
+    void deleteEntity(Entity *const entity) { ais_.erase(entity); }
 
-    void runAI(EntityPtr &caller, EntityPtr &target)
+    void runAI(Entity *const caller, Entity *const target)
     {
         if (!ais_.contains(caller))
             return;
