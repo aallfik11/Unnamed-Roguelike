@@ -166,7 +166,7 @@ public:
         auto entity_buffs = entity->getComponent<BuffComponent>();
         for (auto &buff : buffs_ptr->buffs)
         {
-            entity_buffs->buffs[buff.first] = buff.second->clone();
+            entity_buffs->buffs[buff.first] = castToComponent<EffectComponent>(buff.second->clone());
         }
     }
 
