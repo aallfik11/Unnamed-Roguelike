@@ -109,7 +109,7 @@ class NavMapManager
             auto random_target_x = distro_x_(mt_engine_);
             auto random_target_y = distro_y_(mt_engine_);
             while ((map_[random_target_x][random_target_y].type &
-                    TRAVERSIBLE) == false)
+                    TileType::TRAVERSIBLE) != TileType::NONE)
             {
                 random_target_x = distro_x_(mt_engine_);
                 random_target_y = distro_y_(mt_engine_);
@@ -139,7 +139,7 @@ public:
             auto random_target_x = distro_x_(mt_engine_);
             auto random_target_y = distro_y_(mt_engine_);
             while ((map_[random_target_x][random_target_y].type &
-                    TRAVERSIBLE) == false)
+                    TileType::TRAVERSIBLE) != TileType::NONE)
             {
                 random_target_x = distro_x_(mt_engine_);
                 random_target_y = distro_y_(mt_engine_);
@@ -163,7 +163,10 @@ public:
         });
     }
 
-    void switchToPlayerNavMap(NavMap &nav_map) { nav_map = nav_to_player_; }
+    void switchToPlayerNavMap(NavMap &nav_map) const
+    {
+        nav_map = nav_to_player_;
+    }
 
     void calculateNavMap(NavMap &nav_map, TargetTuple targets)
     {
@@ -225,8 +228,8 @@ public:
         });
     }
 
-    std::tuple<uint16_t, uint16_t> nextBestCoordinates(EntityPtr  &entity,
-                                                       Destination destination)
+    std::tuple<uint16_t, uint16_t>
+    nextBestCoordinates(Entity *const entity, Destination destination) const
     {
         using NavTuple = std::tuple<uint16_t, uint16_t, NavCell>;
         auto nav_map   = entity->getComponent<NavMapComponent>()->nav_map;
@@ -265,9 +268,7 @@ public:
 
         if (destination == Destination::AWAY_FROM)
         {
-            result = std::max(std::max(up, down, compare_higher),
-                              std::max(left, right, compare_higher),
-                              compare_higher);
+            result = std::max({up, down, left, right}, compare_higher);
 
             if (nav_map[current_x][current_y].score >
                 nav_map[std::get<0>(result)][std::get<1>(result)].score)
@@ -280,9 +281,7 @@ public:
             if (nav_map[current_x][current_y].score == 0)
                 return std::make_tuple(current_x, current_y);
 
-            result = std::min(std::min(up, down, compare_lower),
-                              std::min(left, right, compare_lower),
-                              compare_lower);
+            result = std::min({up, down, left, right}, compare_lower);
 
             if (nav_map[current_x][current_y].score <
                 nav_map[std::get<0>(result)][std::get<1>(result)].score)
