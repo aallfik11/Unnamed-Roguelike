@@ -20,11 +20,11 @@ class PositionSystem : public System
     using GameMap   = std::vector<std::vector<Tile>>;
     using EntityPtr = std::shared_ptr<Entity>;
     using Message =
-        std::tuple<SystemAction::POSITION, EntityPtr, uint16_t, uint16_t>;
+        std::tuple<SystemAction::POSITION, Entity *, uint16_t, uint16_t>;
 
-    std::unordered_set<EntityPtr> entity_positions_;
-    std::list<Message>            messages_;
-    GameMap                      &map_;
+    std::unordered_set<Entity *> entity_positions_;
+    std::list<Message>           messages_;
+    GameMap                     &map_;
 
     /**
      * @brief Checks if the coordinates are within the map's bounds
@@ -58,10 +58,10 @@ class PositionSystem : public System
         if (checkCoordinateValidity(x, y) == false)
             return true;
 
-        if (!(map_[x][y].type & TileType::TRAVERSIBLE))
+        if ((map_[x][y].type & TileType::TRAVERSIBLE) == TileType::NONE)
             return true;
 
-        if (map_[x][y].type & TileType::HAS_CREATURE)
+        if ((map_[x][y].type & TileType::HAS_CREATURE) != TileType::NONE)
             return true;
 
         return false;
@@ -80,7 +80,7 @@ public:
      * @return true Successfully updated the position,
      * @return false Position could not be updated
      */
-    bool updatePosition(const EntityPtr &entity, uint16_t x, uint16_t y)
+    bool updatePosition(Entity *const entity, uint16_t x, uint16_t y)
     {
         if (entity_positions_.contains(entity) == false)
         {
@@ -96,12 +96,14 @@ public:
         auto position = entity->getComponent<Coordinates>();
 
         auto type     = entity->type;
-        if (type & (EntityType::CREATURE | EntityType::PLAYER))
+        if ((type & (EntityType::CREATURE | EntityType::PLAYER)) !=
+            EntityType::NONE)
         {
             map_[position->x][position->y].type &= ~TileType::HAS_CREATURE;
             map_[x][y].type                     |= TileType::HAS_CREATURE;
         }
-        else if (type & (EntityType::CONTAINER | EntityType::ITEM))
+        else if ((type & (EntityType::CONTAINER | EntityType::ITEM)) !=
+                 EntityType::NONE)
         {
             map_[position->x][position->y].type &= ~TileType::HAS_ITEM;
             map_[x][y].type                     |= TileType::HAS_ITEM;
@@ -122,7 +124,7 @@ public:
      * @return true - Successfuly updated the position,
      * @return false - Position could not be updated
      */
-    bool updatePosition(const EntityPtr &entity, Direction direction)
+    bool updatePosition(Entity *const entity, Direction direction)
     {
         if (auto position = entity->getComponent<Coordinates>())
         {
@@ -152,9 +154,9 @@ public:
         return false;
     }
 
-    std::list<EntityPtr> getEntitiesAtCoordinates(uint16_t x, uint16_t y)
+    std::list<Entity *> getEntitiesAtCoordinates(uint16_t x, uint16_t y)
     {
-        std::list<EntityPtr> entitiesAtCoordinates;
+        std::list<Entity *> entitiesAtCoordinates;
         for (auto &entity : entity_positions_)
         {
             if (auto coords_ptr = entity->getComponent<Coordinates>())
@@ -173,7 +175,7 @@ public:
      *
      * @param entity
      */
-    void addEntity(const EntityPtr &entity)
+    void addEntity(const Entity *const entity)
     {
         entity_positions_.emplace(entity);
     }
@@ -184,10 +186,7 @@ public:
      *
      * @param entity
      */
-    void deleteEntity(const EntityPtr &entity)
-    {
-        entity_positions_.erase(entity);
-    }
+    void deleteEntity(Entity *const entity) { entity_positions_.erase(entity); }
 
     void updateData() override
     {
@@ -219,7 +218,7 @@ public:
             // false -> get entities
             auto update_or_get =
                 std::any_cast<SystemAction::POSITION>(*message_iterator);
-            auto entity = std::any_cast<EntityPtr>(*(message_iterator + 1));
+            auto entity = std::any_cast<Entity *>(*(message_iterator + 1));
             auto x      = std::any_cast<uint16_t>(*(message_iterator + 2));
             auto y      = std::any_cast<uint16_t>(*(message_iterator + 3));
             messages_.emplace_back(update_or_get, entity, x, y);
