@@ -22,14 +22,14 @@ class AttackSystem : public System
 
     std::random_device                         rd_;
     std::mt19937                               mt_engine_;
-    std::uniform_int_distribution<uint8_t>     roll_chance_;
+    std::uniform_int_distribution<>     roll_chance_;
     std::list<std::pair<EntityPtr, EntityPtr>> messages_;
 
 public:
     AttackSystem()
     {
         mt_engine_.seed(rd_());
-        roll_chance_ = std::uniform_int_distribution<uint8_t>(0, 100);
+        roll_chance_ = std::uniform_int_distribution<>(0, 100);
     }
 
     bool attack(Entity *const attacker, Entity *const defender)
