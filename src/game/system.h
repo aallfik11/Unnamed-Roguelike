@@ -3,8 +3,10 @@
 #include <any>
 #include <cstdint>
 #include <initializer_list>
+#include <istream>
 #include <list>
 #include <memory>
+#include <ostream>
 #include <unordered_map>
 #include <vector>
 
@@ -98,20 +100,45 @@ public:
     static std::shared_ptr<MessageMap> system_messages_;
 
 public:
-    virtual void updateData()          = 0;
-    virtual void readSystemMessages()  = 0;
-    virtual void clearSystemMessages() = 0;
+    virtual void          updateData()                      = 0;
+    virtual void          readSystemMessages()              = 0;
+    virtual void          clearSystemMessages()             = 0;
+    virtual std::ostream &serialize(std::ostream &os) const = 0;
+    virtual std::istream &deserialize(std::istream &is)     = 0;
 
-    static void
-    sendSystemMessage(SystemType                      receiver,
-                      std::initializer_list<std::any> message_parameters)
+    static void sendSystemMessage(SystemType                      receiver,
+                                  std::initializer_list<std::any> message)
     {
-        (*system_messages_)[receiver].emplace_back(message_parameters);
+        (*system_messages_)[receiver].emplace_back(message);
+    }
+
+    friend std::ostream &operator<<(std::ostream       &os,
+                                    const System *const system)
+    {
+        return system->serialize(os);
+    }
+    friend std::istream &operator>>(std::istream &is, System *const system)
+    {
+        return system->deserialize(is);
     }
 };
 
 std::shared_ptr<System::MessageMap>
     System::system_messages_(new System::MessageMap);
+
+inline std::ostream &operator<<(std::ostream &os, const SystemType &s)
+{
+    os << static_cast<int>(s);
+    return os;
+}
+
+inline std::istream &operator>>(std::istream &is, SystemType &s)
+{
+    int temp{};
+    is >> temp;
+    s = static_cast<SystemType>(temp);
+    return is;
+}
 
 inline constexpr SystemAction::HEALTH operator&(SystemAction::HEALTH health_1,
                                                 SystemAction::HEALTH health_2)
