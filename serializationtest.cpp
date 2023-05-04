@@ -94,7 +94,7 @@ int main()
     std::ofstream f("sertest.txt");
     for (auto &component : e_map)
     {
-        // if (component.first == ComponentType::NAVMAP)
-            f << component.second << std::endl;
+        if (component.first != ComponentType::NAVMAP)
+            std::cout << component.second << std::endl;
     }
 }
