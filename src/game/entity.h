@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <memory>
 #include <ranges>
+#include <utility>
 // #include <type_traits>
 #include <typeindex>
 #include <typeinfo>
@@ -31,6 +32,16 @@ public:
 
     Entity(EntityType type) : Entity() { this->type = type; }
 
+    Entity(EntityType type, std::vector<Component *> &components) : Entity()
+    {
+        for (auto &component : components)
+        {
+            components_.emplace(typeid(*component),
+                                std::unique_ptr<Component>(component));
+        }
+        this->type = type;
+    }
+
     Entity(EntityType type, std::initializer_list<Component *> components)
         : Entity()
     {
@@ -50,7 +61,8 @@ public:
         }
     }
 
-    uint32_t getId() const { return id_; }
+    uint32_t        getId() const { return id_; }
+    static uint32_t getMaxId() { return max_id_; }
 
     void addComponent(Component *component)
     {
