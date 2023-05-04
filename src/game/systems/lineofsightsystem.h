@@ -10,11 +10,10 @@
 
 class LOS_System
 {
-    using EntityPtr = std::shared_ptr<Entity>;
-    using GameMap   = std::vector<std::vector<Tile>>;
+    using GameMap = std::vector<std::vector<Tile>>;
 
-    std::unordered_set<EntityPtr> lines_of_sight_;
-    GameMap                      &map_;
+    std::unordered_set<Entity *> lines_of_sight_;
+    GameMap                     &map_;
 
     bool lineOfSightAlg(uint16_t init_x,
                         uint16_t init_y,
@@ -40,7 +39,7 @@ class LOS_System
 
             do
             {
-                if ((map_[x][y].type & TRAVERSIBLE) == false)
+                if ((map_[x][y].type & TileType::TRAVERSIBLE) == TileType::NONE)
                     return false;
 
                 if (t >= 0)
@@ -58,7 +57,7 @@ class LOS_System
 
             do
             {
-                if ((map_[x][y].type & TRAVERSIBLE) == false)
+                if ((map_[x][y].type & TileType::TRAVERSIBLE) == TileType::NONE)
                     return false;
 
                 if (t >= 0)
@@ -77,11 +76,11 @@ class LOS_System
 public:
     LOS_System(GameMap &gamemap) : map_{gamemap} {}
 
-    void addEntity(EntityPtr &entity) { lines_of_sight_.emplace(entity); }
+    void addEntity(Entity *entity) { lines_of_sight_.emplace(entity); }
 
-    void deleteEntity(EntityPtr &entity) { lines_of_sight_.erase(entity); }
+    void deleteEntity(Entity *entity) { lines_of_sight_.erase(entity); }
 
-    void calculateLOS(EntityPtr &entity, EntityPtr &target)
+    void calculateLOS(Entity *entity, Entity *target)
     {
         auto target_coord_ptr      = target->getComponent<Coordinates>();
         auto coord_ptr             = entity->getComponent<Coordinates>();
@@ -111,7 +110,8 @@ public:
             // simpler, if I'll want to have variable seeing distances I'll use
             // the commented version
             los_ptr->has_LOS_to_player =
-                (map_[coord_ptr->x][coord_ptr->y].type & TileType::VISIBLE)
+                ((map_[coord_ptr->x][coord_ptr->y].type & TileType::VISIBLE) !=
+                 TileType::NONE)
                     ? true
                     : false;
         }

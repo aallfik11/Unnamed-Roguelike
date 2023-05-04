@@ -91,15 +91,15 @@ class PlayerControlSystem : public System
     {
         switch (rarity)
         {
-        case COMMON:
+        case Rarity::COMMON:
             return ftxui::Color::GrayLight;
-        case UNCOMMON:
+        case Rarity::UNCOMMON:
             return ftxui::Color::Green3;
-        case RARE:
+        case Rarity::RARE:
             return ftxui::Color::Aquamarine1;
-        case EPIC:
+        case Rarity::EPIC:
             return ftxui::Color::Purple;
-        case LEGENDARY:
+        case Rarity::LEGENDARY:
             return ftxui::Color::Gold1;
         default:
             return ftxui::Color::White;

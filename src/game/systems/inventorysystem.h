@@ -45,7 +45,7 @@ class InventorySystem : public System
             }
             else
                 caller_buffs->buffs[item_buff.first] =
-                    item_buff.second->clone();
+                    castToComponent<EffectComponent>(item_buff.second->clone());
         }
     }
 
@@ -102,7 +102,7 @@ class InventorySystem : public System
         auto caller_buffs   = caller->getComponent<BuffComponent>();
         auto type           = item_component->type;
 
-        if (type & ItemType::WEAPON)
+        if ((type & ItemType::WEAPON) != ItemType::NONE)
         {
             auto caller_weaponslot = caller->getComponent<WeaponSlot>();
 
@@ -138,7 +138,7 @@ class InventorySystem : public System
             }
             return true;
         }
-        else if (type & ItemType::ARMOR)
+        else if ((type & ItemType::ARMOR) != ItemType::NONE)
         {
             auto caller_armorslot = caller->getComponent<ArmorSlot>();
 
@@ -174,7 +174,7 @@ class InventorySystem : public System
             }
             return true;
         }
-        else if (type & ItemType::RING)
+        else if ((type & ItemType::RING) != ItemType::NONE)
         {
             auto caller_amulets = caller->getComponent<AmuletSlot>();
             if (caller_amulets->amount_equipped == caller_amulets->max_slots)
@@ -220,7 +220,8 @@ class InventorySystem : public System
             auto caller_buffs = caller->getComponent<BuffComponent>();
             for (auto &buff : buff_component->buffs)
             {
-                caller_buffs->buffs[buff.first] = buff.second->clone();
+                caller_buffs->buffs[buff.first] =
+                    castToComponent<EffectComponent>(buff.second->clone());
             }
         }
         if (item_component->stack > 1)
@@ -244,7 +245,8 @@ public:
         for (auto &item : items)
         {
             // figure out how to add stackable stuff
-            if (item->getComponent<ItemComponent>()->type & ItemType::STACKABLE)
+            if ((item->getComponent<ItemComponent>()->type &
+                 ItemType::STACKABLE) != ItemType::NONE)
             {
                 if (stackItem(target_inventory->inventory, item) == true)
                     continue;
@@ -277,15 +279,16 @@ public:
         auto item_component = item->getComponent<ItemComponent>();
         if (item_component->equipped)
         {
-            if (item_component->type & ItemType::ARMOR)
+            if ((item_component->type & ItemType::ARMOR) != ItemType::NONE)
             {
                 caller->getComponent<ArmorSlot>()->armor_item = nullptr;
             }
-            else if (item_component->type & ItemType::WEAPON)
+            else if ((item_component->type & ItemType::WEAPON) !=
+                     ItemType::NONE)
             {
                 caller->getComponent<WeaponSlot>()->weapon_item = nullptr;
             }
-            else if (item_component->type & ItemType::RING)
+            else if ((item_component->type & ItemType::RING) != ItemType::NONE)
             {
                 auto amulet_slot = caller->getComponent<AmuletSlot>();
                 amulet_slot->amount_equipped -= 1;
@@ -295,7 +298,7 @@ public:
             item_component->equipped = false;
         }
 
-        if (item_component->type & STACKABLE)
+        if ((item_component->type & ItemType::STACKABLE) != ItemType::NONE)
         {
             item_component->stack -= 1;
             Entity *dropped_item(new Entity(*item));
@@ -325,11 +328,12 @@ public:
         // auto item      = index;
 
         auto item_type = (*index)->getComponent<ItemComponent>()->type;
-        if (item_type & ItemType::EQUIPABLE)
+        if ((item_type & ItemType::EQUIPABLE) != ItemType::NONE)
         {
             equip(caller, index);
         }
-        else if (item_type & ItemType::CONSUMABLE)
+        else if ((item_type & ItemType::CONSUMABLE) != ItemType::NONE)
+            ;
         {
             consume(caller, index);
         }

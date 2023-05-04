@@ -1,42 +1,115 @@
 #ifndef ENTITYMANAGER_H
 #define ENTITYMANAGER_H
+#include "../component.h"
 #include "../entity.h"
+#include "../entityholder.h"
+#include "../entitytypes.h"
+#include "../system.h"
+#include <any>
 #include <cstdint>
+#include <memory>
 #include <unordered_map>
+#include <vector>
 
-class EntityManager
+class EntityManager : public System
 {
-    // bool is purge flag,
-    using EntityHashmap =
-        std::unordered_map<uint32_t, std::pair<std::shared_ptr<Entity>, bool>>;
-    EntityHashmap entities_;
+    using EntityHashmap = std::unordered_map<uint32_t, std::unique_ptr<Entity>>;
+    using Request =
+        std::pair<EntityHolder *, std::shared_ptr<std::list<uint32_t>>>;
+    EntityHashmap       entities_;
+    std::list<uint32_t> purge_list_;
+    std::list<Entity *> add_list_;
+    std::list<Request>  request_list_;
 
 public:
-    uint32_t createEntity()
+    uint32_t createEntity(const EntityType          type,
+                          std::vector<Component *> &components)
     {
-        Entity *temp = new Entity();
-        entities_.emplace(temp->getId(),
-                          std::make_pair<std::shared_ptr<Entity>, bool>(
-                              std::shared_ptr<Entity>(temp), false));
-        return temp->getId();
+        auto id       = Entity::getMaxId();
+        entities_[id] = std::make_unique<Entity>(type, components);
+        return id;
     }
 
-    std::shared_ptr<Entity> getEntity(uint32_t entity_id)
+    void addEntity(Entity *entity)
     {
-        return entities_.at(entity_id).first;
+        entities_[entity->getId()] = std::unique_ptr<Entity>(entity);
+    }
+
+    Entity *getEntity(const uint32_t entity_id) const
+    {
+        return entities_.at(entity_id).get();
     }
 
     EntityHashmap &getAllEntities() { return entities_; }
 
-    void markForDeletion(uint32_t id) { entities_.at(id).second = true; }
+    void markForDeletion(const uint32_t id) { purge_list_.emplace_back(id); }
 
-    void purgeAllMarked()
+    void purge()
     {
-        for (auto it = entities_.begin(); it != entities_.end(); it++)
+        for (auto &entity_id : purge_list_)
         {
-            if (it->second.second == true)
-                entities_.erase(it);
+            entities_.erase(entity_id);
         }
+        purge_list_.clear();
+    }
+
+    void handleRequests()
+    {
+        for (auto &request : request_list_)
+        {
+            std::shared_ptr<std::list<Entity *>> entities(
+                new std::list<Entity *>);
+            for (auto &entity_id : *request.second)
+            {
+                (*entities).push_back(getEntity(entity_id));
+            }
+            request.first->loadEntities(entities);
+        }
+        request_list_.clear();
+    }
+
+    void updateData() override
+    {
+        purge();
+        for (auto &entity : add_list_)
+        {
+            addEntity(entity);
+        }
+        add_list_.clear();
+        handleRequests();
+    }
+    void readSystemMessages() override
+    {
+        for (auto &message : (*System::system_messages_)[SystemType::ENTITY])
+        {
+            auto                 message_it = message.begin();
+            SystemAction::ENTITY action =
+                std::any_cast<SystemAction::ENTITY>(*message_it);
+            message_it++;
+            switch (action)
+            {
+            case SystemAction::ENTITY::ADD:
+            {
+                add_list_.push_back(std::any_cast<Entity *>(*message_it));
+                break;
+            }
+            case SystemAction::ENTITY::PURGE:
+            {
+                purge_list_.push_back(std::any_cast<uint32_t>(*message_it));
+            }
+            case SystemAction::ENTITY::REQUEST:
+            {
+                request_list_.emplace_back(std::make_pair(
+                    std::any_cast<EntityHolder *>(*message_it),
+                    std::any_cast<std::shared_ptr<std::list<uint32_t>>>(
+                        *(message_it + 1))));
+            }
+            }
+        }
+    }
+    void clearSystemMessages() override
+    {
+        (*System::system_messages_)[SystemType::ENTITY].clear();
     }
 };
 

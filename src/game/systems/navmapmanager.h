@@ -15,10 +15,8 @@
 class NavMapManager
 {
 
-    using GameMap   = std::vector<std::vector<Tile>>;
-    using NavMap    = std::vector<std::vector<NavCell>>;
-    using EntityId  = uint32_t;
-    using EntityPtr = std::shared_ptr<Entity>;
+    using GameMap = std::vector<std::vector<Tile>>;
+    using NavMap  = std::vector<std::vector<NavCell>>;
     using RandomTargets =
         std::queue<std::pair</*random x*/ uint16_t, /*random y*/ uint16_t>>;
     using TargetTuple =

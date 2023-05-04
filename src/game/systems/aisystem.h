@@ -7,21 +7,19 @@
 #include "../components/health.h"
 #include "../components/lineofsightcomponent.h"
 #include "../entity.h"
+#include "../entityholder.h"
 #include "../globals.h"
-// #include "../health_enum.h"
 #include "../system.h"
-#include "attacksystem.h"
-#include "healthsystem.h"
 #include "navmapmanager.h"
-#include "positionsystem.h"
 #include <any>
-#include <array>
 #include <cstdint>
+#include <istream>
+#include <list>
 #include <memory>
-#include <unordered_map>
+#include <ostream>
 #include <unordered_set>
 
-class AISystem : public System
+class AISystem : public System, public EntityHolder
 {
 
     /* In order to work correctly, an entity in the AI System is required
@@ -35,14 +33,13 @@ class AISystem : public System
      * StrengthComponent
      */
 
-    using EntityId  = uint32_t;
-    using EntityPtr = std::shared_ptr<Entity>;
-    using AISet     = std::unordered_set<Entity *>;
-    using GameMap   = std::vector<std::vector<Tile>>;
+    using AISet   = std::unordered_set<Entity *>;
+    using GameMap = std::vector<std::vector<Tile>>;
 
     AISet          ais_;
     GameMap        map_;
     NavMapManager &navigation_manager_;
+    Entity        *player;
 
 public: // temporary
     double getRunThreshold(AIType &ai_type)
@@ -187,11 +184,11 @@ public: // temporary
         // caller_health->current_health_points += 1;
         auto message = {
             std::make_any<SystemAction::HEALTH>(SystemAction::HEALTH::UPDATE),
-            std::make_any<EntityPtr>(caller),
+            std::make_any<Entity *>(caller),
             std::make_any<uint16_t>(1),
             std::make_any<SystemAction::HEALTH>(SystemAction::HEALTH::HEAL |
                                                 SystemAction::HEALTH::CURRENT)};
-        (*system_messages_)[SystemType::HEALTH].emplace_back(message);
+        System::sendSystemMessage(SystemType::HEALTH, message);
         // might want to add a regen_amount component (or a field to
         // Health component) later
     }
@@ -232,7 +229,9 @@ public: // temporary
         }
 
         // AttackSystem::attack(caller, target);
-        (*system_messages_)[SystemType::ATTACK].emplace_back(caller, target);
+        auto message = {std::make_any<Entity *>(caller),
+                        std::make_any<Entity *>(target)};
+        System::sendSystemMessage(SystemType::ATTACK, message);
     }
 
     void wanderAround(Entity *const caller, Entity *const target)
@@ -286,10 +285,10 @@ public: // temporary
 
         auto message = {std::make_any<SystemAction::POSITION>(
                             SystemAction::POSITION::UPDATE),
-                        std::make_any<EntityPtr>(caller),
+                        std::make_any<Entity *>(caller),
                         std::make_any<uint16_t>(x),
                         std::make_any<uint16_t>(y)};
-        (*system_messages_)[SystemType::POSITION].emplace_back(message);
+        System::sendSystemMessage(SystemType::POSITION, message);
     }
 
     // void special(Entity * const caller, Entity * const target)
@@ -379,9 +378,9 @@ public:
         // /*SPECIAL*/
     }
 
-    void addEntity(const Entity *const entity) { ais_.emplace(entity); }
+    inline void addEntity(const Entity *const entity) { ais_.emplace(entity); }
 
-    void deleteEntity(Entity *const entity) { ais_.erase(entity); }
+    inline void deleteEntity(Entity *const entity) { ais_.erase(entity); }
 
     void runAI(Entity *const caller, Entity *const target)
     {
@@ -414,6 +413,32 @@ public:
 
             attack(caller, target);
             break;
+        }
+    }
+    void updateData() override
+    {
+        for (auto &ai : ais_)
+        {
+            runAI(ai, player);
+        }
+    }
+    void readSystemMessages() override {}
+    void clearSystemMessages() override {}
+
+    std::ostream &serialize(std::ostream &os) const override
+    {
+        os << SystemType::AI << ' ';
+        for (auto &entity : ais_)
+        {
+            os << entity->getId() << ' ';
+        }
+    }
+
+    void loadEntities(std::shared_ptr<std::list<Entity *>> &entities) override
+    {
+        for (auto &entity : *entities)
+        {
+            addEntity(entity);
         }
     }
 };

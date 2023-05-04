@@ -12,13 +12,12 @@
 
 class HealthSystem : public System
 {
-    using EntityPtr = std::shared_ptr<Entity>;
 
-    using Message   = std::tuple<EntityPtr, uint16_t, SystemAction::HEALTH>;
+    using Message = std::tuple<Entity *, uint16_t, SystemAction::HEALTH>;
     std::list<Message> messages_;
 
 public:
-    inline void updateHealth(const EntityPtr     &entity,
+    inline void updateHealth(Entity *const        entity,
                              uint16_t             amount,
                              SystemAction::HEALTH action)
     {
@@ -87,7 +86,7 @@ public:
         for (auto message : (*system_messages_)[SystemType::HEALTH])
         {
             auto message_iterator = message.begin();
-            auto entity           = std::any_cast<EntityPtr>(*message_iterator);
+            auto entity           = std::any_cast<Entity *>(*message_iterator);
             ++message_iterator;
             auto amount = std::any_cast<uint16_t>(*message_iterator);
             ++message_iterator;

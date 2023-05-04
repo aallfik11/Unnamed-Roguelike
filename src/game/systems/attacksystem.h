@@ -18,12 +18,11 @@
 
 class AttackSystem : public System
 {
-    using EntityPtr = Entity *;
 
-    std::random_device                         rd_;
-    std::mt19937                               mt_engine_;
-    std::uniform_int_distribution<>     roll_chance_;
-    std::list<std::pair<EntityPtr, EntityPtr>> messages_;
+    std::random_device                       rd_;
+    std::mt19937                             mt_engine_;
+    std::uniform_int_distribution<>          roll_chance_;
+    std::list<std::pair<Entity *, Entity *>> messages_;
 
 public:
     AttackSystem()
@@ -165,8 +164,8 @@ public:
         for (auto &message : (*system_messages_)[SystemType::ATTACK])
         {
             auto message_iterator = message.begin();
-            auto attacker         = std::any_cast<EntityPtr>(*message_iterator);
-            auto defender = std::any_cast<EntityPtr>(*(message_iterator + 1));
+            auto attacker         = std::any_cast<Entity *>(*message_iterator);
+            auto defender = std::any_cast<Entity *>(*(message_iterator + 1));
 
             messages_.emplace_back(attacker, defender);
         }
