@@ -1,6 +1,7 @@
 #include "src/game/components/components_all.h"
 #include "src/game/components/lineofsightcomponent.h"
 #include "src/game/entity.h"
+#include "src/game/entitytypes.h"
 #include "src/game/globals.h"
 #include "src/game/systems/aisystem.h"
 #include "src/game/systems/generators/cavegenerator.h"
@@ -38,7 +39,7 @@ int main()
     LOS_System         LOS_sys(map);
     AISystem           ai_sys(pos_sys, nav_test);
 
-    std::shared_ptr<Entity> entity(new Entity(CREATURE,
+    std::unique_ptr<Entity> entity(new Entity(EntityType::CREATURE,
                                               {new TileComponent(),
                                                new Health(100, 100, true),
                                                new Coordinates(34, 25),
@@ -46,7 +47,7 @@ int main()
                                                new LOSComponent(1000),
                                                new WeaponComponent(10)}));
 
-    std::shared_ptr<Entity> target(new Entity(PLAYER,
+    std::unique_ptr<Entity> target(new Entity(EntityType::PLAYER,
                                               {new TileComponent(),
                                                new Health(100, 100, true),
                                                new Coordinates(89, 23)}));
@@ -96,13 +97,13 @@ int main()
 
     auto &nav_map    = nav_map_ptr->nav_map;
 
-    LOS_sys.addEntity(entity);
-    LOS_sys.addEntity(target);
-    LOS_sys.calculateLOS(entity, target);
+    LOS_sys.addEntity(entity.get());
+    LOS_sys.addEntity(target.get());
+    LOS_sys.calculateLOS(entity.get(), target.get());
     std::cout << std::boolalpha
               << entity->getComponent<LOSComponent>()->has_LOS_to_player;
 
-    ai_sys.addEntity(entity);
+    ai_sys.addEntity(entity.get());
 
     // std::cout << a << b;
     // std::cout << std::endl
@@ -162,9 +163,9 @@ int main()
                     {
                         rows.push_back(
                             text("@") |
-                            color(entity->getComponent<TileComponent>()
-                                      ->tile.color) |
-                            bgcolor(Color::Black));
+                            /* color(entity->getComponent<TileComponent>()
+                                      ->tile.color) | */
+                            color(Color::Grey15) | bgcolor(Color::Black));
                     }
                     else if (score == 0)
                         rows.push_back(text("$") |
@@ -191,22 +192,22 @@ int main()
             if (event == Event::ArrowDown)
             {
                 auto [x, y] = nav_test.nextBestCoordinates(
-                    entity, NavMapManager::Destination::TOWARDS);
+                    entity.get(), NavMapManager::Destination::TOWARDS);
                 if (pos_sys.updatePosition(entity, x, y) == false)
                 {
-                    entity->getComponent<TileComponent>()->tile.color =
-                        Color::Red1;
+                    /* entity->getComponent<TileComponent>()->tile.color =
+                        Color::Red1; */
                 }
                 return true;
             }
             if (event == Event::ArrowUp)
             {
                 auto [x, y] = nav_test.nextBestCoordinates(
-                    entity, NavMapManager::Destination::AWAY_FROM);
+                    entity.get(), NavMapManager::Destination::AWAY_FROM);
                 if (pos_sys.updatePosition(entity, x, y) == false)
                 {
-                    entity->getComponent<TileComponent>()->tile.color =
-                        Color::Red1;
+                    /* entity->getComponent<TileComponent>()->tile.color =
+                        Color::Red1; */
                 }
                 return true;
             }
@@ -217,7 +218,7 @@ int main()
             }
             if (event == Event::ArrowLeft)
             {
-                ai_sys.runAI(entity, target);
+                ai_sys.runAI(entity.get(), target.get());
                 return true;
             }
             return false;
