@@ -7,6 +7,8 @@
 #include <ranges>
 #include <utility>
 // #include <type_traits>
+#include <istream>
+#include <ostream>
 #include <typeindex>
 #include <typeinfo>
 #include <unordered_map>
@@ -98,8 +100,16 @@ public:
         return static_cast<ComponentType *>(it->second.get());
     }
 
-    static void resetMaxId() { max_id_ = 0; }
+    friend std::ostream &operator<<(std::ostream       &os,
+                                    const Entity *const entity);
+    friend std::istream &operator>>(std::istream &is, Entity *const entity);
+
+    static void resetMaxId() { max_id_ = 1; }
 };
+
+std::ostream &operator<<(std::ostream &os, const Entity *const entity) {
+    os << entity->type << ' ' << entity->
+}
 
 uint32_t Entity::max_id_ = 1;
 
