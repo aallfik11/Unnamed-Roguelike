@@ -5,8 +5,10 @@
 #include "../entitytypes.h"
 #include "../system.h"
 #include <cstdint>
+#include <istream>
 #include <list>
 #include <memory>
+#include <ostream>
 #include <random>
 #include <utility>
 
@@ -72,7 +74,7 @@ public:
         }
     }
 
-    void updateData()
+    void updateData() override
     {
         for (auto &message : messages_)
         {
@@ -81,7 +83,7 @@ public:
                          std::get<2>(message));
         }
     }
-    void readSystemMessages()
+    void readSystemMessages() override
     {
         for (auto message : (*system_messages_)[SystemType::HEALTH])
         {
@@ -96,11 +98,18 @@ public:
             messages_.emplace_back(std::make_tuple(entity, amount, action));
         }
     }
-    void clearSystemMessages()
+    void clearSystemMessages() override
     {
         messages_.clear();
         (*system_messages_)[SystemType::HEALTH].clear();
     }
+
+    std::ostream &serialize(std::ostream &os) const override
+    {
+        os << SystemType::HEALTH << ' ';
+        return os;
+    }
+    std::istream &deserialize(std::istream &is) override { return is; }
 };
 
 #endif /*HEALTHSYSTEM_H*/

@@ -15,7 +15,9 @@
 #include "../system.h"
 #include "effectsystem.h"
 #include "healthsystem.h"
+#include <istream>
 #include <list>
+#include <ostream>
 
 class InventorySystem : public System
 {
@@ -339,7 +341,7 @@ public:
         }
     }
 
-    void updateData()
+    void updateData() override
     {
         for (auto &message : (*system_messages_)[SystemType::INVENTORY])
         {
@@ -381,10 +383,17 @@ public:
             }
         }
     }
-    void readSystemMessages() {}
-    void clearSystemMessages()
+    void readSystemMessages() override {}
+    void clearSystemMessages() override
     {
         (*system_messages_)[SystemType::INVENTORY].clear();
     }
+
+    std::ostream &serialize(std::ostream &os) const override
+    {
+        os << SystemType::INVENTORY;
+        return os;
+    }
+    std::istream &deserialize(std::istream &is) override { return is; }
 };
 #endif /*INVENTORYSYSTEM_H*/

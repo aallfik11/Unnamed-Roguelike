@@ -150,8 +150,7 @@ public:
             NavMap(G_MAP_WIDTH, std::vector<NavCell>(G_MAP_HEIGHT, initial));
     }
 
-    void calculatePlayerNavMap(
-        const std::shared_ptr<Coordinates> &player_coordinates)
+    void calculatePlayerNavMap(const Coordinates *const player_coordinates)
     {
         resetNavMap(nav_to_player_);
         calculateNavMap(

@@ -5,20 +5,20 @@
 #include "../coordhash.h"
 #include "../directions.h"
 #include "../entity.h"
+#include "../entityholder.h"
 #include "../entitytypes.h"
 #include "../system.h"
 #include "../tile.h"
 #include <any>
 #include <cstdint>
-#include <unordered_map>
+#include <list>
 #include <unordered_set>
 
-class PositionSystem : public System
+class PositionSystem : public System, public EntityHolder
 {
     using EntityId  = uint32_t;
 
     using GameMap   = std::vector<std::vector<Tile>>;
-    using EntityPtr = std::shared_ptr<Entity>;
     using Message =
         std::tuple<SystemAction::POSITION, Entity *, uint16_t, uint16_t>;
 
@@ -175,10 +175,7 @@ public:
      *
      * @param entity
      */
-    void addEntity(const Entity *const entity)
-    {
-        entity_positions_.emplace(entity);
-    }
+    void addEntity(Entity *const entity) { entity_positions_.emplace(entity); }
 
     /**
      * @brief Deletes entity with a given id, does nothing if no id is matched
@@ -228,6 +225,48 @@ public:
     void clearSystemMessages() override
     {
         (*system_messages_)[SystemType::POSITION].clear();
+    }
+
+    virtual std::ostream &serialize(std::ostream &os) const override
+    {
+        os << SystemType::POSITION << ' ' << entity_positions_.size() << ' ';
+        for (auto &entity : entity_positions_)
+        {
+            os << entity->getId() << ' ';
+        }
+        return os;
+    }
+    virtual std::istream &deserialize(std::istream &is) override
+    {
+        std::size_t positions_size{};
+        is >> positions_size;
+        if (positions_size == 0)
+        {
+            return is;
+        }
+        std::shared_ptr<std::list<uint32_t>> entity_requests(
+            new std::list<uint32_t>);
+        uint32_t temp{};
+        for (std::size_t i = 0; i < positions_size; i++)
+        {
+            is >> temp;
+            entity_requests->push_back(temp);
+        }
+        auto message = {
+            std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::REQUEST),
+            std::make_any<EntityHolder *>(this),
+            std::make_any<std::shared_ptr<std::list<uint32_t>>>(
+                entity_requests)};
+        System::sendSystemMessage(SystemType::ENTITY, message);
+        return is;
+    }
+
+    void loadEntities(std::shared_ptr<std::list<Entity *>> &entities) override
+    {
+        for (auto &entity : *entities)
+        {
+            addEntity(entity);
+        }
     }
 };
 

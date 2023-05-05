@@ -8,12 +8,15 @@
 #include "../components/weaponslot.h"
 #include "../effect.h"
 #include "../entity.h"
+#include "../entityholder.h"
 #include "../system.h"
 #include "healthsystem.h"
+#include <istream>
 #include <list>
+#include <ostream>
 #include <unordered_set>
 
-class EffectSystem : public System
+class EffectSystem : public System, public EntityHolder
 {
 
     std::unordered_set<Entity *> buffable_entities_;
@@ -166,7 +169,8 @@ public:
         auto entity_buffs = entity->getComponent<BuffComponent>();
         for (auto &buff : buffs_ptr->buffs)
         {
-            entity_buffs->buffs[buff.first] = castToComponent<EffectComponent>(buff.second->clone());
+            entity_buffs->buffs[buff.first] =
+                castToComponent<EffectComponent>(buff.second->clone());
         }
     }
 
@@ -249,6 +253,47 @@ public:
     void clearSystemMessages() override
     {
         (*system_messages_)[SystemType::EFFECT].clear();
+    }
+
+    std::ostream &serialize(std::ostream &os) const override
+    {
+        os << SystemType::EFFECT << ' ' << buffable_entities_.size() << ' ';
+        for (auto &entity : buffable_entities_)
+        {
+            os << entity->getId() << ' ';
+        }
+        return os;
+    }
+    std::istream &deserialize(std::istream &is) override
+    {
+        std::size_t buffable_entities_size{};
+        is >> buffable_entities_size;
+        if (buffable_entities_size == 0)
+        {
+            return is;
+        }
+        std::shared_ptr<std::list<uint32_t>> entity_requests(
+            new std::list<uint32_t>);
+        uint32_t temp{};
+        for (std::size_t i = 0; i < buffable_entities_size; i++)
+        {
+            is >> temp;
+            entity_requests->push_back(temp);
+        }
+        auto message = {
+            std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::REQUEST),
+            std::make_any<EntityHolder *>(this),
+            std::make_any<std::shared_ptr<std::list<uint32_t>>>(
+                entity_requests)};
+        System::sendSystemMessage(SystemType::ENTITY, message);
+        return is;
+    }
+    void loadEntities(std::shared_ptr<std::list<Entity *>> &entities) override
+    {
+        for (auto &entity : *entities)
+        {
+            addEntity(entity);
+        }
     }
 };
 

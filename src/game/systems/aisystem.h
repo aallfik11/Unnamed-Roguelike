@@ -427,11 +427,36 @@ public:
 
     std::ostream &serialize(std::ostream &os) const override
     {
-        os << SystemType::AI << ' ';
+        os << SystemType::AI << ' ' << ais_.size() << ' ';
         for (auto &entity : ais_)
         {
             os << entity->getId() << ' ';
         }
+        return os;
+    }
+    std::istream &deserialize(std::istream &is) override
+    {
+        std::size_t ais_size{};
+        is >> ais_size;
+        if (ais_size == 0)
+        {
+            return is;
+        }
+        std::shared_ptr<std::list<uint32_t>> entity_requests(
+            new std::list<uint32_t>);
+        uint32_t temp{};
+        for (std::size_t i = 0; i < ais_size; i++)
+        {
+            is >> temp;
+            entity_requests->push_back(temp);
+        }
+        auto message = {
+            std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::REQUEST),
+            std::make_any<EntityHolder *>(this),
+            std::make_any<std::shared_ptr<std::list<uint32_t>>>(
+                entity_requests)};
+        System::sendSystemMessage(SystemType::ENTITY, message);
+        return is;
     }
 
     void loadEntities(std::shared_ptr<std::list<Entity *>> &entities) override

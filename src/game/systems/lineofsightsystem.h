@@ -3,12 +3,17 @@
 #include "../components/coordinates.h"
 #include "../components/lineofsightcomponent.h"
 #include "../entity.h"
+#include "../entityholder.h"
+#include "../system.h"
 #include "../tile.h"
 #include <cmath>
+#include <istream>
+#include <list>
 #include <memory>
+#include <ostream>
 #include <unordered_set>
 
-class LOS_System
+class LOS_System : public System, public EntityHolder
 {
     using GameMap = std::vector<std::vector<Tile>>;
 
@@ -114,6 +119,46 @@ public:
                  TileType::NONE)
                     ? true
                     : false;
+        }
+    }
+    std::ostream &serialize(std::ostream &os) const override
+    {
+        os << SystemType::LINE_OF_SIGHT << ' ' << lines_of_sight_.size() << ' ';
+        for (auto &entity : lines_of_sight_)
+        {
+            os << entity->getId() << ' ';
+        }
+        return os;
+    }
+    std::istream &deserialize(std::istream &is) override
+    {
+        std::size_t linesofsight_size{};
+        is >> linesofsight_size;
+        if (linesofsight_size == 0)
+        {
+            return is;
+        }
+        std::shared_ptr<std::list<uint32_t>> entity_requests(
+            new std::list<uint32_t>);
+        uint32_t temp{};
+        for (std::size_t i = 0; i < linesofsight_size; i++)
+        {
+            is >> temp;
+            entity_requests->push_back(temp);
+        }
+        auto message = {
+            std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::REQUEST),
+            std::make_any<EntityHolder *>(this),
+            std::make_any<std::shared_ptr<std::list<uint32_t>>>(
+                entity_requests)};
+        System::sendSystemMessage(SystemType::ENTITY, message);
+        return is;
+    }
+    void loadEntities(std::shared_ptr<std::list<Entity *>> &entities) override
+    {
+        for (auto &entity : *entities)
+        {
+            addEntity(entity);
         }
     }
 };

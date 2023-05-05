@@ -12,7 +12,9 @@
 #include "../system.h"
 #include "healthsystem.h"
 #include <cstdint>
+#include <istream>
 #include <list>
+#include <ostream>
 #include <random>
 #include <ranges>
 
@@ -175,6 +177,13 @@ public:
         (*system_messages_)[SystemType::ATTACK].clear();
         messages_.clear();
     }
+
+    std::ostream &serialize(std::ostream &os) const override
+    {
+        os << SystemType::ATTACK << ' ';
+        return os;
+    }
+    std::istream &deserialize(std::istream &is) override { return is; }
 };
 
 #endif /*ATTACKSYSTEM_H*/
