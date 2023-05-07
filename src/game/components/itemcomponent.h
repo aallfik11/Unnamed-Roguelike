@@ -37,7 +37,7 @@ public:
     Rarity   rarity;
     bool     equipped;
 
-    ItemComponent(ItemType type,
+    ItemComponent(ItemType type = ItemType::NONE,
                   uint16_t stack     = 1,
                   uint16_t max_stack = 1,
                   Rarity   rarity    = Rarity::COMMON,
