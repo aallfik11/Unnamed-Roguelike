@@ -1,8 +1,10 @@
 #ifndef ENTITYHOLDER_H
 #define ENTITYHOLDER_H
-#include "entity.h"
+// #include "entity.h"
 #include <list>
 #include <memory>
+
+class Entity;
 
 class EntityHolder
 {
