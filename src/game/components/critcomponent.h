@@ -41,7 +41,13 @@ public:
     {
         this->crit_chance     = crit_chance;
         this->crit_multiplier = crit_multiplier;
-        this->crit_effects    = std::unique_ptr<BuffComponent>(crit_effects);
+        if (crit_effects == nullptr)
+        {
+            this->crit_effects =
+                std::unique_ptr<BuffComponent>(new BuffComponent);
+        }
+        else
+            this->crit_effects = std::unique_ptr<BuffComponent>(crit_effects);
     }
 
     CritComponent(const CritComponent &crit_component)
