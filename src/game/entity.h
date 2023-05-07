@@ -107,9 +107,16 @@ public:
     static void resetMaxId() { max_id_ = 1; }
 };
 
-std::ostream &operator<<(std::ostream &os, const Entity *const entity) {
-    os << entity->type << ' ' << entity->
+std::ostream &operator<<(std::ostream &os, const Entity *const entity)
+{
+    os << entity->id_ << ' ' << entity->type << ' ' << entity->components_.size() << ' ';
+    for (const auto &[key, component] : entity->components_)
+    {
+        os << component;
+    }
+    return os;
 }
+
 
 uint32_t Entity::max_id_ = 1;
 
