@@ -88,6 +88,8 @@ enum class POSITION
 {
     UPDATE,
     GET,
+    ADD,
+    DELETE
 };
 }; // namespace SystemAction
 
