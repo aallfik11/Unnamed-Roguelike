@@ -4,6 +4,7 @@
 #include "src/game/entitytypes.h"
 #include "src/game/globals.h"
 #include "src/game/systems/aisystem.h"
+#include "src/game/systems/attacksystem.h"
 #include "src/game/systems/generators/cavegenerator.h"
 #include "src/game/systems/generators/debugmapgenerator.h"
 #include "src/game/systems/healthsystem.h"
@@ -21,36 +22,75 @@
 #include <iostream>
 #include <random>
 #include <string>
-
 int main()
 {
+    std::string rg_text = R"(
+  ▄      ▄      ▄   ██   █▀▄▀█ ▄███▄   ██▄       █▄▄▄▄ ████▄   ▄▀    ▄   ▄███▄   █    ▄█ █  █▀ ▄███▄   
+   █      █      █  █ █  █ █ █ █▀   ▀  █  █      █  ▄▀ █   █ ▄▀       █  █▀   ▀  █    ██ █▄█   █▀   ▀  
+█   █ ██   █ ██   █ █▄▄█ █ ▄ █ ██▄▄    █   █     █▀▀▌  █   █ █ ▀▄  █   █ ██▄▄    █    ██ █▀▄   ██▄▄    
+█   █ █ █  █ █ █  █ █  █ █   █ █▄   ▄▀ █  █      █  █  ▀████ █   █ █   █ █▄   ▄▀ ███▄ ▐█ █  █  █▄   ▄▀ 
+█▄ ▄█ █  █ █ █  █ █    █    █  ▀███▀   ███▀        █          ███  █▄ ▄█ ▀███▀       ▀ ▐   █   ▀███▀   
+ ▀▀▀  █   ██ █   ██   █    ▀                      ▀                 ▀▀▀                   ▀            
+                     ▀                                                                                 
+)";
+    std::string rg_l1, rg_l2, rg_l3, rg_l4, rg_l5, rg_l6, rg_l7;
+    rg_l1 = R"(
+  ▄      ▄      ▄   ██   █▀▄▀█ ▄███▄   ██▄       █▄▄▄▄ ████▄   ▄▀    ▄   ▄███▄   █    ▄█ █  █▀ ▄███▄   )";
+    rg_l2 = R"(
+   █      █      █  █ █  █ █ █ █▀   ▀  █  █      █  ▄▀ █   █ ▄▀       █  █▀   ▀  █    ██ █▄█   █▀   ▀  )";
+    rg_l3 = R"(
+█   █ ██   █ ██   █ █▄▄█ █ ▄ █ ██▄▄    █   █     █▀▀▌  █   █ █ ▀▄  █   █ ██▄▄    █    ██ █▀▄   ██▄▄    )";
+    rg_l4 = R"(
+█   █ █ █  █ █ █  █ █  █ █   █ █▄   ▄▀ █  █      █  █  ▀████ █   █ █   █ █▄   ▄▀ ███▄ ▐█ █  █  █▄   ▄▀ )";
+    rg_l5 = R"(
+█▄ ▄█ █  █ █ █  █ █    █    █  ▀███▀   ███▀        █          ███  █▄ ▄█ ▀███▀       ▀ ▐   █   ▀███▀   )";
+    rg_l6 = R"(
+ ▀▀▀  █   ██ █   ██   █    ▀                      ▀                 ▀▀▀                   ▀            )";
+    rg_l7 = R"(
+                     ▀                                                                                 )";
 
     /*
         to do:
         - add additional "checkup maps" to easily check if moves are legal
         - http://www.roguebasin.com/index.php/Data_structures_for_the_map
     */
-
-    std::random_device rd;
-    std::mt19937       mt(rd());
-    auto               map = *CaveGenerator::generate(mt, 100, 50);
-    PositionSystem     pos_sys(map);
-    NavMapManager      nav_test(map);
-    LOS_System         LOS_sys(map);
-    AISystem           ai_sys(pos_sys, nav_test);
-
     std::unique_ptr<Entity> entity(new Entity(EntityType::CREATURE,
                                               {new TileComponent(),
                                                new Health(100, 100, true),
                                                new Coordinates(34, 25),
                                                new AIComponent(),
                                                new LOSComponent(1000),
+                                               new BuffComponent,
+                                               new CritComponent,
+                                               new ArmorComponent,
                                                new WeaponComponent(10)}));
 
     std::unique_ptr<Entity> target(new Entity(EntityType::PLAYER,
                                               {new TileComponent(),
+                                               new WeaponComponent(10),
+                                               new CritComponent,
+                                               new ArmorComponent(10),
+                                               new BuffComponent,
                                                new Health(100, 100, true),
                                                new Coordinates(89, 23)}));
+
+    std::random_device rd;
+    std::mt19937       mt(rd());
+    // auto               map = *CaveGenerator::generate(mt, 100, 50);
+    auto               map = *DebugMapGenerator::generate(mt, 100, 50);
+    PositionSystem     pos_sys(map);
+    NavMapManager      nav_test(map, target->getComponent<Coordinates>());
+    LOS_System         LOS_sys(map, nullptr);
+    AISystem           ai_sys(map, nav_test, target.get());
+    HealthSystem       hp_sys;
+    AttackSystem       att_sys;
+    /* for (auto &col : map)
+    {
+        for (auto &cell : col)
+        {
+            cell.type |= TileType::VISIBLE;
+        }
+    } */
 
     // Tile walltile;
     // walltile.type    = WALL;
@@ -79,7 +119,7 @@ int main()
     // map[88][28].type = WALL;
 
     std::shared_ptr<NavMapComponent> navmap(new NavMapComponent());
-    pos_sys.addEntity(entity);
+    pos_sys.addEntity(entity.get());
     entity->addComponent(new NavMapComponent());
 
     auto target_coords = target->getComponent<Coordinates>();
@@ -97,8 +137,8 @@ int main()
 
     auto &nav_map    = nav_map_ptr->nav_map;
 
+    LOS_sys.assignPlayer(target.get());
     LOS_sys.addEntity(entity.get());
-    LOS_sys.addEntity(target.get());
     LOS_sys.calculateLOS(entity.get(), target.get());
     std::cout << std::boolalpha
               << entity->getComponent<LOSComponent>()->has_LOS_to_player;
@@ -118,10 +158,11 @@ int main()
     auto renderer = Renderer(
         [&]
         {
-            auto        coord_ptr = entity->getComponent<Coordinates>();
-            auto        x_coord   = coord_ptr->x;
-            auto        y_coord   = coord_ptr->y;
-            std::string sprite    = " ";
+            auto        coord_ptr     = entity->getComponent<Coordinates>();
+            auto        x_coord       = coord_ptr->x;
+            auto        y_coord       = coord_ptr->y;
+            auto        player_coords = target->getComponent<Coordinates>();
+            std::string sprite        = " ";
             Elements    cols;
             for (int x = 0; x < 100; x++)
             {
@@ -159,7 +200,7 @@ int main()
                         score = score_backup;
                     }
 
-                    if (x == x_coord && y == y_coord)
+                    if (x == player_coords->x && y == player_coords->y)
                     {
                         rows.push_back(
                             text("@") |
@@ -167,9 +208,23 @@ int main()
                                       ->tile.color) | */
                             color(Color::Grey15) | bgcolor(Color::Black));
                     }
+                    else if (x == x_coord && y == y_coord)
+                    {
+                        rows.push_back(
+                            text("M") |
+                            /* color(entity->getComponent<TileComponent>()
+                                      ->tile.color) | */
+                            color(Color::Grey15) | bgcolor(Color::Black));
+                    }
                     else if (score == 0)
-                        rows.push_back(text("$") |
-                                       bgcolor(Color::RGB(red, green, blue)));
+                    {
+                        if ((map[x][y].type & TileType::WALL) == TileType::NONE)
+                            rows.push_back(text("$") | bgcolor(Color::RGB(
+                                                           red, green, blue)));
+                        else
+                            rows.push_back(text("$") |
+                                           bgcolor(Color::BlueViolet));
+                    }
                     else if (score == ~0)
                     {
                         rows.push_back(text(" ") | bgcolor(Color::GrayDark));
@@ -181,7 +236,19 @@ int main()
 
                 cols.push_back(vbox(rows));
             }
-            return hbox(cols);
+            auto hp = std::to_string(
+                target->getComponent<Health>()->current_health_points);
+            auto enemy_hp = std::to_string(
+                entity->getComponent<Health>()->current_health_points);
+            // return vbox(hbox(cols), hbox(text(hp), text(enemy_hp)));
+            return vbox(text(rg_l1),
+                        text(rg_l2),
+                        text(rg_l3),
+                        text(rg_l4),
+                        text(rg_l5),
+                        text(rg_l6),
+                        text(rg_l7)) |
+                   hcenter;
         });
 
     renderer |= CatchEvent(
@@ -193,7 +260,7 @@ int main()
             {
                 auto [x, y] = nav_test.nextBestCoordinates(
                     entity.get(), NavMapManager::Destination::TOWARDS);
-                if (pos_sys.updatePosition(entity, x, y) == false)
+                if (pos_sys.updatePosition(entity.get(), x, y) == false)
                 {
                     /* entity->getComponent<TileComponent>()->tile.color =
                         Color::Red1; */
@@ -204,12 +271,39 @@ int main()
             {
                 auto [x, y] = nav_test.nextBestCoordinates(
                     entity.get(), NavMapManager::Destination::AWAY_FROM);
-                if (pos_sys.updatePosition(entity, x, y) == false)
+                if (pos_sys.updatePosition(entity.get(), x, y) == false)
                 {
                     /* entity->getComponent<TileComponent>()->tile.color =
                         Color::Red1; */
                 }
                 return true;
+            }
+            if (event == Event::Character("w"))
+            {
+                pos_sys.updatePosition(
+                    target.get(), target_coords->x, target_coords->y - 1);
+            }
+            if (event == Event::Character("a"))
+            {
+
+                pos_sys.updatePosition(
+                    target.get(), target_coords->x - 1, target_coords->y);
+            }
+            if (event == Event::Character("s"))
+            {
+                pos_sys.updatePosition(
+                    target.get(), target_coords->x, target_coords->y + 1);
+            }
+            if (event == Event::Character("d"))
+            {
+                pos_sys.updatePosition(
+                    target.get(), target_coords->x + 1, target_coords->y);
+            }
+            if (event == Event::Character("x"))
+            {
+                auto message = {std::make_any<Entity *>(target.get()),
+                                std::make_any<Entity *>(entity.get())};
+                System::sendSystemMessage(SystemType::ATTACK, message);
             }
             if (event == Event::Tab)
             {
@@ -219,8 +313,23 @@ int main()
             if (event == Event::ArrowLeft)
             {
                 ai_sys.runAI(entity.get(), target.get());
+                pos_sys.readSystemMessages();
+                pos_sys.updateData();
+                pos_sys.clearSystemMessages();
                 return true;
             }
+            LOS_sys.updateData();
+            nav_test.updateData();
+            ai_sys.runAI(entity.get(), target.get());
+            pos_sys.readSystemMessages();
+            pos_sys.updateData();
+            pos_sys.clearSystemMessages();
+            att_sys.readSystemMessages();
+            att_sys.updateData();
+            att_sys.clearSystemMessages();
+            hp_sys.readSystemMessages();
+            hp_sys.updateData();
+            hp_sys.clearSystemMessages();
             return false;
         });
 
@@ -230,6 +339,7 @@ int main()
     {
         loop.RunOnceBlocking();
     }
+    std::cout << std::endl << target.get();
 
     return 0;
 }
