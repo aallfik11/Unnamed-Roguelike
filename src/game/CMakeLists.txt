@@ -15,6 +15,7 @@ add_library(game
     globals.h
     system.h
     entityholder.h
+    entitydeserializer.h
     )
 
 set_target_properties(game PROPERTIES LINKER_LANGUAGE CXX)
