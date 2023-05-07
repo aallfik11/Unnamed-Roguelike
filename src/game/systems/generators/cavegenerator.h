@@ -29,12 +29,12 @@ class CaveGenerator
             {
                 if (x == 0 || x == size_x - 1 || y == 0 || y == size_y - 1)
                 {
-                    map[x][y].type = WALL;
+                    map[x][y].type = TileType::WALL;
                     continue;
                 }
                 if (roll_wall_chance(twister_engine) < wall_chance)
                 {
-                    map[x][y].type = WALL;
+                    map[x][y].type = TileType::WALL;
                 }
             }
         }
@@ -49,7 +49,8 @@ class CaveGenerator
             {
                 if (!(column == x && cell == y))
                 {
-                    if (map[column][cell].type & WALL)
+                    if ((map[column][cell].type & TileType::WALL) !=
+                        TileType::NONE)
                     {
                         wall_counter++;
                     }
@@ -71,13 +72,15 @@ class CaveGenerator
                 for (uint32_t y = 1; y < size_y - 1; y++)
                 {
                     auto walls = checkNeighbors(map, x, y);
-                    if ((map[x][y].type & WALL) && walls <= 2)
+                    if (((map[x][y].type & TileType::WALL) != TileType::NONE) &&
+                        walls <= 2)
                     {
-                        map_cpy[x][y].type = TileType(FLOOR | TRAVERSIBLE);
+                        map_cpy[x][y].type =
+                            TileType(TileType::FLOOR | TileType::TRAVERSIBLE);
                     }
 
                     else if (walls >= 5)
-                        map_cpy[x][y].type = WALL;
+                        map_cpy[x][y].type = TileType::WALL;
                 }
             }
             map = map_cpy;
@@ -90,13 +93,13 @@ class CaveGenerator
         {
             for (auto &y : x)
             {
-                if (y.type & CHECKED)
+                if ((y.type & TileType::CHECKED) != TileType::NONE)
                 {
                     continue;
                 }
                 else
                 {
-                    y.type = WALL;
+                    y.type = TileType::WALL;
                 }
             }
         }
@@ -109,7 +112,7 @@ class CaveGenerator
         {
             for (auto &y : x)
             {
-                if (y.type & WALL)
+                if ((y.type & TileType::WALL) != TileType::NONE)
                 {
                     walls++;
                 }
@@ -120,9 +123,10 @@ class CaveGenerator
 
     static void floodFill(GameMap &map, uint32_t x, uint32_t y)
     {
-        if ((map[x][y].type & FLOOR) && !(map[x][y].type & CHECKED))
+        if (((map[x][y].type & TileType::FLOOR) != TileType::NONE) &&
+            ((map[x][y].type & TileType::CHECKED) == TileType::NONE))
         {
-            map[x][y].type |= CHECKED;
+            map[x][y].type |= TileType::CHECKED;
         }
         else
             return;
@@ -150,7 +154,7 @@ public:
             auto x = random_x(twister_engine);
             auto y = random_y(twister_engine);
 
-            while (map[x][y].type & WALL)
+            while ((map[x][y].type & TileType::WALL) != TileType::NONE)
             {
                 x = random_x(twister_engine);
                 y = random_y(twister_engine);
