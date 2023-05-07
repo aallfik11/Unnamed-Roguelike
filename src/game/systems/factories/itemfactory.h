@@ -36,6 +36,7 @@ class ItemFactory
     std::map<Rarity, std::pair<uint8_t, uint8_t>>   rarity_crit_chance_ranges_;
     std::map<Rarity, std::pair<double, double>> rarity_crit_multiplier_ranges_;
     std::unordered_map<int, Effect>             weapon_effect_map_;
+    std::unordered_map<int, Effect>             potion_effect_map_;
     std::map<Rarity, std::pair<uint16_t, uint16_t>> rarity_armor_ranges_;
     std::unordered_map<Rarity, std::string>         rarity_weapon_names_;
     std::unordered_map<Rarity, std::string>         rarity_weapon_descritpions_;
@@ -149,18 +150,29 @@ public:
         rarity_crit_multiplier_ranges_[Rarity::EPIC]      = {2.1l, 2.3l};
         rarity_crit_multiplier_ranges_[Rarity::LEGENDARY] = {2.4l, 3.0l};
 
-        // analogously to damage ranges
-        rarity_armor_ranges_[Rarity::COMMON]              = {11, 15};
-        rarity_armor_ranges_[Rarity::UNCOMMON]            = {16, 20};
-        rarity_armor_ranges_[Rarity::RARE]                = {21, 25};
-        rarity_armor_ranges_[Rarity::EPIC]                = {26, 45};
-        rarity_armor_ranges_[Rarity::LEGENDARY]           = {46, 75};
+        weapon_effect_map_[0]                             = Effect::BLEED;
+        weapon_effect_map_[1]                             = Effect::POISON;
+        weapon_effect_map_[2]                             = Effect::BLIND;
+        weapon_crit_effect_distro_ = std::uniform_int_distribution<>(0, 2);
 
-        rarity_weapon_names_[Rarity::COMMON]              = "Sword";
-        rarity_weapon_names_[Rarity::UNCOMMON]            = "Uncommon Sword";
-        rarity_weapon_names_[Rarity::RARE]                = "Rare Sword";
-        rarity_weapon_names_[Rarity::EPIC]                = "Epic Sword";
-        rarity_weapon_names_[Rarity::LEGENDARY]           = "Legendary Sword";
+        potion_effect_map_[0]      = Effect::HEAL | Effect::APPLY_ONCE;
+        potion_effect_map_[1]      = Effect::HEAL; // regen
+        potion_effect_map_[2]      = Effect::IRONSKIN | Effect::APPLY_ONCE;
+        potion_effect_map_[3]      = Effect::STRENGTH | Effect::APPLY_ONCE;
+        potion_effect_distro_      = std::uniform_int_distribution<>(0, 3);
+
+        // analogously to damage ranges
+        rarity_armor_ranges_[Rarity::COMMON]    = {11, 15};
+        rarity_armor_ranges_[Rarity::UNCOMMON]  = {16, 20};
+        rarity_armor_ranges_[Rarity::RARE]      = {21, 25};
+        rarity_armor_ranges_[Rarity::EPIC]      = {26, 45};
+        rarity_armor_ranges_[Rarity::LEGENDARY] = {46, 75};
+
+        rarity_weapon_names_[Rarity::COMMON]    = "Sword";
+        rarity_weapon_names_[Rarity::UNCOMMON]  = "Uncommon Sword";
+        rarity_weapon_names_[Rarity::RARE]      = "Rare Sword";
+        rarity_weapon_names_[Rarity::EPIC]      = "Epic Sword";
+        rarity_weapon_names_[Rarity::LEGENDARY] = "Legendary Sword";
 
         rarity_weapon_descritpions_[Rarity::COMMON] =
             "A simple weapon, made by a mediocre blacksmith. It serves its "
