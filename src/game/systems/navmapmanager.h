@@ -4,21 +4,25 @@
 #include "../components/navmapcomponent.h"
 #include "../entity.h"
 #include "../globals.h"
+#include "../system.h"
 #include "../tile.h"
 #include <cmath>
+#include <istream>
+#include <list>
 #include <memory>
+#include <ostream>
 #include <queue>
 #include <random>
 #include <unordered_map>
 #include <vector>
 
-class NavMapManager
+class NavMapManager : public System
 {
 
     using GameMap = std::vector<std::vector<Tile>>;
     using NavMap  = std::vector<std::vector<NavCell>>;
     using RandomTargets =
-        std::queue<std::pair</*random x*/ uint16_t, /*random y*/ uint16_t>>;
+        std::list<std::pair</*random x*/ uint16_t, /*random y*/ uint16_t>>;
     using TargetTuple =
         std::vector<std::tuple</*target's x coordinate*/ uint16_t,
                                /*target's y coordinate*/ uint16_t,
@@ -32,6 +36,7 @@ class NavMapManager
     std::uniform_int_distribution<uint16_t> distro_x_;
     std::uniform_int_distribution<uint16_t> distro_y_;
     NavMap                                  nav_to_player_;
+    const Coordinates *const                player_coordinates_;
 
     // std::unordered_map<EntityPtr, NavMap> nav_maps_;
 
@@ -107,12 +112,12 @@ class NavMapManager
             auto random_target_x = distro_x_(mt_engine_);
             auto random_target_y = distro_y_(mt_engine_);
             while ((map_[random_target_x][random_target_y].type &
-                    TileType::TRAVERSIBLE) != TileType::NONE)
+                    TileType::TRAVERSIBLE) == TileType::NONE)
             {
                 random_target_x = distro_x_(mt_engine_);
                 random_target_y = distro_y_(mt_engine_);
             }
-            random_targets_.push({random_target_x, random_target_y});
+            random_targets_.push_back({random_target_x, random_target_y});
         }
     }
 
@@ -123,7 +128,8 @@ public:
         TOWARDS
     };
 
-    NavMapManager(GameMap &map) : map_(map)
+    NavMapManager(GameMap &map, const Coordinates *const player_coordinates)
+        : map_{map}, player_coordinates_{player_coordinates}
     {
         mt_engine_ = std::mt19937(rd_());
         distro_x_ = std::uniform_int_distribution<uint16_t>(1, G_MAP_WIDTH - 2);
@@ -132,31 +138,20 @@ public:
 
         // precomputing random targets for creatures to pick when wandering
         // around
-        while (random_targets_.size() <= 100)
-        {
-            auto random_target_x = distro_x_(mt_engine_);
-            auto random_target_y = distro_y_(mt_engine_);
-            while ((map_[random_target_x][random_target_y].type &
-                    TileType::TRAVERSIBLE) != TileType::NONE)
-            {
-                random_target_x = distro_x_(mt_engine_);
-                random_target_y = distro_y_(mt_engine_);
-            }
-            random_targets_.push({random_target_x, random_target_y});
-        }
+        fillRandomTargets();
 
         NavCell initial;
         nav_to_player_ =
             NavMap(G_MAP_WIDTH, std::vector<NavCell>(G_MAP_HEIGHT, initial));
     }
 
-    void calculatePlayerNavMap(const Coordinates *const player_coordinates)
+    void calculatePlayerNavMap()
     {
         resetNavMap(nav_to_player_);
         calculateNavMap(
             nav_to_player_,
             {
-                {player_coordinates->x, player_coordinates->y, 0, 1.0}
+                {player_coordinates_->x, player_coordinates_->y, 0, 1.0}
         });
     }
 
@@ -215,8 +210,8 @@ public:
     void assignRandomTarget(NavMap &nav_map)
     {
         auto random_target = random_targets_.front();
-        random_targets_.pop();
-        random_targets_.push(random_target);
+        random_targets_.pop_front();
+        random_targets_.push_back(random_target);
 
         calculateNavMap(
             nav_map,
@@ -287,6 +282,12 @@ public:
             return (std::make_tuple(get<0>(result), get<1>(result)));
         }
     }
+
+    void          updateData() override { calculatePlayerNavMap(); }
+    void          readSystemMessages() override {}
+    void          clearSystemMessages() override {}
+    std::ostream &serialize(std::ostream &os) const override { return os; }
+    std::istream &deserialize(std::istream &is) override { return is; }
 };
 
 #endif /*NAVMAPMANAGER*/

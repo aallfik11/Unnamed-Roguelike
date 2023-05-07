@@ -49,17 +49,23 @@ public:
         auto attacker_base_damage = attacker_base_weapon->damage;
         if (attacker_weapon != nullptr)
         {
-            attacker_base_damage =
-                attacker_weapon->weapon_item->getComponent<WeaponComponent>()
-                    ->damage;
+            if (attacker_weapon->weapon_item != nullptr)
+            {
+                attacker_base_damage = attacker_weapon->weapon_item
+                                           ->getComponent<WeaponComponent>()
+                                           ->damage;
+            }
         }
 
         auto defender_base_AC = defender_base_armor->armor_class;
         if (defender_armor != nullptr)
         {
-            defender_base_AC =
-                defender_armor->armor_item->getComponent<ArmorComponent>()
-                    ->armor_class;
+            if (defender_armor->armor_item != nullptr)
+            {
+                defender_base_AC =
+                    defender_armor->armor_item->getComponent<ArmorComponent>()
+                        ->armor_class;
+            }
         }
 
         auto ac_modifier = 0;
@@ -81,7 +87,11 @@ public:
         auto attacker_crit = attacker->getComponent<CritComponent>();
         if (attacker_weapon != nullptr)
         {
-            attacker_weapon->weapon_item->getComponent<CritComponent>();
+            if (attacker_weapon->weapon_item != nullptr)
+            {
+                attacker_crit =
+                    attacker_weapon->weapon_item->getComponent<CritComponent>();
+            }
         }
 
         if (attacker_crit->crit_chance >= roll_chance_(mt_engine_))

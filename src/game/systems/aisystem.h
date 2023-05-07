@@ -39,7 +39,7 @@ class AISystem : public System, public EntityHolder
     AISet          ais_;
     GameMap        map_;
     NavMapManager &navigation_manager_;
-    Entity        *player;
+    Entity        *player_;
 
 public: // temporary
     double getRunThreshold(AIType &ai_type)
@@ -84,14 +84,19 @@ public: // temporary
                 std::abs(caller_coordinates->x - target_coordinates->x);
             auto abs_distance_y =
                 std::abs(caller_coordinates->y - target_coordinates->y);
+            // ugly, I hope to come up with something better later
 
             if (abs_distance_x <= 1 && abs_distance_y <= 1)
             {
                 caller_brain->ai_state = AIState::ATTACK;
                 return attack(caller, target);
             }
+            navigation_manager_.switchToPlayerNavMap(
+                caller->getComponent<NavMapComponent>()->nav_map);
+            auto caller_brain           = caller->getComponent<AIComponent>();
+            caller_brain->last_target_x = target_coordinates->x;
+            caller_brain->last_target_y = target_coordinates->y;
         }
-
         auto [x, y] = navigation_manager_.nextBestCoordinates(
             caller, NavMapManager::Destination::TOWARDS);
 
@@ -304,8 +309,8 @@ public: // temporary
     // }
 
 public:
-    AISystem(GameMap &map, NavMapManager &nav_manager)
-        : map_{map}, navigation_manager_{nav_manager}
+    AISystem(GameMap &map, NavMapManager &nav_manager, Entity *const player)
+        : map_{map}, navigation_manager_{nav_manager}, player_{player}
     {
         // states_[APPROACH_TARGET] = std::function<Action(EntityPtr&,
         // EntityPtr&)>(approachTarget); states_[RUN_AWAY]        =
@@ -378,7 +383,7 @@ public:
         // /*SPECIAL*/
     }
 
-    inline void addEntity(const Entity *const entity) { ais_.emplace(entity); }
+    inline void addEntity(Entity *const entity) { ais_.emplace(entity); }
 
     inline void deleteEntity(Entity *const entity) { ais_.erase(entity); }
 
@@ -419,7 +424,7 @@ public:
     {
         for (auto &ai : ais_)
         {
-            runAI(ai, player);
+            runAI(ai, player_);
         }
     }
     void readSystemMessages() override {}

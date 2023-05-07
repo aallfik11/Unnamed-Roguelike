@@ -13,18 +13,21 @@
 #include <cstdint>
 #include <list>
 #include <unordered_set>
+#include <utility>
 
 class PositionSystem : public System, public EntityHolder
 {
-    using EntityId  = uint32_t;
+    using EntityId = uint32_t;
 
-    using GameMap   = std::vector<std::vector<Tile>>;
-    using Message =
-        std::tuple<SystemAction::POSITION, Entity *, uint16_t, uint16_t>;
+    using GameMap  = std::vector<std::vector<Tile>>;
+    using Message  = std::tuple<Entity *, uint16_t, uint16_t>;
 
-    std::unordered_set<Entity *> entity_positions_;
-    std::list<Message>           messages_;
-    GameMap                     &map_;
+    std::unordered_set<Entity *>             entity_positions_;
+    std::list<Message>                       pos_change_messages_;
+    std::list<std::pair<uint16_t, uint16_t>> request_messages_;
+    std::list<Entity *>                      addition_messages_;
+    std::list<Entity *>                      removal_messages_;
+    GameMap                                 &map_;
 
     /**
      * @brief Checks if the coordinates are within the map's bounds
@@ -187,20 +190,15 @@ public:
 
     void updateData() override
     {
-        for (auto &message : messages_)
+        for (auto &message : pos_change_messages_)
         {
+            updatePosition(std::get<0>(message),
+                           std::get<1>(message),
+                           std::get<2>(message));
+        }
 
-            auto x = std::get<2>(message);
-            auto y = std::get<3>(message);
-            if (std::get<0>(message) == SystemAction::POSITION::UPDATE)
-            {
-                auto entity = std::get<1>(message);
-                updatePosition(entity, x, y);
-            }
-            else
-            {
-                getEntitiesAtCoordinates(x, y);
-            }
+        for (auto &message : request_messages_)
+        {
         }
     }
 
@@ -210,15 +208,42 @@ public:
         for (auto &message : (*system_messages_)[SystemType::POSITION])
         {
             auto message_iterator = message.begin();
-
-            // true -> update position
-            // false -> get entities
-            auto update_or_get =
+            auto message_type =
                 std::any_cast<SystemAction::POSITION>(*message_iterator);
-            auto entity = std::any_cast<Entity *>(*(message_iterator + 1));
-            auto x      = std::any_cast<uint16_t>(*(message_iterator + 2));
-            auto y      = std::any_cast<uint16_t>(*(message_iterator + 3));
-            messages_.emplace_back(update_or_get, entity, x, y);
+            ++message_iterator;
+            switch (message_type)
+            {
+            case SystemAction::POSITION::UPDATE:
+            {
+                auto entity = std::any_cast<Entity *>(*message_iterator);
+                ++message_iterator;
+                auto x = std::any_cast<uint16_t>(*message_iterator);
+                ++message_iterator;
+                auto y = std::any_cast<uint16_t>(*message_iterator);
+                pos_change_messages_.emplace_back(
+                    std::make_tuple<Message>({entity, x, y}));
+                break;
+            }
+            case SystemAction::POSITION::GET:
+            {
+                auto x = std::any_cast<uint16_t>(*message_iterator);
+                ++message_iterator;
+                auto y = std::any_cast<uint16_t>(*message_iterator);
+                break;
+            }
+            case SystemAction::POSITION::ADD:
+            {
+                auto entity = std::any_cast<Entity *>(*message_iterator);
+                addition_messages_.emplace_back(entity);
+                break;
+            }
+            case SystemAction::POSITION::DELETE:
+            {
+                auto entity = std::any_cast<Entity *>(*message_iterator);
+                removal_messages_.emplace_back(entity);
+                break;
+            }
+            }
         }
     }
 

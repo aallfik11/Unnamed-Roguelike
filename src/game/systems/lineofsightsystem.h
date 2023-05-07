@@ -17,8 +17,12 @@ class LOS_System : public System, public EntityHolder
 {
     using GameMap = std::vector<std::vector<Tile>>;
 
+    Entity                      *player_;
     std::unordered_set<Entity *> lines_of_sight_;
-    GameMap                     &map_;
+    std::list<Entity *>          addition_messages_;
+    std::list<Entity *>          deletion_messages_;
+
+    GameMap &map_;
 
     bool lineOfSightAlg(uint16_t init_x,
                         uint16_t init_y,
@@ -79,13 +83,18 @@ class LOS_System : public System, public EntityHolder
     }
 
 public:
-    LOS_System(GameMap &gamemap) : map_{gamemap} {}
+    LOS_System(GameMap &gamemap, Entity *player)
+        : player_{player}, map_{gamemap}
+    {
+    }
 
-    void addEntity(Entity *entity) { lines_of_sight_.emplace(entity); }
+    void addEntity(Entity *const entity) { lines_of_sight_.emplace(entity); }
 
-    void deleteEntity(Entity *entity) { lines_of_sight_.erase(entity); }
+    void deleteEntity(Entity *const entity) { lines_of_sight_.erase(entity); }
 
-    void calculateLOS(Entity *entity, Entity *target)
+    void assignPlayer(Entity *const player) { player_ = player; }
+
+    void calculateLOS(Entity *const entity, Entity *const target)
     {
         auto target_coord_ptr      = target->getComponent<Coordinates>();
         auto coord_ptr             = entity->getComponent<Coordinates>();
@@ -100,27 +109,87 @@ public:
 
     void calculateAllLinesOfSight()
     {
+        auto player_coords = player_->getComponent<Coordinates>();
         for (auto los_entity : lines_of_sight_)
         {
             auto coord_ptr = los_entity->getComponent<Coordinates>();
             auto los_ptr   = los_entity->getComponent<LOSComponent>();
 
-            // los_ptr->has_LOS_to_player =
-            //     lineOfSightAlg(coord_ptr->x,
-            //                    coord_ptr->y,
-            //                    /*placeholder, here goes playerx*/ 0,
-            //                    /*placeholder, here goes playery*/ 0,
-            //                    los_ptr->seeing_distance);
+            los_ptr->has_LOS_to_player = lineOfSightAlg(
+                coord_ptr->x,
+                coord_ptr->y,
+                /*placeholder, here goes playerx*/ player_coords->x,
+                /*placeholder, here goes playery*/ player_coords->y,
+                los_ptr->seeing_distance);
 
             // simpler, if I'll want to have variable seeing distances I'll use
             // the commented version
-            los_ptr->has_LOS_to_player =
-                ((map_[coord_ptr->x][coord_ptr->y].type & TileType::VISIBLE) !=
-                 TileType::NONE)
-                    ? true
-                    : false;
+            // los_ptr->has_LOS_to_player =
+            //     ((map_[coord_ptr->x][coord_ptr->y].type & TileType::VISIBLE)
+            //     !=
+            //      TileType::NONE)
+            //         ? true
+            //         : false;
         }
     }
+
+    void updateData() override
+    {
+        for (auto &entity : deletion_messages_)
+        {
+            deleteEntity(entity);
+        }
+        for (auto &entity : addition_messages_)
+        {
+            addEntity(entity);
+        }
+
+        calculateAllLinesOfSight();
+    }
+    void readSystemMessages() override
+    {
+        for (auto &message : (*system_messages_)[SystemType::LINE_OF_SIGHT])
+        {
+            auto message_it = message.begin();
+            auto action =
+                std::any_cast<SystemAction::LINE_OF_SIGHT>(*message_it);
+            ++message_it;
+            switch (action)
+            {
+            case SystemAction::LINE_OF_SIGHT::ADD:
+            {
+                addition_messages_.emplace_back(
+                    std::any_cast<Entity *>(*message_it));
+                break;
+            }
+            case SystemAction::LINE_OF_SIGHT::DELETE:
+            {
+                deletion_messages_.emplace_back(
+                    std::any_cast<Entity *>(*message_it));
+                break;
+            }
+            case SystemAction::LINE_OF_SIGHT::CALCULATE:
+            {
+                auto caller = std::any_cast<Entity *>(*message_it);
+                ++message_it;
+                auto target = std::any_cast<Entity *>(*message_it);
+                calculateLOS(caller, target);
+                break;
+            }
+            case SystemAction::LINE_OF_SIGHT::CALCULATE_ALL:
+            {
+                calculateAllLinesOfSight();
+            }
+            }
+        }
+    }
+    void clearSystemMessages() override
+    {
+        (*system_messages_)[SystemType::LINE_OF_SIGHT].clear();
+        addition_messages_.clear();
+        deletion_messages_.clear();
+    }
+
     std::ostream &serialize(std::ostream &os) const override
     {
         os << SystemType::LINE_OF_SIGHT << ' ' << lines_of_sight_.size() << ' ';
