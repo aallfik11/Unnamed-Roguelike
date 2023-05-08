@@ -25,25 +25,33 @@ class ItemFactory
     std::uniform_int_distribution<>                 item_amount_distro_;
     std::uniform_int_distribution<>                 weapon_amount_distro_;
     std::uniform_int_distribution<>                 armor_amount_distro_;
+    std::uniform_int_distribution<>                 ring_amount_distro_;
     std::uniform_int_distribution<>                 potion_amount_distro_;
     std::uniform_int_distribution<>                 food_amount_distro_;
     std::uniform_int_distribution<>                 x_pos_distro_;
     std::uniform_int_distribution<>                 y_pos_distro_;
     std::uniform_int_distribution<>                 weapon_crit_effect_distro_;
     std::uniform_int_distribution<>                 potion_effect_distro_;
+    std::uniform_int_distribution<>                 ring_effect_distro_;
     std::map<Rarity, int>                           rarity_chances_;
     std::map<Rarity, std::pair<uint16_t, uint16_t>> rarity_damage_ranges_;
     std::map<Rarity, std::pair<uint8_t, uint8_t>>   rarity_crit_chance_ranges_;
     std::map<Rarity, std::pair<double, double>> rarity_crit_multiplier_ranges_;
     std::unordered_map<int, Effect>             weapon_effect_map_;
     std::unordered_map<int, Effect>             potion_effect_map_;
+    std::unordered_map<int, Effect>             ring_effect_map_;
     std::map<Rarity, std::pair<uint16_t, uint16_t>> rarity_armor_ranges_;
     std::unordered_map<Rarity, std::string>         rarity_weapon_names_;
     std::unordered_map<Rarity, std::string>         rarity_weapon_descritpions_;
     std::unordered_map<Rarity, std::string>         rarity_armor_names_;
     std::unordered_map<Rarity, std::string>         rarity_armor_descriptions_;
+    std::unordered_map<Effect, std::string>         effect_ring_names_;
+    std::unordered_map<Effect, std::string>         effect_ring_descriptions_;
     std::unordered_map<Effect, std::string>         effect_potion_names_;
     std::unordered_map<Effect, std::string>         effect_potion_descriptions_;
+    std::unordered_map<Rarity, uint8_t>             rarity_food_values_;
+    std::unordered_map<Rarity, std::string>         rarity_food_names_;
+    std::unordered_map<Rarity, std::string>         rarity_food_descriptions_;
 
     std::list<Entity *> generateWeapons(int amount)
     {
@@ -62,8 +70,9 @@ class ItemFactory
         int                 cumulated_rarity_chance{};
         std::string         name{};
         std::string         description{};
+        BuffComponent      *weapon_buffs = new BuffComponent;
 
-        std::uniform_int_distribution<>         damage_distro;
+        std::uniform_int_distribution<uint16_t> damage_distro;
         std::uniform_int_distribution<uint16_t> crit_chance_distro;
         std::uniform_real_distribution<double>  crit_multiplier_distro;
 
@@ -80,36 +89,217 @@ class ItemFactory
                 }
                 cumulated_rarity_chance += chance;
             }
+            if (weapon_rarity >= Rarity::RARE)
+            {
+                roll = weapon_crit_effect_distro_(mt_engine_);
+                if (roll <= 2)
+                {
+                    auto effect   = weapon_effect_map_[roll];
+                    auto strength = static_cast<uint8_t>(weapon_rarity) * 2;
+                    auto duration = static_cast<uint16_t>(weapon_rarity);
+                    weapon_buffs->buffs[(effect & ~(APPLIED | APPLY_ONCE))] =
+                        std::make_unique<EffectComponent>(
+                            effect, strength, duration);
+                }
+            }
+
             dmg_min         = rarity_damage_ranges_[weapon_rarity].first;
             dmg_max         = rarity_damage_ranges_[weapon_rarity].second;
+
             crit_chance_min = rarity_crit_chance_ranges_[weapon_rarity].first;
             crit_chance_max = rarity_crit_chance_ranges_[weapon_rarity].second;
+
             crit_multiplier_min =
                 rarity_crit_multiplier_ranges_[weapon_rarity].first;
             crit_multiplier_max =
                 rarity_crit_multiplier_ranges_[weapon_rarity].second;
-            damage_distro = std::uniform_int_distribution<>(dmg_min, dmg_max);
+
+            damage_distro =
+                std::uniform_int_distribution<uint16_t>(dmg_min, dmg_max);
+
             crit_chance_distro = std::uniform_int_distribution<uint16_t>(
                 crit_chance_min, crit_chance_max);
             crit_multiplier_distro = std::uniform_real_distribution<double>(
                 crit_multiplier_min, crit_multiplier_max);
+
             damage          = damage_distro(mt_engine_);
             crit_chance     = crit_chance_distro(mt_engine_);
             crit_multiplier = crit_multiplier_distro(mt_engine_);
             name            = rarity_weapon_names_[weapon_rarity];
             description     = rarity_weapon_descritpions_[weapon_rarity];
-            Entity *weapon =
-                new Entity(EntityType::ITEM,
-                           {new Name(name),
-                            new Description(description),
-                            new WeaponComponent(damage),
-                            new CritComponent(crit_chance, crit_multiplier)});
+            Entity *weapon  = new Entity(
+                EntityType::ITEM,
+                {new ItemComponent(ItemType::WEAPON | ItemType::EQUIPABLE,
+                                   1,
+                                   1,
+                                   weapon_rarity),
+                  new Name(name),
+                  new Description(description),
+                  new WeaponComponent(damage),
+                  new CritComponent(
+                     crit_chance, crit_multiplier, weapon_buffs)});
             weapons.emplace_back(weapon);
         }
+        return weapons;
     }
-    std::list<Entity *> generateArmors(int amount) {}
-    std::list<Entity *> generatePotions(int amount) {}
-    std::list<Entity *> generateFood(int amount) {}
+    std::list<Entity *> generateArmors(int amount)
+    {
+        std::list<Entity *> armors;
+        Rarity              armor_rarity{};
+        uint8_t             armor_class{};
+        uint8_t             ac_min{};
+        uint8_t             ac_max{};
+        int                 roll{};
+        int                 cumulated_rarity_chance{};
+        std::string         name{};
+        std::string         description{};
+
+        std::uniform_int_distribution<uint8_t> armor_distro;
+        for (int i = 0; i < amount; i++)
+        {
+            roll = rarity_distro_(mt_engine_);
+            roll = (roll + current_depth_ >= 100) ? 100 : roll + current_depth_;
+            for (auto &[rarity, chance] : rarity_chances_)
+            {
+                if (roll <= chance + cumulated_rarity_chance)
+                {
+                    armor_rarity = rarity;
+                    break;
+                }
+                cumulated_rarity_chance += chance;
+            }
+
+            ac_min = rarity_armor_ranges_[armor_rarity].first;
+            ac_max = rarity_armor_ranges_[armor_rarity].second;
+            armor_distro =
+                std::uniform_int_distribution<uint8_t>(ac_min, ac_max);
+            armor_class = armor_distro(mt_engine_);
+
+            name        = rarity_armor_names_[armor_rarity];
+            description = rarity_armor_descriptions_[armor_rarity];
+            armors.emplace_back(new Entity(
+                EntityType::ITEM,
+                {new ItemComponent(
+                     ItemType::ARMOR | ItemType::EQUIPABLE, 1, 1, armor_rarity),
+                 new ArmorComponent(armor_class),
+                 new Name(name),
+                 new Description(description)}));
+        }
+        return armors;
+    }
+    std::list<Entity *> generateRings(int amount)
+    {
+        std::list<Entity *> rings;
+        Rarity              ring_rarity{};
+        std::string         name{};
+        std::string         description{};
+        int                 roll{};
+        int                 cumulated_rarity_chance{};
+        Effect              effect{};
+        uint8_t             effect_strength{};
+
+        for (int i = 0; i < amount; i++)
+        {
+            for (auto &[rarity, chance] : rarity_chances_)
+            {
+                if (roll <= chance + cumulated_rarity_chance)
+                {
+                    ring_rarity = rarity;
+                    break;
+                }
+                cumulated_rarity_chance += chance;
+            }
+            roll             = ring_effect_distro_(mt_engine_);
+            effect           = ring_effect_map_[roll];
+            effect_strength  = static_cast<uint8_t>(ring_rarity) * 2;
+            name             = effect_ring_names_[effect];
+            description      = effect_ring_descriptions_[effect];
+            effect          |= Effect::PERMANENT;
+            rings.emplace_back(new Entity(
+                EntityType::ITEM,
+                {new ItemComponent(
+                     ItemType::RING | ItemType::EQUIPABLE, 1, 1, ring_rarity),
+                 new Name(name),
+                 new Description(description),
+                 new BuffComponent(
+                     {new EffectComponent(effect, effect_strength)})}));
+        }
+        return rings;
+    }
+    std::list<Entity *> generatePotions(int amount)
+    {
+        std::list<Entity *> potions;
+        Rarity              potion_rarity{};
+        std::string         name{};
+        std::string         description{};
+        int                 roll{};
+        int                 cumulated_rarity_chance{};
+        Effect              effect{};
+        uint8_t             effect_strength{};
+        uint16_t            effect_duration{};
+        for (int i = 0; i < amount; i++)
+        {
+
+            for (auto &[rarity, chance] : rarity_chances_)
+            {
+                if (roll <= chance + cumulated_rarity_chance)
+                {
+                    potion_rarity = rarity;
+                    break;
+                }
+                cumulated_rarity_chance += chance;
+            }
+            effect_strength = static_cast<uint8_t>(potion_rarity);
+            effect_duration = static_cast<uint8_t>(potion_rarity) * 2;
+            roll            = potion_effect_distro_(mt_engine_);
+            effect          = potion_effect_map_[roll];
+            name            = effect_potion_names_[effect];
+            description     = effect_potion_descriptions_[effect];
+            potions.emplace_back(new Entity(
+                EntityType::ITEM,
+                {new ItemComponent(ItemType::POTION | ItemType::CONSUMABLE |
+                                       ItemType::STACKABLE,
+                                   1,
+                                   4,
+                                   potion_rarity),
+                 new Name(name),
+                 new Description(description),
+                 new BuffComponent({new EffectComponent(
+                     effect, effect_strength, effect_duration)})}));
+        }
+        return potions;
+    }
+    std::list<Entity *> generateFood(int amount)
+    {
+        std::list<Entity *> food;
+        Rarity              food_rarity{};
+        int                 roll{};
+        int                 cumulated_rarity_chance{};
+        std::string         name{};
+        std::string         description{};
+        uint8_t             hunger_replenished{};
+        for (int i = 0; i < amount; i++)
+        {
+            for (auto &[rarity, chance] : rarity_chances_)
+            {
+                if (roll <= chance + cumulated_rarity_chance)
+                {
+                    food_rarity = rarity;
+                    break;
+                }
+                cumulated_rarity_chance += chance;
+            }
+            name               = rarity_food_names_[food_rarity];
+            description        = rarity_food_descriptions_[food_rarity];
+            hunger_replenished = rarity_food_values_[food_rarity];
+            food.emplace_back(new Entity(
+                EntityType::ITEM,
+                {new ItemComponent(ItemType::FOOD | ItemType::STACKABLE |
+                                   ItemType::CONSUMABLE),
+                 new HungerComponent(hunger_replenished)}));
+        }
+        return food;
+    }
 
 public:
     ItemFactory(GameMap &map, int &depth) : map_{map}, current_depth_{depth}
@@ -119,6 +309,7 @@ public:
         item_amount_distro_   = std::uniform_int_distribution<>(6, 15);
         weapon_amount_distro_ = std::uniform_int_distribution<>(0, 5);
         armor_amount_distro_  = std::uniform_int_distribution<>(0, 5);
+        ring_amount_distro_   = std::uniform_int_distribution<>(0, 1);
         potion_amount_distro_ = std::uniform_int_distribution<>(0, 4);
         food_amount_distro_   = std::uniform_int_distribution<>(2, 6);
         x_pos_distro_ = std::uniform_int_distribution<>(1, map_.size() - 1);
@@ -153,7 +344,11 @@ public:
         weapon_effect_map_[0]                             = Effect::BLEED;
         weapon_effect_map_[1]                             = Effect::POISON;
         weapon_effect_map_[2]                             = Effect::BLIND;
-        weapon_crit_effect_distro_ = std::uniform_int_distribution<>(0, 2);
+        weapon_crit_effect_distro_ = std::uniform_int_distribution<>(0, 5);
+
+        ring_effect_map_[0]        = Effect::IRONSKIN | APPLY_ONCE;
+        ring_effect_map_[1]        = Effect::STRENGTH | APPLY_ONCE;
+        ring_effect_distro_        = std::uniform_int_distribution<>(0, 1);
 
         potion_effect_map_[0]      = Effect::HEAL | Effect::APPLY_ONCE;
         potion_effect_map_[1]      = Effect::HEAL; // regen
@@ -220,6 +415,70 @@ public:
             "intertwining plates of metal. The armor offers unmatched "
             "protection and coverage while allowing its user for incredible "
             "mobility";
+
+        effect_ring_names_[Effect::STRENGTH] = "Ring of Strength";
+        effect_ring_names_[Effect::IRONSKIN] = "Effect of Iron Skin";
+
+        effect_ring_descriptions_[Effect::STRENGTH] =
+            "When you put this ring on your finger, you feel as if you could "
+            "pulverize rocks to dust with your bare hands";
+        effect_ring_descriptions_[Effect::IRONSKIN] =
+            "When you put this ring on your finger, you feel your skin "
+            "becoming impervious to blows";
+
+        effect_potion_names_[(Effect::HEAL | Effect::APPLY_ONCE)] =
+            "Potion of Healing";
+        effect_potion_names_[Effect::HEAL] = "Potion of Regeneration";
+        effect_potion_names_[(Effect::IRONSKIN | Effect::APPLY_ONCE)] =
+            "Potion of Iron Skin";
+        effect_potion_names_[(Effect::STRENGTH | Effect::APPLY_ONCE)] =
+            "Potion of Strength";
+
+        effect_potion_descriptions_[(Effect::HEAL | Effect::APPLY_ONCE)] =
+            "A ruby-colored concoction, its smell reminiscent of fermented "
+            "fruits. Heals your wounds when drunk";
+        effect_potion_descriptions_[Effect::HEAL] =
+            "A light-pink liquit. Its smell reminds you of rose petals. Slowly "
+            "healsover a duration of time";
+        effect_potion_descriptions_[(Effect::IRONSKIN | Effect::APPLY_ONCE)] =
+            "A metallic liquid, looking almost like mercury. It smells "
+            "metallic. It seems that drinking this potion makes your skin more "
+            "resistant to attacks";
+        effect_potion_descriptions_[(Effect::STRENGTH | Effect::APPLY_ONCE)] =
+            "A dark, crimson concotion, its color reminiscent dried blood. It "
+            "smells of alcohol. The potion increases the drinker's strenght";
+
+        rarity_food_values_[Rarity::COMMON]    = 10;
+        rarity_food_values_[Rarity::UNCOMMON]  = 15;
+        rarity_food_values_[Rarity::RARE]      = 30;
+        rarity_food_values_[Rarity::EPIC]      = 60;
+        rarity_food_values_[Rarity::LEGENDARY] = 100;
+
+        rarity_food_names_[Rarity::COMMON]     = "Tiny Food Ration";
+        rarity_food_names_[Rarity::UNCOMMON]   = "Small Food Ration";
+        rarity_food_names_[Rarity::RARE]       = "Medium Food Ration";
+        rarity_food_names_[Rarity::EPIC]       = "Large Food Ration";
+        rarity_food_names_[Rarity::EPIC]       = "Feastful Food Ration";
+
+        rarity_food_descriptions_[Rarity::COMMON] =
+            "A ration partially eaten away by the rats. After cutting "
+            "off the bad part , not much of it remains but it still seems to "
+            "be edible";
+        rarity_food_descriptions_[Rarity::UNCOMMON] =
+            "A small food ration of dried meat and hardtack. Preserved quite "
+            "well despite its location, it's enough to keep you going for a "
+            "little while";
+        rarity_food_descriptions_[Rarity::RARE] =
+            "A medium-sized food ration consisting of a decent quantity of "
+            "dried fruits, meat and hardtack. It seems to be quite edible "
+            "despite its age";
+        rarity_food_descriptions_[Rarity::EPIC] =
+            "A large ration fit for a travelling knight, made of high quality "
+            "ingredients and packed nicely. Looks as fresh as if it were "
+            "prepared yesterday";
+        rarity_food_descriptions_[Rarity::LEGENDARY] =
+            "A feast packed inside a sealed wooden box. This meal is worthy of "
+            "a king, and it's more than capable of filling you completely";
     }
 
     std::list<Entity *> generateItems()
