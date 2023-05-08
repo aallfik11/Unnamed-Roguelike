@@ -1,6 +1,7 @@
 #ifndef NAME_H
 #define NAME_H
 #include "../component.h"
+#include <algorithm>
 #include <istream>
 #include <memory>
 #include <ostream>
@@ -11,12 +12,24 @@ class Name : public Component
     Name         *cloneImpl() const override { return new Name(*this); }
     std::ostream &serialize(std::ostream &os) const override
     {
-        os << ComponentType::NAME << ' ' << this->name << ' ';
+        auto word_count =
+            std::count(this->name.cbegin(), this->name.cend(), ' ') + 1;
+        os << ComponentType::NAME << ' ' << word_count << ' ' << this->name
+           << ' ';
         return os;
     }
     std::istream &deserialize(std::istream &is) override
     {
-        is >> this->name;
+        int         word_count{};
+        std::string temp{};
+        is >> word_count;
+        for (int i = 0; i < word_count - 1; i++)
+        {
+            is >> temp;
+            this->name += temp + " ";
+        }
+        is >> temp;
+        this->name += temp;
         return is;
     }
 
