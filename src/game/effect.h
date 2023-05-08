@@ -4,7 +4,7 @@
 #include <istream>
 #include <ostream>
 
-enum Effect : uint16_t // doing this as a bitmask as I might want to
+enum class Effect : uint16_t // doing this as a bitmask as I might want to
                        // support having multiple effects stacked into one
                        // potion
 {

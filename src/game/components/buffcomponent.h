@@ -70,7 +70,7 @@ public:
     {
         for (auto &buff : buffs_list)
         {
-            buffs[(buff->effect & ~(APPLIED | APPLY_ONCE))] =
+            buffs[(buff->effect & ~(Effect::APPLIED | Effect::APPLY_ONCE))] =
                 std::unique_ptr<EffectComponent>(buff);
         }
     }
