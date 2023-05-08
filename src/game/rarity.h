@@ -6,6 +6,7 @@
 
 enum class Rarity : uint8_t
 {
+    NONE,
     COMMON,
     UNCOMMON,
     RARE,
