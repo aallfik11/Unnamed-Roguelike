@@ -508,6 +508,16 @@ public:
         generatedItems.splice(generatedItems.end(), food);
         for (auto &entity : generatedItems)
         {
+            auto x = x_pos_distro_(mt_engine_);
+            auto y = y_pos_distro_(mt_engine_);
+            while ((map_[x][y].type &
+                    (TileType::HAS_CREATURE | TileType::HAS_ITEM |
+                     TileType::HAS_STAIRS | TileType::FLOOR)) != TileType::NONE)
+            {
+                x = x_pos_distro_(mt_engine_);
+                y = y_pos_distro_(mt_engine_);
+            }
+            entity->addComponent(new Coordinates(x, y));
             auto entity_message = {
                 std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::ADD),
                 std::make_any<Entity *>(entity)};
