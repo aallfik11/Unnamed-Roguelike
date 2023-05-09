@@ -165,6 +165,21 @@ public:
             if ((countWalls(map) / map_size) <= max_wall_percentage)
                 break;
         }
+        for (auto &col : map)
+        {
+            for (auto &cell : col)
+            {
+                if ((cell.type & TileType::WALL) != TileType::NONE)
+                {
+                    cell.appearance = TileAppearance::WALL;
+                }
+                else if ((cell.type & TileType::FLOOR) != TileType::NONE)
+                {
+                    cell.appearance = TileAppearance::FLOOR;
+                }
+
+            }
+        }
         return std::shared_ptr<GameMap>(new GameMap(map));
     }
 };
