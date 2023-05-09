@@ -423,7 +423,7 @@ public:
             "mobility";
 
         effect_ring_names_[Effect::STRENGTH] = "Ring of Strength";
-        effect_ring_names_[Effect::IRONSKIN] = "Effect of Iron Skin";
+        effect_ring_names_[Effect::IRONSKIN] = "Ring of Iron Skin";
 
         effect_ring_descriptions_[Effect::STRENGTH] =
             "When you put this ring on your finger, you feel as if you could "
@@ -492,15 +492,18 @@ public:
         std::list<Entity *> generatedItems;
         auto                weapon_amount = weapon_amount_distro_(mt_engine_);
         auto                armor_amount  = armor_amount_distro_(mt_engine_);
+        auto                ring_amount   = ring_amount_distro_(mt_engine_);
         auto                potion_amount = potion_amount_distro_(mt_engine_);
         auto                food_amount   = food_amount_distro_(mt_engine_);
 
         auto weapons                      = generateWeapons(weapon_amount);
         auto armors                       = generateArmors(armor_amount);
+        auto rings                        = generateRings(ring_amount);
         auto potions                      = generatePotions(potion_amount);
         auto food                         = generateFood(food_amount);
         generatedItems.splice(generatedItems.end(), weapons);
         generatedItems.splice(generatedItems.end(), armors);
+        generatedItems.splice(generatedItems.end(), rings);
         generatedItems.splice(generatedItems.end(), potions);
         generatedItems.splice(generatedItems.end(), food);
         for (auto &entity : generatedItems)
@@ -522,10 +525,12 @@ public:
         std::list<Entity *> generatedItems;
         auto                weapons = generateWeapons(amount);
         auto                armors  = generateArmors(amount);
+        auto                rings   = generateRings(amount);
         auto                potions = generatePotions(amount);
         auto                food    = generateFood(amount);
         generatedItems.splice(generatedItems.end(), weapons);
         generatedItems.splice(generatedItems.end(), armors);
+        generatedItems.splice(generatedItems.end(), rings);
         generatedItems.splice(generatedItems.end(), potions);
         generatedItems.splice(generatedItems.end(), food);
         return generatedItems;
