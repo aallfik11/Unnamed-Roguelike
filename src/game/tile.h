@@ -74,9 +74,63 @@ inline std::istream &operator>>(std::istream &is, TileType &type)
     return is;
 }
 
+enum class TileAppearance : uint16_t
+{
+    // MAP TILES
+    WALL,
+    FLOOR,
+    STAIRS,
+
+    // ITEMS
+    WEAPON,
+    ARMOR,
+    RING,
+    POTION,
+    FOOD,
+    GOAL_ITEM,
+
+    // CREATURES
+    PLAYER,
+    // ANIMALS
+    RAT,
+    BAT,
+    GIANT_SPIDER,
+    VIPER,
+
+    // HUMANOID
+    KOBOLD,
+    GOBLIN,
+    ORC,
+    TROLL,
+    ZOMBIE,
+    DEATHKNIGHT,
+    ASSASSIN,
+    DEMON,
+    VAMPIRE, // NOT SURE
+
+    // OTHER
+    DRAGON,
+    GIANT_VENUS_FLYTRAP,
+
+};
+inline std::ostream &operator<<(std::ostream         &os,
+                                const TileAppearance &appearance)
+{
+    os << static_cast<uint16_t>(appearance);
+    return os;
+}
+inline std::istream &operator>>(std::istream &is, TileAppearance &appearance)
+{
+    uint16_t temp{};
+    is >> temp;
+    appearance = static_cast<TileAppearance>(temp);
+    return is;
+}
+
 struct Tile
 {
     TileType                    type = TileType::FLOOR | TileType::TRAVERSIBLE;
+    TileAppearance              appearance = TileAppearance::FLOOR;
     // TileColor -- make an enum for that
     //  ftxui::Color color;
     //  ftxui::Color background_color;
