@@ -1,6 +1,7 @@
 #ifndef HEALTH_H
 #define HEALTH_H
 #include "../component.h"
+#include <algorithm>
 #include <cstdint>
 #include <istream>
 #include <memory>
@@ -29,10 +30,23 @@ public:
     uint16_t current_health_points;
     bool     alive;
 
-    Health(uint16_t max_hp = 0, uint16_t current_hp = 0, bool alive = false)
+    Health()
+    {
+        max_health_points     = 0;
+        current_health_points = 0;
+        alive                 = true;
+    }
+
+    Health(uint16_t max_hp)
     {
         max_health_points     = max_hp;
+        current_health_points = max_hp;
+        alive                 = true;
+    }
 
+    Health(uint16_t max_hp, uint16_t current_hp, bool alive = true)
+    {
+        max_health_points     = max_hp;
         current_health_points = (current_hp > max_hp) ? max_hp : current_hp;
         this->alive           = alive;
     }
