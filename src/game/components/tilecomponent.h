@@ -17,32 +17,27 @@ class TileComponent : public Component
 
     std::ostream &serialize(std::ostream &os) const override
     {
-        os << ComponentType::TILE << ' ' << this->tile << ' ' << this->sprite
-           << ' ';
+        os << ComponentType::TILE << ' ' << this->sprite << ' ';
         return os;
     }
 
     std::istream &deserialize(std::istream &is) override
     {
-        is >> this->tile >> this->sprite;
+        is >> this->sprite;
         return is;
     }
 
 public:
-    Tile        tile;
-    std::string sprite;
+    TileAppearance sprite;
 
-    TileComponent(TileType type = TileType::SPRITE, std::string sprite = " ")
+    TileComponent(TileAppearance sprite = TileAppearance::NONE)
     {
-        this->tile.type = type;
-        this->sprite    = sprite;
+        this->sprite = sprite;
     }
 
     TileComponent(const TileComponent &tile_component)
     {
-        this->tile.type = tile_component.tile.type;
-
-        this->sprite    = tile_component.sprite;
+        this->sprite = tile_component.sprite;
     }
 };
 
