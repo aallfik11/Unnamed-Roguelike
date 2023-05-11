@@ -51,7 +51,15 @@ class MonsterFactory
 
     Entity *generateRat()
     {
-        Entity *monster = new Entity(EntityType::CREATURE, {new Name("Rat")});
+        Entity *monster = new Entity(
+            EntityType::CREATURE,
+            {new Name("Rat"),
+             new Health(5),
+             new ArmorComponent(),
+             new CritComponent(1,
+                               1.0l,
+                               new BuffComponent({new EffectComponent(
+                                   Effect::POISON, 1, 3)}))});
         return monster;
     }
     Entity *generateBat()
