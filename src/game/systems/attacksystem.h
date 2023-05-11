@@ -71,11 +71,11 @@ public:
         auto ac_modifier = 0;
 
         // checking if the attack even hits
-        if (attacker_effects->buffs.contains(BLIND))
+        if (attacker_effects->buffs.contains(Effect::BLIND))
         {
             ac_modifier += 30;
         }
-        if (attacker_effects->buffs.contains(BLIND | PERMANENT))
+        if (attacker_effects->buffs.contains(Effect::BLIND | Effect::PERMANENT))
         {
             ac_modifier += 30;
         }
@@ -124,28 +124,33 @@ public:
             }
         }
 
-        if (attacker_effects->buffs.contains(STRENGTH))
+        if (attacker_effects->buffs.contains(Effect::STRENGTH))
         {
             attacker_base_damage +=
-                attacker_effects->buffs[STRENGTH | PERMANENT]->effect_strength;
+                attacker_effects->buffs[Effect::STRENGTH | Effect::PERMANENT]
+                    ->effect_strength;
         }
-        if (attacker_effects->buffs.contains((STRENGTH | PERMANENT)))
+        if (attacker_effects->buffs.contains(
+                (Effect::STRENGTH | Effect::PERMANENT)))
         {
             attacker_base_damage +=
-                attacker_effects->buffs[STRENGTH | PERMANENT]->effect_strength;
+                attacker_effects->buffs[Effect::STRENGTH | Effect::PERMANENT]
+                    ->effect_strength;
         }
 
         ac_modifier /= 3;
 
-        if (defender_effects->buffs.contains(IRONSKIN))
+        if (defender_effects->buffs.contains(Effect::IRONSKIN))
         {
             ac_modifier +=
-                defender_effects->buffs[IRONSKIN]->effect_strength * 5;
+                defender_effects->buffs[Effect::IRONSKIN]->effect_strength * 5;
         }
-        if (defender_effects->buffs.contains(IRONSKIN | PERMANENT))
+        if (defender_effects->buffs.contains(Effect::IRONSKIN |
+                                             Effect::PERMANENT))
         {
             ac_modifier +=
-                defender_effects->buffs[IRONSKIN | PERMANENT]->effect_strength *
+                defender_effects->buffs[Effect::IRONSKIN | Effect::PERMANENT]
+                    ->effect_strength *
                 5;
         }
 

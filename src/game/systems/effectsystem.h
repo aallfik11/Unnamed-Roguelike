@@ -37,7 +37,7 @@ public:
         using SystemAction::HEALTH::HEAL;
         using SystemAction::HEALTH::MAX;
 
-        if (effect_ptr->effect & Effect::HEAL)
+        if ((effect_ptr->effect & Effect::HEAL) != Effect::NONE)
         {
             // HealthSystem::updateHealth(
             //     caller, effect_ptr->effect_strength * 5, HEAL | CURRENT);
@@ -51,14 +51,14 @@ public:
 
             // (*system_messages_)[SystemType::HEALTH].emplace_back(message);
             sendSystemMessage(SystemType::HEALTH, message);
-            if (effect_ptr->effect & APPLY_ONCE)
+            if ((effect_ptr->effect & Effect::APPLY_ONCE) != Effect::NONE)
             {
-                effect_ptr->effect |= APPLIED;
+                effect_ptr->effect |= Effect::APPLIED;
             }
             return;
         }
 
-        if (effect_ptr->effect & POISON)
+        if ((effect_ptr->effect & Effect::POISON) != Effect::NONE)
         {
             // HealthSystem::updateHealth(
             //     caller, effect_ptr->effect_strength, DAMAGE | CURRENT);
@@ -75,7 +75,7 @@ public:
             return;
         }
 
-        if (effect_ptr->effect & BLEED)
+        if ((effect_ptr->effect & Effect::BLEED) != Effect::NONE)
         {
             auto message = {
                 std::make_any<SystemAction::HEALTH>(
@@ -87,21 +87,21 @@ public:
             sendSystemMessage(SystemType::HEALTH, message);
             return;
         }
-        if (effect_ptr->effect & IRONSKIN)
+        if ((effect_ptr->effect & Effect::IRONSKIN) != Effect::NONE)
         {
-            effect_ptr->effect |= APPLIED;
+            effect_ptr->effect |= Effect::APPLIED;
             return;
         }
 
-        if (effect_ptr->effect & BLIND)
+        if ((effect_ptr->effect & Effect::BLIND) != Effect::NONE)
         {
-            effect_ptr->effect |= APPLIED;
+            effect_ptr->effect |= Effect::APPLIED;
             return;
         }
 
-        if (effect_ptr->effect & STRENGTH)
+        if ((effect_ptr->effect & Effect::STRENGTH) != Effect::NONE)
         {
-            effect_ptr->effect |= APPLIED;
+            effect_ptr->effect |= Effect::APPLIED;
             return;
         }
     }
@@ -123,11 +123,12 @@ public:
                     continue;
                 }
 
-                if ((buff_iterator->second->effect & APPLIED) == false)
+                if ((buff_iterator->second->effect & Effect::APPLIED) ==
+                    Effect::NONE)
                 {
                     applyEffect(entity, buff_iterator->second.get());
                 }
-                if ((buff_iterator->first & PERMANENT) == false)
+                if ((buff_iterator->first & Effect::PERMANENT) == Effect::NONE)
                 {
                     buff_iterator->second->effect_duration -= 1;
                 }
@@ -146,7 +147,7 @@ public:
             for (auto &buff : buffs_ptr->buffs)
             {
                 buff.second->effect_duration -= 1;
-                if ((buff.second->effect & APPLIED) == false)
+                if ((buff.second->effect & Effect::APPLIED) == Effect::NONE)
                 {
                     applyEffect(entity, buff.second.get());
                 }
@@ -207,7 +208,7 @@ public:
             for (auto buff_iterator = entity_buffs->buffs.begin();
                  buff_iterator != entity_buffs->buffs.end();)
             {
-                if ((buff_iterator->first & Effect::PERMANENT) == 0)
+                if ((buff_iterator->first & Effect::PERMANENT) == Effect::NONE)
                 {
                     buff_iterator = entity_buffs->buffs.erase(buff_iterator);
                 }
