@@ -104,6 +104,9 @@ class MonsterFactory
         monster->getComponent<Name>()->name = "Bat";
         monster->getComponent<AIComponent>()->ai_type =
             AIType::AI_MONSTER_COWARDLY;
+        monster->getComponent<LOSComponent>()->seeing_distance = 40;
+
+        auto hp = monster->getComponent<Health>();
     }
     void generateGiantSpider(Entity *const monster) {}
     void generateViper(Entity *const monster) {}
