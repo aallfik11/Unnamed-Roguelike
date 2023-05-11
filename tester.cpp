@@ -77,7 +77,7 @@ int main()
     std::random_device rd;
     std::mt19937       mt(rd());
     // auto               map = *CaveGenerator::generate(mt, 100, 50);
-    auto               map = *DebugMapGenerator::generate(mt, 100, 50);
+    auto               map = *CaveGenerator::generate(mt, 100, 50);
     PositionSystem     pos_sys(map);
     NavMapManager      nav_test(map, target->getComponent<Coordinates>());
     LOS_System         LOS_sys(map, nullptr);
@@ -240,15 +240,15 @@ int main()
                 target->getComponent<Health>()->current_health_points);
             auto enemy_hp = std::to_string(
                 entity->getComponent<Health>()->current_health_points);
-            // return vbox(hbox(cols), hbox(text(hp), text(enemy_hp)));
-            return vbox(text(rg_l1),
-                        text(rg_l2),
-                        text(rg_l3),
-                        text(rg_l4),
-                        text(rg_l5),
-                        text(rg_l6),
-                        text(rg_l7)) |
-                   hcenter;
+            return vbox(hbox(cols), hbox(text(hp), text(enemy_hp)));
+            // return vbox(text(rg_l1),
+            //             text(rg_l2),
+            //             text(rg_l3),
+            //             text(rg_l4),
+            //             text(rg_l5),
+            //             text(rg_l6),
+            //             text(rg_l7)) |
+            //        hcenter;
         });
 
     renderer |= CatchEvent(
