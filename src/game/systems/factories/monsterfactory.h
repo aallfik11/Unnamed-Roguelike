@@ -7,6 +7,7 @@
 #include "itemfactory.h"
 #include <functional>
 #include <list>
+#include <memory>
 #include <random>
 #include <unordered_map>
 #include <vector>
@@ -46,101 +47,77 @@ class MonsterFactory
     std::uniform_int_distribution<> random_med_lvl_monster_;
     std::uniform_int_distribution<> random_high_lvl_monster_;
 
-    std::unordered_map<Monsters, std::function<Entity *(MonsterFactory *)>>
+    std::unordered_map<Monsters,
+                       std::function<void(MonsterFactory *, Entity *const)>>
         monster_generators_;
 
-    Entity *generateRat()
+    Entity *generateBaseMonster()
     {
-        Entity *monster = new Entity(
-            EntityType::CREATURE,
-            {new Name("Rat"),
-             new Health(5),
-             new ArmorComponent(),
-             new CritComponent(1,
-                               1.0l,
-                               new BuffComponent({new EffectComponent(
-                                   Effect::POISON, 1, 3)}))});
-        return monster;
+        return new Entity(EntityType::CREATURE,
+                          {new Name(),
+                           new AIComponent(),
+                           new LOSComponent(),
+                           new Health(),
+                           new WeaponComponent(),
+                           new ArmorComponent(),
+                           new CritComponent(),
+                           new BuffComponent(),
+                           new Coordinates(),
+                           new TileComponent(),
+                           new ExperienceComponent});
     }
-    Entity *generateBat()
+
+    void makeHumanoid(Entity *entity)
     {
-        Entity *monster = new Entity(EntityType::CREATURE, {new Name("Bat")});
-        return monster;
+        entity->addComponent(new Inventory);
+        entity->addComponent(new ArmorSlot);
+        entity->addComponent(new WeaponSlot);
+        entity->addComponent(new AmuletSlot);
     }
-    Entity *generateGiantSpider()
+
+    void generateRat(Entity *const monster)
     {
-        Entity *monster =
-            new Entity(EntityType::CREATURE, {new Name("Giant Spider")});
-        return monster;
+        monster->getComponent<Name>()->name = "Rat";
+
+        monster->getComponent<AIComponent>()->ai_type =
+            AIType::AI_MONSTER_COWARDLY;
+
+        monster->getComponent<LOSComponent>()->seeing_distance = 25;
+
+        auto hp                   = monster->getComponent<Health>();
+        hp->max_health_points     = 5;
+        hp->current_health_points = 5;
+
+        monster->getComponent<WeaponComponent>()->damage = 2;
+
+        auto crit             = monster->getComponent<CritComponent>();
+        crit->crit_chance     = 1;
+        crit->crit_multiplier = 1.0l;
+        crit->crit_effects->buffs[Effect::POISON] =
+            std::make_unique<EffectComponent>(Effect::POISON, 1, 3);
+
+        monster->getComponent<TileComponent>()->sprite = TileAppearance::RAT;
     }
-    Entity *generateViper()
+    void generateBat(Entity *const monster)
     {
-        Entity *monster = new Entity(EntityType::CREATURE, {new Name("Viper")});
-        return monster;
+
+        monster->getComponent<Name>()->name = "Bat";
+        monster->getComponent<AIComponent>()->ai_type =
+            AIType::AI_MONSTER_COWARDLY;
     }
-    Entity *generateKobold()
-    {
-        Entity *monster =
-            new Entity(EntityType::CREATURE, {new Name("Kobold")});
-        return monster;
-    }
-    Entity *generateGoblin()
-    {
-        Entity *monster =
-            new Entity(EntityType::CREATURE, {new Name("Goblin")});
-        return monster;
-    }
-    Entity *generateOrc()
-    {
-        Entity *monster = new Entity(EntityType::CREATURE, {new Name("Orc")});
-        return monster;
-    }
-    Entity *generateTroll()
-    {
-        Entity *monster = new Entity(EntityType::CREATURE, {new Name("Troll")});
-        return monster;
-    }
-    Entity *generateZombie()
-    {
-        Entity *monster =
-            new Entity(EntityType::CREATURE, {new Name("Zombie")});
-        return monster;
-    }
-    Entity *generateDeathknight()
-    {
-        Entity *monster =
-            new Entity(EntityType::CREATURE, {new Name("Deathknight")});
-        return monster;
-    }
-    Entity *generateAssassin()
-    {
-        Entity *monster =
-            new Entity(EntityType::CREATURE, {new Name("Assassin")});
-        return monster;
-    }
-    Entity *generateDemon()
-    {
-        Entity *monster = new Entity(EntityType::CREATURE, {new Name("Demon")});
-        return monster;
-    }
-    Entity *generateVampire()
-    {
-        Entity *monster =
-            new Entity(EntityType::CREATURE, {new Name("Vampire")});
-        return monster;
-    }
-    Entity *generateDragon()
-    {
-        Entity *monster =
-            new Entity(EntityType::CREATURE, {new Name("Dragon")});
-        return monster;
-    }
-    Entity *generateGiantVenusFlytrap()
-    {
-        Entity *monster =
-            new Entity(EntityType::CREATURE, {new Name("Giant Venus Flytrap")});
-        return monster;
-    }
+    void generateGiantSpider(Entity *const monster) {}
+    void generateViper(Entity *const monster) {}
+    void generateKobold(Entity *const monster) { makeHumanoid(monster); }
+    void generateGoblin(Entity *const monster) { makeHumanoid(monster); }
+    void generateOrc(Entity *const monster) { makeHumanoid(monster); }
+    void generateTroll(Entity *const monster) { makeHumanoid(monster); }
+    void generateZombie(Entity *const monster) { makeHumanoid(monster); }
+    void generateDeathknight(Entity *const monster) { makeHumanoid(monster); }
+    void generateAssassin(Entity *const monster) { makeHumanoid(monster); }
+    void generateDemon(Entity *const monster) { makeHumanoid(monster); }
+    void generateVampire(Entity *const monster) { makeHumanoid(monster); }
+    void generateDragon(Entity *const monster) {}
+    void generateGiantVenusFlytrap(Entity *const monster) {}
 
 public:
     MonsterFactory(std::vector<std::vector<Tile>> &map, int &depth)
@@ -229,19 +206,25 @@ public:
         {
             roll         = random_low_lvl_monster_(mt_engine_);
             monster_type = low_level_monsters_[roll];
-            monsters.emplace_back(monster_generators_[monster_type](this));
+            auto monster = generateBaseMonster();
+            monster_generators_[monster_type](this, monster);
+            monsters.emplace_back(monster);
         }
         for (int i = 0; i < med_level_monster_amount; ++i)
         {
             roll         = random_med_lvl_monster_(mt_engine_);
             monster_type = med_level_monsters[roll];
-            monsters.emplace_back(monster_generators_[monster_type](this));
+            auto monster = generateBaseMonster();
+            monster_generators_[monster_type](this, monster);
+            monsters.emplace_back(monster);
         }
         for (int i = 0; i < high_level_monster_amount; ++i)
         {
             roll         = random_high_lvl_monster_(mt_engine_);
             monster_type = high_level_monsters_[roll];
-            monsters.emplace_back(monster_generators_[monster_type](this));
+            auto monster = generateBaseMonster();
+            monster_generators_[monster_type](this, monster);
+            monsters.emplace_back(monster);
         }
 
         return monsters;
