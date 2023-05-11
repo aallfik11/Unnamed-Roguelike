@@ -220,8 +220,7 @@ public:
                 auto x = std::any_cast<uint16_t>(*message_iterator);
                 ++message_iterator;
                 auto y = std::any_cast<uint16_t>(*message_iterator);
-                pos_change_messages_.emplace_back(
-                    std::make_tuple<Message>({entity, x, y}));
+                pos_change_messages_.emplace_back(Message(entity, x, y));
                 break;
             }
             case SystemAction::POSITION::GET:
