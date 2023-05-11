@@ -1,0 +1,21 @@
+Monster template:
+new Entity(EntityType::CREATURE,
+{
+new Name(),
+new AIComponent(),
+new LOSComponent(),
+new Health(),
+new WeaponComponent(),
+new ArmorComponent(),
+new CritComponent(),
+new BuffComponent(),
+new Coordinates(),
+new TileComponent()})
+
+
+
+
+
+
+Humanoid monster template:
+same
