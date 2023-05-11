@@ -9,6 +9,7 @@
 #include <list>
 #include <memory>
 #include <random>
+#include <stdint.h>
 #include <unordered_map>
 #include <vector>
 
@@ -51,6 +52,11 @@ class MonsterFactory
                        std::function<void(MonsterFactory *, Entity *const)>>
         monster_generators_;
 
+    class MonsterBuilder
+    {
+        
+    };
+
     Entity *generateBaseMonster()
     {
         return new Entity(EntityType::CREATURE,
@@ -73,6 +79,13 @@ class MonsterFactory
         entity->addComponent(new ArmorSlot);
         entity->addComponent(new WeaponSlot);
         entity->addComponent(new AmuletSlot);
+    }
+
+    void setHealth(Entity *const monster, uint16_t max_hp)
+    {
+        auto hp                   = monster->getComponent<Health>();
+        hp->max_health_points     = max_hp;
+        hp->current_health_points = max_hp;
     }
 
     void generateRat(Entity *const monster)
@@ -106,7 +119,8 @@ class MonsterFactory
             AIType::AI_MONSTER_COWARDLY;
         monster->getComponent<LOSComponent>()->seeing_distance = 40;
 
-        auto hp = monster->getComponent<Health>();
+        auto hp               = monster->getComponent<Health>();
+        hp->max_health_points = 5;
     }
     void generateGiantSpider(Entity *const monster) {}
     void generateViper(Entity *const monster) {}
