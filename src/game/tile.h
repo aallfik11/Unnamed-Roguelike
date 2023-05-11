@@ -76,6 +76,9 @@ inline std::istream &operator>>(std::istream &is, TileType &type)
 
 enum class TileAppearance : uint16_t
 {
+    //can be used for invisibility later on
+    NONE,
+
     // MAP TILES
     WALL,
     FLOOR,
