@@ -14,6 +14,9 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+class MonsterFactory;
+
 class ItemFactory
 {
     using GameMap = std::vector<std::vector<Tile>>;
@@ -52,6 +55,8 @@ class ItemFactory
     std::unordered_map<Rarity, uint8_t>             rarity_food_values_;
     std::unordered_map<Rarity, std::string>         rarity_food_names_;
     std::unordered_map<Rarity, std::string>         rarity_food_descriptions_;
+
+    friend class MonsterFactory;
 
     std::list<Entity *> generateWeapons(int amount)
     {
@@ -213,12 +218,13 @@ class ItemFactory
                 }
                 cumulated_rarity_chance += chance;
             }
-            roll             = ring_effect_distro_(mt_engine_);
-            effect           = ring_effect_map_[roll];
-            effect_strength  = static_cast<uint8_t>(ring_rarity) * 2;
-            name             = effect_ring_names_[effect & ~(Effect::APPLY_ONCE)];
-            description      = effect_ring_descriptions_[effect & ~(Effect::APPLY_ONCE)];
-            effect          |= Effect::PERMANENT;
+            roll            = ring_effect_distro_(mt_engine_);
+            effect          = ring_effect_map_[roll];
+            effect_strength = static_cast<uint8_t>(ring_rarity) * 2;
+            name = effect_ring_names_[effect & ~(Effect::APPLY_ONCE)];
+            description =
+                effect_ring_descriptions_[effect & ~(Effect::APPLY_ONCE)];
+            effect |= Effect::PERMANENT;
             rings.emplace_back(new Entity(
                 EntityType::ITEM,
                 {new ItemComponent(ItemType::RING, 1, 1, ring_rarity),
@@ -528,6 +534,53 @@ public:
             System::sendSystemMessage(SystemType::POSITION, pos_message);
         }
         return generatedItems;
+    }
+
+    Entity *generateWeapon(int rarity_modifier = 0)
+    {
+        int depth_backup  = current_depth_;
+        current_depth_   += rarity_modifier;
+        auto weapon       = generateWeapons(1).front();
+        current_depth_    = depth_backup;
+        return weapon;
+    }
+
+    Entity *generateArmor(int rarity_modifier = 0)
+    {
+
+        int depth_backup  = current_depth_;
+        current_depth_   += rarity_modifier;
+        auto armor        = generateArmors(1).front();
+        current_depth_    = depth_backup;
+        return armor;
+    }
+
+    Entity *generateRing(int rarity_modifier = 0)
+    {
+
+        int depth_backup  = current_depth_;
+        current_depth_   += rarity_modifier;
+        auto ring         = generateRings(1).front();
+        current_depth_    = depth_backup;
+        return ring;
+    }
+
+    Entity *generatePotion(int rarity_modifier = 0)
+    {
+        int depth_backup  = current_depth_;
+        current_depth_   += rarity_modifier;
+        auto potion       = generatePotions(1).front();
+        current_depth_    = depth_backup;
+        return potion;
+    }
+
+    Entity *generateFoodRation(int rarity_modifier = 0)
+    {
+        int depth_backup  = current_depth_;
+        current_depth_   += rarity_modifier;
+        auto food         = generateFood(1).front();
+        current_depth_    = depth_backup;
+        return food;
     }
 
     std::list<Entity *> debugGenerateItems(int amount)
