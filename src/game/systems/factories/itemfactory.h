@@ -13,6 +13,7 @@
 #include <random>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 class MonsterFactory;
@@ -542,6 +543,10 @@ public:
         current_depth_   += rarity_modifier;
         auto weapon       = generateWeapons(1).front();
         current_depth_    = depth_backup;
+        System::sendSystemMessage(
+            SystemType::ENTITY,
+            {std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::ADD),
+             std::make_any<Entity *>(weapon)});
         return weapon;
     }
 
@@ -552,6 +557,10 @@ public:
         current_depth_   += rarity_modifier;
         auto armor        = generateArmors(1).front();
         current_depth_    = depth_backup;
+        System::sendSystemMessage(
+            SystemType::ENTITY,
+            {std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::ADD),
+             std::make_any<Entity *>(armor)});
         return armor;
     }
 
@@ -562,6 +571,10 @@ public:
         current_depth_   += rarity_modifier;
         auto ring         = generateRings(1).front();
         current_depth_    = depth_backup;
+        System::sendSystemMessage(
+            SystemType::ENTITY,
+            {std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::ADD),
+             std::make_any<Entity *>(ring)});
         return ring;
     }
 
@@ -571,6 +584,10 @@ public:
         current_depth_   += rarity_modifier;
         auto potion       = generatePotions(1).front();
         current_depth_    = depth_backup;
+        System::sendSystemMessage(
+            SystemType::ENTITY,
+            {std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::ADD),
+             std::make_any<Entity *>(potion)});
         return potion;
     }
 
@@ -580,6 +597,10 @@ public:
         current_depth_   += rarity_modifier;
         auto food         = generateFood(1).front();
         current_depth_    = depth_backup;
+        System::sendSystemMessage(
+            SystemType::ENTITY,
+            {std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::ADD),
+             std::make_any<Entity *>(food)});
         return food;
     }
 
@@ -596,7 +617,109 @@ public:
         generatedItems.splice(generatedItems.end(), rings);
         generatedItems.splice(generatedItems.end(), potions);
         generatedItems.splice(generatedItems.end(), food);
+        for (auto &entity : generatedItems)
+        {
+            auto x = x_pos_distro_(mt_engine_);
+            auto y = y_pos_distro_(mt_engine_);
+            while ((map_[x][y].type &
+                    (TileType::HAS_CREATURE | TileType::HAS_ITEM |
+                     TileType::HAS_STAIRS | TileType::FLOOR)) != TileType::NONE)
+            {
+                x = x_pos_distro_(mt_engine_);
+                y = y_pos_distro_(mt_engine_);
+            }
+            entity->addComponent(new Coordinates(x, y));
+            auto entity_message = {
+                std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::ADD),
+                std::make_any<Entity *>(entity)};
+            auto pos_message = {std::make_any<SystemAction::POSITION>(
+                                    SystemAction::POSITION::ADD),
+                                std::make_any<Entity *>(entity)};
+            System::sendSystemMessage(SystemType::ENTITY, entity_message);
+            System::sendSystemMessage(SystemType::POSITION, pos_message);
+        }
         return generatedItems;
+    }
+};
+
+class ItemBuilder
+{
+    std::unordered_set<Component *> components;
+
+public:
+    Entity *build()
+    {
+        Entity *item = new Entity(EntityType::ITEM);
+
+        for (auto &component : components)
+        {
+            item->addComponent(component);
+        }
+
+        auto sys_message = {
+            std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::ADD),
+            std::make_any<Entity *>(item)};
+        System::sendSystemMessage(SystemType::ENTITY, sys_message);
+
+        components.clear();
+
+        return item;
+    }
+
+    ItemBuilder &itemComponent(const ItemType type      = ItemType::NONE,
+                               const uint16_t stack     = 1,
+                               const uint16_t max_stack = 1,
+                               const Rarity   rarity    = Rarity::COMMON,
+                               const bool     equipped  = false)
+    {
+        components.insert(
+            new ItemComponent(type, stack, max_stack, rarity, equipped));
+        return *this;
+    }
+
+    ItemBuilder &name(const std::string &name = "")
+    {
+        components.insert(new Name(name));
+        return *this;
+    }
+
+    ItemBuilder &description(const std::string &description = "")
+    {
+        components.insert(new Description(description));
+        return *this;
+    }
+
+    ItemBuilder &damage(const uint16_t damage = 1)
+    {
+        components.insert(new WeaponComponent(damage));
+        return *this;
+    }
+
+    ItemBuilder &crit(const uint8_t                            crit_chance,
+                      const double                             crit_multiplier,
+                      std::initializer_list<EffectComponent *> effects)
+    {
+        CritComponent crit_comp(
+            crit_chance, crit_multiplier, new BuffComponent(effects));
+        return *this;
+    }
+
+    ItemBuilder &armor(const uint8_t armor_class = 10)
+    {
+        components.insert(new ArmorComponent(armor_class));
+        return *this;
+    }
+
+    ItemBuilder &buffs(std::initializer_list<EffectComponent *> buffs)
+    {
+        components.insert(new BuffComponent(buffs));
+        return *this;
+    }
+
+    ItemBuilder &hungerValue(const uint8_t saturation = 100)
+    {
+        components.insert(new HungerComponent(saturation));
+        return *this;
     }
 };
 #endif /*ITEMFACTORY_H*/
