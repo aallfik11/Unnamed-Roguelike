@@ -10,7 +10,8 @@ new ArmorComponent(),
 new CritComponent(),
 new BuffComponent(),
 new Coordinates(),
-new TileComponent()})
+new TileComponent(),
+new ExperienceComponent()})
 
 
 
