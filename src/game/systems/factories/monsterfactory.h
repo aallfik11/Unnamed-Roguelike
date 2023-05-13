@@ -17,7 +17,6 @@
 
 class MonsterFactory
 {
-
     using Monsters::ASSASSIN;
     using Monsters::BAT;
     using Monsters::DEATHKNIGHT;
@@ -105,7 +104,8 @@ class MonsterFactory
 
         MonsterBuilder &health(const uint16_t max_hp)
         {
-            monster_->getComponent<Health>()->max_health_points = max_hp;
+            monster_->getComponent<Health>()->max_health_points     = max_hp;
+            monster_->getComponent<Health>()->current_health_points = max_hp;
             return *this;
         }
 
@@ -195,6 +195,7 @@ class MonsterFactory
                 }
             }
             monster_->getComponent<WeaponSlot>()->weapon_item = weapon;
+            monster_->getComponent<Inventory>()->inventory.emplace_back(weapon);
             return *this;
         }
 
@@ -209,6 +210,7 @@ class MonsterFactory
                 }
             }
             monster_->getComponent<ArmorSlot>()->armor_item = armor;
+            monster_->getComponent<Inventory>()->inventory.emplace_back(armor);
             return *this;
         }
 
@@ -224,6 +226,7 @@ class MonsterFactory
                 }
             }
             auto amulet_slot       = monster_->getComponent<AmuletSlot>();
+            auto inv_ptr           = monster_->getComponent<Inventory>();
             amulet_slot->max_slots = max_rings;
             int i                  = 0;
             for (auto &item : items)
@@ -232,10 +235,33 @@ class MonsterFactory
                     break;
 
                 amulet_slot->amulet_slots.insert(item);
+                inv_ptr->inventory.emplace_back(item);
             }
             return *this;
         }
     };
+
+    bool rollChance(int chance)
+    {
+        if (chance <= 0)
+            return false;
+        if (chance >= 100)
+            return true;
+        static std::uniform_int_distribution<> roll(1, 100);
+        return (chance <= roll(mt_engine_));
+    }
+
+    int rollRandomFromRange(int min_value, int max_value)
+    {
+        if (min_value > max_value)
+        {
+            int temp  = min_value;
+            min_value = max_value;
+            max_value = temp;
+        }
+        std::uniform_int_distribution<> roll(min_value, max_value);
+        return roll(mt_engine_);
+    }
 
     void addRandomArmor(Entity *const monster,
                         uint8_t       armor_chance,
@@ -307,6 +333,7 @@ class MonsterFactory
                           {new Name(),
                            new AIComponent(),
                            new LOSComponent(),
+                           new NavMapComponent(),
                            new Health(),
                            new WeaponComponent(),
                            new ArmorComponent(),
@@ -327,7 +354,8 @@ class MonsterFactory
             .health(5)
             .baseDamage(2)
             .critComponent(1, 1.0l, {new EffectComponent(Effect::POISON, 1, 3)})
-            .tileComponent(TileAppearance::RAT);
+            .tileComponent(TileAppearance::RAT)
+            .experience(1, 25);
     }
     void generateBat(Entity *const monster)
     {
@@ -338,7 +366,8 @@ class MonsterFactory
             .health(5)
             .baseDamage(3)
             .critComponent(1, 1.0l, {new EffectComponent(Effect::BLEED, 1, 2)})
-            .tileComponent(TileAppearance::BAT);
+            .tileComponent(TileAppearance::BAT)
+            .experience(1, 30);
     }
     void generateGiantSpider(Entity *const monster)
     {
@@ -353,7 +382,8 @@ class MonsterFactory
                            1.0l,
                            {new EffectComponent(Effect::POISON, 1, 2),
                             new EffectComponent(Effect::BLIND, 1, 2)})
-            .tileComponent(TileAppearance::GIANT_SPIDER);
+            .tileComponent(TileAppearance::GIANT_SPIDER)
+            .experience(1, 40);
     }
     void generateViper(Entity *const monster)
     {
@@ -365,21 +395,23 @@ class MonsterFactory
             .baseDamage(1)
             .baseArmor(25)
             .critComponent(
-                25, 1.0l, {new EffectComponent(Effect::POISON, 1, 5)})
-            .tileComponent(TileAppearance::VIPER);
+                25, 1.0l, {new EffectComponent(Effect::POISON, 1, 4)})
+            .tileComponent(TileAppearance::VIPER)
+            .experience(1, 40);
     }
     void generateKobold(Entity *const monster)
     {
         MonsterBuilder builder(monster);
         builder.humanoid()
-            .name("Kobol")
+            .name("Kobold")
             .ai(AIType::AI_MONSTER_DEFAULT)
             .los(20)
             .health(16)
             .baseDamage(3)
             .baseArmor(25)
             .critComponent(5, 1.5l, {new EffectComponent(Effect::BLEED, 2, 2)})
-            .tileComponent(TileAppearance::KOBOLD);
+            .tileComponent(TileAppearance::KOBOLD)
+            .experience(1, 100);
 
         addRandomWeapon(monster, 60);
         addRandomArmor(monster, 10);
@@ -398,7 +430,8 @@ class MonsterFactory
             .baseDamage(2)
             .baseArmor(15)
             .critComponent(5, 1.5l, {})
-            .tileComponent(TileAppearance::GOBLIN);
+            .tileComponent(TileAppearance::GOBLIN)
+            .experience(1, 45);
 
         addRandomArmor(monster, 25);
         addRandomWeapon(monster, 75);
@@ -416,22 +449,178 @@ class MonsterFactory
             .baseDamage(4)
             .baseArmor(15)
             .critComponent(15, 2.0l, {})
-            .tileComponent(TileAppearance::ORC);
+            .tileComponent(TileAppearance::ORC)
+            .experience(1, 150);
 
         addRandomWeapon(monster, 90);
         addRandomArmor(monster, 75);
         addRandomPotion(monster, 5);
         addRandomFoodRation(monster, 60);
     }
-    void generateTroll(Entity *const monster) { makeHumanoid(monster); }
-    void generateZombie(Entity *const monster) { 
+    void generateTroll(Entity *const monster)
+    {
         MonsterBuilder builder(monster);
+        builder.humanoid()
+            .name("Troll")
+            .ai(AIType::AI_MONSTER_BERSERK)
+            .los(20)
+            .health(40)
+            .baseDamage(15)
+            .baseArmor(30)
+            .critComponent(15, 2.0l, {})
+            .tileComponent(TileAppearance::TROLL)
+            .experience(1, 400);
+
+        addRandomFoodRation(monster, 30);
     }
-    void generateDeathknight(Entity *const monster) { makeHumanoid(monster); }
-    void generateAssassin(Entity *const monster) { makeHumanoid(monster); }
-    void generateDemon(Entity *const monster) { makeHumanoid(monster); }
-    void generateVampire(Entity *const monster) { makeHumanoid(monster); }
-    void generateDragon(Entity *const monster) {}
+    void generateZombie(Entity *const monster)
+    {
+        MonsterBuilder builder(monster);
+        builder.humanoid()
+            .name("Zombie")
+            .ai(AIType::AI_MONSTER_BERSERK)
+            .los(20)
+            .health(25)
+            .baseDamage(2)
+            .baseArmor(15)
+            .critComponent(
+                33, 1.5, {new EffectComponent(Effect::POISON, 1, 10)})
+            .tileComponent(TileAppearance::ZOMBIE)
+            .experience(1, 150);
+
+        addRandomArmor(monster, 33);
+        addRandomRing(monster, 5);
+    }
+    void generateDeathknight(Entity *const monster)
+    {
+        ItemBuilder sword;
+        ItemBuilder armor;
+
+        sword.itemComponent(ItemType::WEAPON, 1, 1, Rarity::LEGENDARY)
+            .name("Deathknight Sword")
+            .description(
+                "A black sword, carried by the deathknights. Imbued with dark "
+                "magicks capable of blinding the foe on a critical strike")
+            .damage(rollRandomFromRange(30, 35))
+            .crit(rollRandomFromRange(25, 35),
+                  2.0l,
+                  {new EffectComponent(Effect::BLIND, 1, 3)});
+
+        armor.itemComponent(ItemType::ARMOR, 1, 1, Rarity::LEGENDARY)
+            .name("Deathknight Armor")
+            .description(
+                "A black set of armor, Acting as a container for the knight's "
+                "soul. It doesn't seem to possess any other magical "
+                "properties, but it still offers solid protection")
+            .armor(rollRandomFromRange(45, 55));
+
+        MonsterBuilder builder(monster);
+        builder.humanoid()
+            .name("Deathknight")
+            .ai(AIType::AI_MONSTER_BERSERK)
+            .los(15)
+            .health(30)
+            .baseDamage(10)
+            .baseArmor(30)
+            .weapon(sword.build())
+            .armor(armor.build())
+            .tileComponent(TileAppearance::DEATHKNIGHT)
+            .experience(1, 500);
+
+        addRandomRing(monster, 35);
+    }
+    void generateAssassin(Entity *const monster)
+    {
+        ItemBuilder item_builder;
+
+        item_builder.itemComponent(ItemType::WEAPON, 1, 1, Rarity::EPIC)
+            .name("Assassin's Dagger")
+            .description("A small, pointy blade, wielded by the assassins. "
+                         "Capable of landing devastating critical strikes")
+            .damage(5)
+            .crit(40, 3.0l, {new EffectComponent(Effect::BLEED, 5, 3)});
+
+        MonsterBuilder builder(monster);
+        builder.humanoid()
+            .name("Assassin")
+            .ai(AIType::AI_MONSTER_DEFAULT)
+            .los(25)
+            .health(10)
+            .baseDamage(5)
+            .baseArmor(20)
+            .critComponent(33, 3.0l, {})
+            .weapon(item_builder.build())
+            .tileComponent(TileAppearance::ASSASSIN)
+            .experience(1, 500);
+    }
+    void generateDemon(Entity *const monster)
+    {
+        MonsterBuilder builder(monster);
+        builder.name("Demon")
+            .ai(AIType::AI_MONSTER_AGGRESSIVE)
+            .los(20)
+            .health(30)
+            .baseDamage(8)
+            .baseArmor(30)
+            .critComponent(100,
+                           1.0l,
+                           {new EffectComponent(Effect::BLEED, 1, 10),
+                            new EffectComponent(Effect::BLIND, 1, 2)})
+            .tileComponent(TileAppearance::DEMON)
+            .experience(1, 500);
+    }
+    void generateVampire(Entity *const monster)
+    {
+        ItemBuilder vampiric_sword;
+        ItemBuilder vampiric_armor;
+
+        vampiric_sword.itemComponent(ItemType::WEAPON, 1, 1, Rarity::LEGENDARY)
+            .name("Vampiric Sword")
+            .description(
+                "A serrated sword that causes heavy bleeding. It is imbued "
+                "with the magical power of strength and regeneration")
+            .damage(rollRandomFromRange(10, 14))
+            .buffs({new EffectComponent(Effect::STRENGTH | Effect::PERMANENT,
+                                        rollRandomFromRange(8, 12)),
+                    new EffectComponent(Effect::HEAL | Effect::PERMANENT, 2)})
+            .crit(100,
+                  1.0l,
+                  {new EffectComponent(Effect::BLEED,
+                                       rollRandomFromRange(2, 5),
+                                       rollRandomFromRange(1, 2))});
+
+        vampiric_armor.itemComponent(ItemType::ARMOR, 1, 1, Rarity::LEGENDARY)
+            .name("Vampiric Armor")
+            .description("Armor worn by vampires. Its magical power grants "
+                         "regeneration to its wearer")
+            .armor(rollRandomFromRange(30, 45))
+            .buffs({new EffectComponent(Effect::HEAL | Effect::PERMANENT,
+                                        rollRandomFromRange(2, 4))});
+
+        MonsterBuilder builder(monster);
+        builder.name("Vampire")
+            .ai(AIType::AI_MONSTER_DEFAULT)
+            .los(30)
+            .baseDamage(5)
+            .baseArmor(20)
+            .critComponent(10, 2.0l, {new EffectComponent(Effect::BLEED, 2, 2)})
+            .tileComponent(TileAppearance::VAMPIRE)
+            .weapon(vampiric_sword.build())
+            .armor(vampiric_armor.build())
+            .experience(1, 500);
+    }
+    void generateDragon(Entity *const monster)
+    {
+        MonsterBuilder builder(monster);
+        builder.name("Dragon")
+            .ai(AIType::AI_MONSTER_AGGRESSIVE)
+            .los(40)
+            .baseDamage(40)
+            .baseArmor(60)
+            .critComponent(15, 1.5l, {})
+            .tileComponent(TileAppearance::DRAGON)
+            .experience(1, 600);
+    }
     void generateGiantVenusFlytrap(Entity *const monster)
     {
         MonsterBuilder builder(monster);
@@ -445,9 +634,33 @@ class MonsterFactory
                            1.5l,
                            {new EffectComponent(Effect::BLEED, 1, 2),
                             new EffectComponent(Effect::POISON, 1, 3)})
-            .tileComponent(TileAppearance::GIANT_VENUS_FLYTRAP);
+            .tileComponent(TileAppearance::GIANT_VENUS_FLYTRAP)
+            .experience(1, 130);
 
         addRandomFoodRation(monster, 25);
+    }
+
+    void placeMonster(Entity *const monster)
+    {
+        int                                     size_x = map_.size();
+        int                                     size_y = map_[0].size();
+        std::uniform_int_distribution<uint16_t> rand_x(1, size_x - 2);
+        std::uniform_int_distribution<uint16_t> rand_y(1, size_y - 2);
+
+        auto x = rand_x(mt_engine_);
+        auto y = rand_y(mt_engine_);
+        while ((map_[x][y].type & (TileType::WALL | TileType::HAS_STAIRS |
+                                   TileType::HAS_CREATURE)) != TileType::NONE)
+        {
+            x = rand_x(mt_engine_);
+            y = rand_y(mt_engine_);
+        }
+        System::sendSystemMessage(SystemType::POSITION,
+                                  {std::make_any<SystemAction::POSITION>(
+                                       SystemAction::POSITION::UPDATE),
+                                   std::make_any<Entity *>(monster),
+                                   std::make_any<uint16_t>(x),
+                                   std::make_any<uint16_t>(y)});
     }
 
 public:
@@ -558,6 +771,19 @@ public:
             auto monster = generateBaseMonster();
             monster_generators_[monster_type](this, monster);
             monsters.emplace_back(monster);
+        }
+
+        for (auto &monster : monsters)
+        {
+            placeMonster(monster);
+            auto message = {
+                std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::ADD),
+                std::make_any<Entity *>(monster)};
+            System::sendSystemMessage(SystemType::ENTITY, message);
+            System::sendSystemMessage(
+                SystemType::AI,
+                {std::make_any<SystemAction::AI>(SystemAction::AI::ADD),
+                 std::make_any<Entity *>(monster)});
         }
 
         return monsters;
