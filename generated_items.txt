@@ -1,5 +1,0 @@
-Item 0:    1 32 5 6 8 1.751314 0  18 10 7 A weapon made by a skilled craftsman. It has seen better days, but due to its quality, it's still a decent piece of weaponry 15 Uncommon Sword 13 22 1 1 2 0 
-Item 2:    2 32 5 6 5 1.542084 0  18 5 7 A simple weapon, made by a mediocre blacksmith. It serves its purpose well enough 15 Sword 13 22 1 1 1 0 
-Item 4:    3 32 5 6 5 1.531074 0  18 4 7 A simple weapon, made by a mediocre blacksmith. It serves its purpose well enough 15 Sword 13 22 1 1 1 0 
-Item 6:    4 32 4 7 A ration partially eaten away by the rats. After cutting off the bad part , not much of it remains but it still seems to be edible 15 Tiny Food Ration 11 10 100 13 1 1 1 1 0 
-Item 8:    5 32 4 7 A ration partially eaten away by the rats. After cutting off the bad part , not much of it remains but it still seems to be edible 15 Tiny Food Ration 11 10 100 13 1 1 1 1 0 
