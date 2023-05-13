@@ -7,7 +7,9 @@
 #include "../system.h"
 #include <any>
 #include <cstdint>
+#include <istream>
 #include <memory>
+#include <ostream>
 #include <unordered_map>
 #include <vector>
 
@@ -111,6 +113,19 @@ public:
     {
         (*System::system_messages_)[SystemType::ENTITY].clear();
     }
+
+    std::ostream &serialize(std::ostream &os) const override
+    {
+        os << "ENTITYSYSTEM SIZE: " << entities_.size() << std::endl
+           << std::endl;
+        for (auto &[id, entity] : entities_)
+        {
+            os << entity.get() << std::endl;
+        }
+        return os;
+    }
+
+    std::istream &deserialize(std::istream &is) override { return is; }
 };
 
 #endif /*ENTITYMANAGER*/
