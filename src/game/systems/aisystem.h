@@ -36,10 +36,12 @@ class AISystem : public System, public EntityHolder
     using AISet   = std::unordered_set<Entity *>;
     using GameMap = std::vector<std::vector<Tile>>;
 
-    AISet          ais_;
-    GameMap        map_;
-    NavMapManager &navigation_manager_;
-    Entity        *player_;
+    AISet               ais_;
+    GameMap             map_;
+    NavMapManager      &navigation_manager_;
+    Entity             *player_;
+    std::list<Entity *> addition_messages_;
+    std::list<Entity *> removal_messages_;
 
 public: // temporary
     double getRunThreshold(AIType &ai_type)
@@ -422,13 +424,51 @@ public:
     }
     void updateData() override
     {
+        for (auto &entity : removal_messages_)
+        {
+            deleteEntity(entity);
+        }
+
+        for (auto &entity : addition_messages_)
+        {
+            addEntity(entity);
+        }
+
         for (auto &ai : ais_)
         {
             runAI(ai, player_);
         }
     }
-    void readSystemMessages() override {}
-    void clearSystemMessages() override {}
+    void readSystemMessages() override
+    {
+        for (auto &message : (*System::system_messages_)[SystemType::AI])
+        {
+            auto message_it   = message.begin();
+            auto message_type = std::any_cast<SystemAction::AI>(*message_it);
+            ++message_it;
+
+            switch (message_type)
+            {
+            case SystemAction::AI::ADD:
+            {
+                addition_messages_.emplace_back(
+                    std::any_cast<Entity *>(*message_it));
+                break;
+            }
+            case SystemAction::AI::REMOVE:
+            {
+                removal_messages_.emplace_back(
+                    std::any_cast<Entity *>(*message_it));
+                break;
+            }
+            }
+        }
+    }
+    void clearSystemMessages() override
+    {
+        addition_messages_.clear();
+        removal_messages_.clear();
+    }
 
     std::ostream &serialize(std::ostream &os) const override
     {

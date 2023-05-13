@@ -35,6 +35,8 @@ enum class PLAYER
 };
 enum class AI
 {
+    ADD,
+    REMOVE,
 };
 enum class ATTACK
 {
