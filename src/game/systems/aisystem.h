@@ -466,6 +466,7 @@ public:
     }
     void clearSystemMessages() override
     {
+        (*system_messages_)[SystemType::AI].clear();
         addition_messages_.clear();
         removal_messages_.clear();
     }
