@@ -24,9 +24,11 @@ class CritComponent : public Component
     std::istream &deserialize(std::istream &is) override
     {
         ComponentType placeholder;
+        int           crit_chance{};
         this->crit_effects = std::make_unique<BuffComponent>();
-        is >> this->crit_chance >> this->crit_multiplier >> placeholder >>
+        is >> crit_chance >> this->crit_multiplier >> placeholder >>
             this->crit_effects.get();
+        this->crit_chance = static_cast<uint8_t>(crit_chance);
         return is;
     }
 

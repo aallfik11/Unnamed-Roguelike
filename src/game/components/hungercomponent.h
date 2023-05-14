@@ -23,7 +23,13 @@ class HungerComponent : public Component
 
     std::istream &deserialize(std::istream &is) override
     {
-        is >> this->hunger >> this->max_hunger;
+        int hunger{},
+            max_hunger{}; // since uint8_t is basically a char, reading is
+                          // problematic, so I need temporary values
+
+        is >> hunger >> max_hunger;
+        this->hunger     = static_cast<uint8_t>(hunger);
+        this->max_hunger = static_cast<uint8_t>(max_hunger);
         return is;
     }
 

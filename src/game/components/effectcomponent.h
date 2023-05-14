@@ -23,7 +23,9 @@ class EffectComponent : public Component
 
     std::istream &deserialize(std::istream &is) override
     {
-        is >> this->effect >> this->effect_strength >> this->effect_duration;
+        int effect_strength{};
+        is >> this->effect >> effect_strength >> this->effect_duration;
+        this->effect_strength = static_cast<uint8_t>(effect_strength);
 
         return is;
     }

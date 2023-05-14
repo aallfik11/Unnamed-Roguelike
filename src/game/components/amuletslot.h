@@ -31,7 +31,10 @@ class AmuletSlot : public Component, public EntityHolder
 
     std::istream &deserialize(std::istream &is) override
     {
-        is >> this->amount_equipped >> this->max_slots;
+        int amount_equipped{}, max_slots{};
+        is >> amount_equipped >> max_slots;
+        this->amount_equipped = static_cast<uint8_t>(amount_equipped);
+        this->max_slots       = static_cast<uint8_t>(max_slots);
 
         std::shared_ptr<std::list<uint32_t>> entities_requested(
             new std::list<uint32_t>);

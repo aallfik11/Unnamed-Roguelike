@@ -76,9 +76,9 @@ inline std::ostream &operator<<(std::ostream &os, const ComponentType &type)
 
 inline std::istream &operator>>(std::istream &is, ComponentType &type)
 {
-    uint8_t temp;
+    int temp;
     is >> temp;
-    type = static_cast<ComponentType>(temp);
+    type = static_cast<ComponentType>(+temp);
     return is;
 }
 

@@ -20,7 +20,9 @@ class ArmorComponent : public Component
 
     std::istream &deserialize(std::istream &is) override
     {
-        is >> this->armor_class;
+        int armor_class{};
+        is >> armor_class;
+        this->armor_class = static_cast<uint8_t>(armor_class);
         return is;
     }
 

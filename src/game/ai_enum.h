@@ -31,7 +31,7 @@ inline std::ostream &operator<<(std::ostream &os, const AIType &type)
 
 inline std::istream &operator>>(std::istream &is, AIType &type)
 {
-    uint8_t temp;
+    int temp;
     is >> temp;
     type = static_cast<AIType>(temp);
     return is;
@@ -45,7 +45,7 @@ inline std::ostream &operator<<(std::ostream &os, const AIState &type)
 
 inline std::istream &operator>>(std::istream &is, AIState &type)
 {
-    uint8_t temp;
+    int temp;
     is >> temp;
     type = static_cast<AIState>(temp);
     return is;

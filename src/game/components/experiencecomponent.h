@@ -22,7 +22,9 @@ class ExperienceComponent : public Component
 
     std::istream &deserialize(std::istream &is) override
     {
-        is >> this->level >> this->current_experience;
+        int level{};
+        is >> level >> this->current_experience;
+        this->level = static_cast<uint8_t>(level);
         return is;
     }
 

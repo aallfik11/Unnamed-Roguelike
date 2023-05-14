@@ -22,7 +22,7 @@ inline std::ostream &operator<<(std::ostream &os, const Rarity &type)
 
 inline std::istream &operator>>(std::istream &is, Rarity &type)
 {
-    uint16_t temp{};
+    int temp{};
     is >> temp;
     type = static_cast<Rarity>(temp);
     return is;

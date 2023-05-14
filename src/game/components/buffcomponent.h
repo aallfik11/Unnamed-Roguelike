@@ -41,11 +41,11 @@ class BuffComponent : public Component
             ComponentType placeholder;
             is >> placeholder;
             Effect   effect{};
-            uint8_t  eff_strength{};
+            int  eff_strength{};
             uint16_t eff_duration{};
             is >> effect >> eff_strength >> eff_duration;
             this->buffs[key] = std::make_unique<EffectComponent>(
-                effect, eff_strength, eff_duration);
+                effect, static_cast<uint8_t>(eff_strength), eff_duration);
         }
         return is;
     }
