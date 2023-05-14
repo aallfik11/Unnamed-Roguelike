@@ -196,6 +196,7 @@ class MonsterFactory
             }
             monster_->getComponent<WeaponSlot>()->weapon_item = weapon;
             monster_->getComponent<Inventory>()->inventory.emplace_back(weapon);
+            weapon->getComponent<ItemComponent>()->equipped = true;
             return *this;
         }
 
@@ -211,6 +212,7 @@ class MonsterFactory
             }
             monster_->getComponent<ArmorSlot>()->armor_item = armor;
             monster_->getComponent<Inventory>()->inventory.emplace_back(armor);
+            armor->getComponent<ItemComponent>()->equipped = true;
             return *this;
         }
 
@@ -231,11 +233,14 @@ class MonsterFactory
             int i                  = 0;
             for (auto &item : items)
             {
-                if (i >= 5)
+                if (i >= max_rings)
                     break;
 
                 amulet_slot->amulet_slots.insert(item);
+                amulet_slot->amount_equipped += 1;
                 inv_ptr->inventory.emplace_back(item);
+                item->getComponent<ItemComponent>()->equipped = true;
+                ++i;
             }
             return *this;
         }
