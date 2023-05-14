@@ -63,6 +63,27 @@ public:
         }
     }
 
+    Entity(bool no_id_increment)
+    {
+        this->id_ = 0;
+        ++max_id_;
+        this->type = EntityType::NONE;
+    }
+
+    Entity(Entity &&entity)
+    {
+        for (auto &component : entity.components_)
+        {
+            this->addComponent(component.second->clone());
+        }
+        this->type = entity.type;
+        this->id_  = entity.id_;
+
+        entity.components_.clear();
+        entity.type = EntityType::NONE;
+        entity.id_  = 0;
+    }
+
     uint32_t        getId() const { return id_; }
     static uint32_t getMaxId() { return max_id_; }
 
@@ -109,14 +130,14 @@ public:
 
 std::ostream &operator<<(std::ostream &os, const Entity *const entity)
 {
-    os << entity->id_ << ' ' << entity->type << ' ' << entity->components_.size() << ' ';
+    os << entity->id_ << ' ' << entity->type << ' '
+       << entity->components_.size() << ' ';
     for (const auto &[key, component] : entity->components_)
     {
         os << component;
     }
     return os;
 }
-
 
 uint32_t Entity::max_id_ = 1;
 
