@@ -1,7 +1,7 @@
+#include "src/game/systems/entitymanager.h"
 #include "src/game/systems/factories/itemfactory.h"
 #include "src/game/systems/factories/monsterfactory.h"
 #include "src/game/systems/generators/debugmapgenerator.h"
-#include "src/game/systems/entitymanager.h"
 #include <fstream>
 #include <iostream>
 #include <random>
@@ -14,16 +14,16 @@ int main()
     // std::cin >> depth;
 
     std::random_device rd;
-    
-    std::mt19937       mt(rd());
-    auto               map         = *DebugMapGenerator::generate(mt, 100, 50);
-    auto               itemfactory = ItemFactory(map, depth);
-    auto               monsterfactory = MonsterFactory(itemfactory, map, depth);
 
-    auto          items               = itemfactory.debugGenerateItems(20);
-    auto          monsters            = monsterfactory.generateMonsters();
-    int           item_ctr            = 0;
-    int           monster_ctr         = 0;
+    std::mt19937 mt(rd());
+    auto         map            = *DebugMapGenerator::generate(mt, 100, 50);
+    auto         itemfactory    = ItemFactory(map, depth);
+    auto         monsterfactory = MonsterFactory(itemfactory, map, depth);
+
+    auto          items         = itemfactory.debugGenerateItems(20);
+    auto          monsters      = monsterfactory.generateMonsters();
+    int           item_ctr      = 0;
+    int           monster_ctr   = 0;
     std::ofstream file_wr("generated_items.txt");
     for (auto &item : items)
     {
@@ -41,11 +41,30 @@ int main()
     file_wr.close();
     e_manager.readSystemMessages();
     e_manager.updateData();
-    System* s = &e_manager;
-    std::cout << s;
+    e_manager.clearSystemMessages();
+    System *s        = &e_manager;
+    // std::cout << s;
+    // file_wr.open("entities.txt");
+    // file_wr << s;
+    // file_wr.close();
     // Entity* monster = monsterfactory.generateBaseMonster();
     // monsterfactory.generateAssassin(monster);
     // std::cout << std::endl << std::endl << monster;
+
+    System       *e2 = new EntityManager();
+    std::ifstream ifstr("C:\\Users\\mniec\\OneDrive\\Pulpit\\RoguelikeProjekt\\Unnamed-Roguelike\\build\\entities.txt");
+    int           temp{};
+    ifstr >> temp;
+    ifstr >> e2;
+    ifstr.close();
+
+    e2->readSystemMessages();
+    e2->updateData();
+    e2->clearSystemMessages();
+
+    file_wr.open("entities2.txt");
+    file_wr << e2;
+    file_wr.close();
     std::cout << "No segfault???";
     return 0;
 }
