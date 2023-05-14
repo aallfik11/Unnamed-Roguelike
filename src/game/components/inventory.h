@@ -30,7 +30,7 @@ class Inventory : public Component, public EntityHolder
         is >> inv_size;
         if (inv_size != 0)
         {
-            uint32_t                             temp_entity_id;
+            uint32_t                             temp_entity_id{};
             std::shared_ptr<std::list<uint32_t>> entities_requested(
                 new std::list<uint32_t>);
             for (std::size_t i = 0; i < inv_size; i++)
