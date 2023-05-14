@@ -2,6 +2,7 @@
 #define ENTITYMANAGER_H
 #include "../component.h"
 #include "../entity.h"
+#include "../entitydeserializer.h"
 #include "../entityholder.h"
 #include "../entitytypes.h"
 #include "../system.h"
@@ -52,7 +53,6 @@ public:
         {
             entities_.erase(entity_id);
         }
-        purge_list_.clear();
     }
 
     void handleRequests()
@@ -67,7 +67,6 @@ public:
             }
             request.first->loadEntities(entities);
         }
-        request_list_.clear();
     }
 
     void updateData() override
@@ -77,7 +76,6 @@ public:
         {
             addEntity(entity);
         }
-        add_list_.clear();
         handleRequests();
     }
     void readSystemMessages() override
@@ -112,12 +110,14 @@ public:
     void clearSystemMessages() override
     {
         (*System::system_messages_)[SystemType::ENTITY].clear();
+        add_list_.clear();
+        purge_list_.clear();
+        request_list_.clear();
     }
 
     std::ostream &serialize(std::ostream &os) const override
     {
-        os << "ENTITYSYSTEM SIZE: " << entities_.size() << std::endl
-           << std::endl;
+        os << SystemType::ENTITY << ' ' << entities_.size() << std::endl;
         for (auto &[id, entity] : entities_)
         {
             os << entity.get() << std::endl;
@@ -125,7 +125,20 @@ public:
         return os;
     }
 
-    std::istream &deserialize(std::istream &is) override { return is; }
+    std::istream &deserialize(std::istream &is) override
+    {
+        std::size_t entity_amount{};
+        is >> entity_amount;
+        for (std::size_t i = 0; i < entity_amount; i++)
+        {
+            auto entity = std::make_unique<Entity>(true);
+            is >> entity.get();
+            entities_[entity->getId()] = std::move(entity);
+        }
+        is >> entity_amount; // to get rid of an additional newline and move the
+                             // stream to the correct read position
+        return is;
+    }
 };
 
 #endif /*ENTITYMANAGER*/
