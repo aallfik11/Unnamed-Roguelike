@@ -80,7 +80,7 @@ static std::unique_ptr<Component> deserializeEntity(std::istream &is,
 std::istream &operator>>(std::istream &is, Entity *const entity)
 {
     std::size_t number_of_components{};
-    is >> entity->type >> number_of_components;
+    is >> entity->id_ >> entity->type >> number_of_components;
     ComponentType temp{};
     for (std::size_t i = 0; i < number_of_components; i++)
     {
