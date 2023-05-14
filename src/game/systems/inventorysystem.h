@@ -3,6 +3,7 @@
 #include "../components/amuletslot.h"
 #include "../components/armorslot.h"
 #include "../components/buffcomponent.h"
+#include "../components/coordinates.h"
 #include "../components/effectcomponent.h"
 #include "../components/hungercomponent.h"
 #include "../components/inventory.h"
@@ -23,6 +24,10 @@ class InventorySystem : public System
 {
 
     using Inv = std::list<Entity *>;
+    std::list<std::pair<Entity *, std::list<Entity *>>> addition_messages_;
+    std::list<std::pair<Entity *, uint32_t>>            drop_messages_;
+    std::list<std::pair<Entity *, Entity *>>            transfer_messages_;
+    std::list<std::pair<Entity *, uint32_t>>            usage_messages_;
 
     inline Inv::iterator iterateToItem(Inv &inventory, uint32_t index)
     {
@@ -258,16 +263,40 @@ public:
         }
     }
 
-    Entity *dropFromInventory(Entity *const caller, const uint32_t index)
+    void addToInventory(Entity *const caller, const std::list<Entity *> &items)
+    {
+        auto target_inventory = caller->getComponent<Inventory>();
+        if (target_inventory == nullptr)
+            caller->addComponent(new Inventory());
+
+        for (auto &item : items)
+        {
+            // figure out how to add stackable stuff
+            if ((item->getComponent<ItemComponent>()->type &
+                 ItemType::STACKABLE) != ItemType::NONE)
+            {
+                if (stackItem(target_inventory->inventory, item) == true)
+                    continue;
+            }
+
+            target_inventory->inventory.emplace_back(item);
+        }
+    }
+
+    Entity *dropFromInventory(Entity *const  caller,
+                              const uint32_t index,
+                              bool           add_to_pos = true)
     {
         // EntityPtr item;
         auto &caller_inventory = caller->getComponent<Inventory>()->inventory;
         auto  item_iterator    = caller_inventory.begin();
         std::advance(item_iterator, index);
-        return dropFromInventory(caller, item_iterator);
+        return dropFromInventory(caller, item_iterator, add_to_pos);
     }
 
-    Entity *dropFromInventory(Entity *const caller, const Inv::iterator &index)
+    Entity *dropFromInventory(Entity *const        caller,
+                              const Inv::iterator &index,
+                              bool                 add_to_pos = true)
     {
         Entity *item             = nullptr;
         auto   &caller_inventory = caller->getComponent<Inventory>()->inventory;
@@ -297,10 +326,17 @@ public:
                 amulet_slot->amulet_slots.erase(item);
             }
 
+            if (auto item_buffs = item->getComponent<BuffComponent>())
+            {
+                removeEquipmentBuff(caller->getComponent<BuffComponent>(),
+                                    item_buffs);
+            }
+
             item_component->equipped = false;
         }
 
-        if ((item_component->type & ItemType::STACKABLE) != ItemType::NONE)
+        if ((item_component->type & ItemType::STACKABLE) != ItemType::NONE &&
+            item_component->stack > 1)
         {
             item_component->stack -= 1;
             Entity *dropped_item(new Entity(*item));
@@ -311,6 +347,16 @@ public:
                  std::make_any<Entity *>(dropped_item)});
 
             item = dropped_item;
+        }
+        if (add_to_pos == true)
+        {
+            auto caller_coords = caller->getComponent<Coordinates>();
+            sendSystemMessage(SystemType::POSITION,
+                              {std::make_any<SystemAction::POSITION>(
+                                   SystemAction::POSITION::UPDATE),
+                               std::make_any<Entity *>(item),
+                               std::make_any<uint16_t>(caller_coords->x),
+                               std::make_any<uint16_t>(caller_coords->y)});
         }
 
         return item;
@@ -343,6 +389,28 @@ public:
 
     void updateData() override
     {
+        for (auto &[caller, items] : addition_messages_)
+        {
+            addToInventory(caller, items);
+        }
+
+        for (auto &[caller, index] : usage_messages_)
+        {
+            useItem(caller, index);
+        }
+
+        for (auto &[caller, item] : transfer_messages_)
+        {
+            addToInventory(caller, {item});
+        }
+
+        for (auto &[caller, index] : drop_messages_)
+        {
+            dropFromInventory(caller, index);
+        }
+    }
+    void readSystemMessages() override
+    {
         for (auto &message : (*system_messages_)[SystemType::INVENTORY])
         {
             auto message_iterator = message.begin();
@@ -355,15 +423,15 @@ public:
             {
             case SystemAction::INVENTORY::ADD:
             {
-                auto items = std::any_cast<std::initializer_list<Entity *>>(
-                    *message_iterator);
-                addToInventory(entity, items);
+                auto items =
+                    std::any_cast<std::list<Entity *>>(*message_iterator);
+                addition_messages_.emplace_back(entity, items);
                 break;
             }
             case SystemAction::INVENTORY::DROP:
             {
                 auto index = std::any_cast<uint32_t>(*message_iterator);
-                dropFromInventory(entity, index);
+                drop_messages_.emplace_back(entity, index);
                 break;
             }
             case SystemAction::INVENTORY::TRANSFER:
@@ -371,22 +439,26 @@ public:
                 auto index = std::any_cast<uint32_t>(*message_iterator);
                 ++message_iterator;
                 auto target = std::any_cast<Entity *>(*message_iterator);
-                addToInventory(target, {dropFromInventory(entity, index)});
+                transfer_messages_.emplace_back(
+                    target, dropFromInventory(entity, index, false));
                 break;
             }
             case SystemAction::INVENTORY::USE:
             {
                 auto index = std::any_cast<uint32_t>(*message_iterator);
-                useItem(entity, index);
+                usage_messages_.emplace_back(entity, index);
                 break;
             }
             }
         }
     }
-    void readSystemMessages() override {}
     void clearSystemMessages() override
     {
         (*system_messages_)[SystemType::INVENTORY].clear();
+        addition_messages_.clear();
+        usage_messages_.clear();
+        transfer_messages_.clear();
+        drop_messages_.clear();
     }
 
     std::ostream &serialize(std::ostream &os) const override
