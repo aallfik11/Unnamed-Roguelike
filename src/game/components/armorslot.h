@@ -61,7 +61,7 @@ public:
 
     void loadEntities(std::shared_ptr<std::list<Entity *>> &entities) override
     {
-        *(entities->begin()) = this->armor_item;
+        this->armor_item = entities->front();
     }
 };
 
