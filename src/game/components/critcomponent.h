@@ -10,6 +10,14 @@
 class CritComponent : public Component
 {
 
+    /*debug*/ bool isEqual(const Component *const c) const override
+    {
+        auto crit = static_cast<const CritComponent *>(c);
+        if (*(this->crit_effects) == *(crit->crit_effects))
+            return false;
+        return (this->crit_chance == crit->crit_chance &&
+                this->crit_multiplier == crit->crit_multiplier);
+    }
     CritComponent *cloneImpl() const override
     {
         return new CritComponent(*this);

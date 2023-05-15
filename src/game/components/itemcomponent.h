@@ -10,6 +10,13 @@
 
 class ItemComponent : public Component
 {
+    /*debug*/ bool isEqual(const Component *const c) const override
+    {
+        auto i = static_cast<const ItemComponent *>(c);
+        return (this->type == i->type && this->stack == i->stack &&
+                this->max_stack == i->max_stack && this->rarity == i->rarity &&
+                this->equipped == i->equipped);
+    }
     ItemComponent *cloneImpl() const override
     {
         return new ItemComponent(*this);
@@ -37,7 +44,7 @@ public:
     Rarity   rarity;
     bool     equipped;
 
-    ItemComponent(ItemType type = ItemType::NONE,
+    ItemComponent(ItemType type      = ItemType::NONE,
                   uint16_t stack     = 1,
                   uint16_t max_stack = 1,
                   Rarity   rarity    = Rarity::COMMON,

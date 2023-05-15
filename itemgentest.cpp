@@ -44,15 +44,15 @@ int main()
     e_manager.clearSystemMessages();
     System *s        = &e_manager;
     // std::cout << s;
-    // file_wr.open("entities.txt");
-    // file_wr << s;
-    // file_wr.close();
+    file_wr.open("entities.txt");
+    file_wr << s;
+    file_wr.close();
     // Entity* monster = monsterfactory.generateBaseMonster();
     // monsterfactory.generateAssassin(monster);
     // std::cout << std::endl << std::endl << monster;
-
-    System       *e2 = new EntityManager();
-    std::ifstream ifstr("C:\\Users\\mniec\\OneDrive\\Pulpit\\RoguelikeProjekt\\Unnamed-Roguelike\\build\\entities.txt");
+    EntityManager e_manager2;
+    System       *e2 = &e_manager2;
+    std::ifstream ifstr("entities.txt");
     int           temp{};
     ifstr >> temp;
     ifstr >> e2;
@@ -65,6 +65,10 @@ int main()
     file_wr.open("entities2.txt");
     file_wr << e2;
     file_wr.close();
+    if(e_manager == e_manager2)
+    {
+        std::cout << "Same!";
+    }
     std::cout << "No segfault???";
     return 0;
 }

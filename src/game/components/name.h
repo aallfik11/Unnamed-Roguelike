@@ -9,6 +9,11 @@
 
 class Name : public Component
 {
+    /*debug*/ bool isEqual(const Component *const c) const override
+    {
+        auto n = static_cast<const Name*>(c);
+        return (this->name == n->name);
+    }
     Name         *cloneImpl() const override { return new Name(*this); }
     std::ostream &serialize(std::ostream &os) const override
     {

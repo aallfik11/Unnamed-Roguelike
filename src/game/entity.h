@@ -126,6 +126,16 @@ public:
     friend std::istream &operator>>(std::istream &is, Entity *const entity);
 
     static void resetMaxId() { max_id_ = 1; }
+
+    bool operator==(const Entity &e) const
+    {
+        for (auto &[type_id, component_ptr] : this->components_)
+        {
+            if ((*component_ptr == *(e.components_.at(type_id))) == false)
+                return false;
+        }
+        return (this->type == e.type && this->id_ == e.id_);
+    }
 };
 
 std::ostream &operator<<(std::ostream &os, const Entity *const entity)
@@ -137,6 +147,8 @@ std::ostream &operator<<(std::ostream &os, const Entity *const entity)
         os << component;
     }
     return os;
+
+    // DEBUG
 }
 
 uint32_t Entity::max_id_ = 1;

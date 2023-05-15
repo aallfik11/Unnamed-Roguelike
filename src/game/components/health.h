@@ -9,6 +9,13 @@
 
 class Health : public Component
 {
+    /*debug*/ bool isEqual(const Component *const c) const override
+    {
+        auto h = static_cast<const Health *>(c);
+        return (this->max_health_points == h->max_health_points &&
+                this->current_health_points == h->current_health_points &&
+                this->alive == h->alive);
+    }
     Health       *cloneImpl() const override { return new Health(*this); }
     std::ostream &serialize(std::ostream &os) const override
     {

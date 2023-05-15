@@ -8,6 +8,12 @@
 
 class LOSComponent : public Component
 {
+    /*debug*/ bool isEqual(const Component *const c) const override
+    {
+        auto l = static_cast<const LOSComponent *>(c);
+        return (this->has_LOS_to_player == l->has_LOS_to_player &&
+                this->seeing_distance == l->seeing_distance);
+    }
     LOSComponent *cloneImpl() const override { return new LOSComponent(*this); }
 
     std::ostream &serialize(std::ostream &os) const override

@@ -9,6 +9,11 @@
 class WeaponComponent : public Component
 {
 
+    /*debug*/ bool isEqual(const Component *const c) const override
+    {
+        auto w = static_cast<const WeaponComponent *>(c);
+        return (this->damage == w->damage);
+    }
     WeaponComponent *cloneImpl() const override
     {
         return new WeaponComponent(*this);

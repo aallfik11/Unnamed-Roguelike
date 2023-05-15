@@ -64,6 +64,16 @@ inline std::istream &operator>>(std::istream &is, NavCell &n)
 
 class NavMapComponent : public Component
 {
+    /*debug*/ bool isEqual(const Component *const c) const override
+    {
+        auto n = static_cast<const NavMapComponent *>(c);
+        for (std::size_t i = 0; i < this->nav_map.size(); ++i)
+        {
+            if (this->nav_map[i] != n->nav_map[i])
+                return false;
+        }
+        return true;
+    }
     NavMapComponent *cloneImpl() const override
     {
         return new NavMapComponent(*this);

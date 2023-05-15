@@ -14,6 +14,18 @@
 
 class BuffComponent : public Component
 {
+    /*debug*/ bool isEqual(const Component *const c) const override
+    {
+        auto b = static_cast<const BuffComponent *>(c);
+        for (auto &[effect, effect_ptr] : this->buffs)
+        {
+            if (b->buffs.contains(effect) == false)
+                return false;
+            if (*effect_ptr != *(b->buffs.at(effect)))
+                return false;
+        }
+        return true;
+    }
     BuffComponent *cloneImpl() const override
     {
         return new BuffComponent(*this);
@@ -41,7 +53,7 @@ class BuffComponent : public Component
             ComponentType placeholder;
             is >> placeholder;
             Effect   effect{};
-            int  eff_strength{};
+            int      eff_strength{};
             uint16_t eff_duration{};
             is >> effect >> eff_strength >> eff_duration;
             this->buffs[key] = std::make_unique<EffectComponent>(

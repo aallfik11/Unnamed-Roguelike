@@ -12,6 +12,25 @@
 
 class Inventory : public Component, public EntityHolder
 {
+    /*debug*/ bool isEqual(const Component *const c) const override
+    {
+        auto i = static_cast<const Inventory *>(c);
+        for (auto &entity : this->inventory)
+        {
+            bool found = false;
+            for (auto &other_entity : i->inventory)
+            {
+                if (*entity == *other_entity)
+                {
+                    found = true;
+                    break;
+                }
+            }
+            if (found == false)
+                return false;
+        }
+        return true;
+    }
     Inventory *cloneImpl() const override { return new Inventory(*this); }
 
     std::ostream &serialize(std::ostream &os) const override

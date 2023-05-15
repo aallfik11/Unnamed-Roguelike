@@ -8,6 +8,11 @@
 
 class Coordinates : public Component
 {
+    /*debug*/ bool isEqual(const Component *const c) const override
+    {
+        auto coords = static_cast<const Coordinates *>(c);
+        return (this->x == coords->x && this->y == coords->y);
+    }
 
     Coordinates *cloneImpl() const override { return new Coordinates(*this); }
 

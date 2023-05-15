@@ -9,6 +9,11 @@
 
 class Description : public Component
 {
+    /*debug*/ bool isEqual(const Component *const c) const override
+    {
+        auto d = static_cast<const Description *>(c);
+        return (this->description == d->description);
+    }
 
     Description  *cloneImpl() const override { return new Description(*this); }
     std::ostream &serialize(std::ostream &os) const override

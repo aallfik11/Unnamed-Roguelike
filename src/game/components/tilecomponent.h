@@ -10,6 +10,11 @@
 
 class TileComponent : public Component
 {
+    /*debug*/ bool isEqual(const Component *const c) const override
+    {
+        auto t = static_cast<const TileComponent *>(c);
+        return (this->sprite == t->sprite);
+    }
     TileComponent *cloneImpl() const override
     {
         return new TileComponent(*this);

@@ -8,6 +8,12 @@
 
 class ExperienceComponent : public Component
 {
+    /*debug*/ bool isEqual(const Component *const c) const override
+    {
+        auto e = static_cast<const ExperienceComponent *>(c);
+        return (this->level == e->level &&
+                this->current_experience == e->current_experience);
+    }
     ExperienceComponent *cloneImpl() const override
     {
         return new ExperienceComponent(*this);

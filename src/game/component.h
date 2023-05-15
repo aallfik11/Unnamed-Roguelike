@@ -12,6 +12,7 @@ protected:
     virtual Component    *cloneImpl() const                 = 0;
     virtual std::ostream &serialize(std::ostream &os) const = 0;
     virtual std::istream &deserialize(std::istream &is)     = 0;
+    /*debug*/ virtual bool isEqual(const Component* const c) const = 0;
 
 public:
     std::unique_ptr<Component> clone() const
@@ -32,6 +33,9 @@ public:
     {
         return c->deserialize(is);
     }
+    bool operator==(const Component& c) const {
+        return this->isEqual(&c);
+    };
 };
 
 template <class Derived, class Base = Component>
@@ -65,7 +69,7 @@ enum class ComponentType : uint8_t
     WEAPON,
     WEAPONSLOT,
 
-    _SIZE //DO NOT TOUCH
+    _SIZE // DO NOT TOUCH
 };
 
 inline std::ostream &operator<<(std::ostream &os, const ComponentType &type)

@@ -8,6 +8,7 @@
 #include "../system.h"
 #include <any>
 #include <cstdint>
+#include <iostream>
 #include <istream>
 #include <memory>
 #include <ostream>
@@ -138,6 +139,25 @@ public:
         is >> entity_amount; // to get rid of an additional newline and move the
                              // stream to the correct read position
         return is;
+    }
+
+    // DEBUG
+    bool operator==(const EntityManager &e)
+    {
+        for (auto &[key, entity] : this->entities_)
+        {
+            if (e.entities_.contains(key) == false)
+            {
+                std::cerr << "KEY MISSING: " << key << ' ';
+                return false;
+            }
+            if (*(this->entities_.at(key)) != *(e.entities_.at(key)))
+            {
+                std::cerr << "ENTITY MISMATCH: "<< key << ' ';
+                return false;
+            }
+        }
+        return true;
     }
 };
 

@@ -9,6 +9,13 @@
 
 class EffectComponent : public Component
 {
+    /*debug*/ bool isEqual(const Component *const c) const override
+    {
+        auto e = static_cast<const EffectComponent *>(c);
+        return (this->effect == e->effect &&
+                this->effect_strength == e->effect_strength &&
+                this->effect_duration == e->effect_duration);
+    }
     EffectComponent *cloneImpl() const override
     {
         return new EffectComponent(*this);

@@ -18,6 +18,22 @@
  */
 class AmuletSlot : public Component, public EntityHolder
 {
+
+    /*debug*/ bool isEqual(const Component* const c) const override
+    {
+        auto a = static_cast<const AmuletSlot*>(c);
+        std::unordered_set<uint32_t> this_amulet_ids;
+        std::unordered_set<uint32_t> other_amulet_ids;
+        for(auto& amulet : this->amulet_slots)
+            this_amulet_ids.insert(amulet->getId());
+        for(auto& amulet : a->amulet_slots)
+            other_amulet_ids.insert(amulet->getId());
+
+        if(this_amulet_ids == other_amulet_ids)
+            return true;
+
+        return false;
+    }
     AmuletSlot   *cloneImpl() const override { return new AmuletSlot(*this); }
     std::ostream &serialize(std::ostream &os) const override
     {

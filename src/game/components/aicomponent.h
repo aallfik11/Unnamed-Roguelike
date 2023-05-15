@@ -11,6 +11,12 @@
 
 class AIComponent : public Component
 {
+    /*debug*/ bool isEqual(const Component* const c) const override
+    {
+        auto a = static_cast<const AIComponent*>(c);
+        return (*this == *a);
+    }
+
     AIComponent(const AIComponent &ai_component)
     {
         this->ai_type       = ai_component.ai_type;

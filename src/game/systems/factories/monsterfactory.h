@@ -660,6 +660,7 @@ class MonsterFactory
             x = rand_x(mt_engine_);
             y = rand_y(mt_engine_);
         }
+        map_[x][y].type |= TileType::HAS_CREATURE;
         System::sendSystemMessage(SystemType::POSITION,
                                   {std::make_any<SystemAction::POSITION>(
                                        SystemAction::POSITION::UPDATE),

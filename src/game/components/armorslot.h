@@ -12,6 +12,11 @@
 
 class ArmorSlot : public Component, public EntityHolder
 {
+    /*debug*/ bool isEqual(const Component* const c) const override
+    {
+        auto a = static_cast<const ArmorSlot*>(c);
+        return (*(this->armor_item) == *(a->armor_item));
+    }
     ArmorSlot    *cloneImpl() const override { return new ArmorSlot(*this); }
     std::ostream &serialize(std::ostream &os) const override
     {

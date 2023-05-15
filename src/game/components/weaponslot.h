@@ -12,6 +12,11 @@
 class WeaponSlot : public Component, public EntityHolder
 {
 
+    /*debug*/ bool isEqual(const Component *const c) const override
+    {
+        auto w = static_cast<const WeaponSlot *>(c);
+        return (*(this->weapon_item) == *(w->weapon_item));
+    }
     WeaponSlot *cloneImpl() const override
     {
         return new WeaponSlot(this->weapon_item);
