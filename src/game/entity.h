@@ -3,11 +3,13 @@
 #include "component.h"
 #include "entitytypes.h"
 #include <algorithm>
+#include <iostream>
 #include <memory>
 #include <ranges>
 #include <utility>
 // #include <type_traits>
 #include <istream>
+#include <map>
 #include <ostream>
 #include <typeindex>
 #include <typeinfo>
@@ -131,7 +133,11 @@ public:
     {
         for (auto &[type_id, component_ptr] : this->components_)
         {
-            if ((*component_ptr == *(e.components_.at(type_id))) == false)
+            if (e.components_.contains(type_id) == false)
+            {
+                return false;
+            }
+            if (*component_ptr != *(e.components_.at(type_id)))
                 return false;
         }
         return (this->type == e.type && this->id_ == e.id_);
