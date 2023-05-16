@@ -3,6 +3,7 @@
 #include "../component.h"
 #include "../entity.h"
 #include "../entityholder.h"
+#include "../observerptr.h"
 #include "../system.h"
 #include <any>
 #include <cstdint>
