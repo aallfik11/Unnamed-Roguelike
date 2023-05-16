@@ -47,6 +47,8 @@ enum class EFFECT
     ADD,
     APPLY,
     CLEANSE,
+    ADD_ENTITY,
+    REMOVE_ENTITY,
 };
 enum class ENTITY
 {
@@ -85,6 +87,8 @@ enum class MAP_MANAGER
 };
 enum class NAVMAP_MANAGER
 {
+    ADD,
+    REMOVE,
 };
 enum class POSITION
 {
