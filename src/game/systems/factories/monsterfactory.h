@@ -606,6 +606,7 @@ class MonsterFactory
         builder.name("Vampire")
             .ai(AIType::AI_MONSTER_DEFAULT)
             .los(30)
+            .health(30)
             .baseDamage(5)
             .baseArmor(20)
             .critComponent(10, 2.0l, {new EffectComponent(Effect::BLEED, 2, 2)})
@@ -620,6 +621,7 @@ class MonsterFactory
         builder.name("Dragon")
             .ai(AIType::AI_MONSTER_AGGRESSIVE)
             .los(40)
+            .health(50)
             .baseDamage(40)
             .baseArmor(60)
             .critComponent(15, 1.5l, {})
@@ -790,6 +792,17 @@ public:
                 SystemType::AI,
                 {std::make_any<SystemAction::AI>(SystemAction::AI::ADD),
                  std::make_any<Entity *>(monster)});
+
+            System::sendSystemMessage(
+                SystemType::LINE_OF_SIGHT,
+                {std::make_any<SystemAction::LINE_OF_SIGHT>(
+                     SystemAction::LINE_OF_SIGHT::ADD),
+                 std::make_any<Entity *>(monster)});
+
+            System::sendSystemMessage(SystemType::EFFECT,
+                                      {std::make_any<SystemAction::EFFECT>(
+                                           SystemAction::EFFECT::ADD_ENTITY),
+                                       std::make_any<Entity *>(monster)});
         }
 
         return monsters;
