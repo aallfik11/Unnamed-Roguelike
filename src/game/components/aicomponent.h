@@ -11,10 +11,12 @@
 
 class AIComponent : public Component
 {
-    /*debug*/ bool isEqual(const Component* const c) const override
+    /*debug*/ bool isEqual(const Component *const c) const override
     {
-        auto a = static_cast<const AIComponent*>(c);
-        return (*this == *a);
+        auto a = static_cast<const AIComponent *>(c);
+        return (this->ai_type == a->ai_type && this->ai_state == a->ai_state &&
+                this->last_target_x == a->last_target_x &&
+                this->last_target_y == a->last_target_y);
     }
 
     AIComponent(const AIComponent &ai_component)
@@ -55,6 +57,8 @@ public:
         this->last_target_x = last_target_x;
         this->last_target_y = last_target_y;
     }
+
+    ComponentType getType() const override { return ComponentType::AI; }
 };
 
 #endif /*AI_COMPONENT_H*/

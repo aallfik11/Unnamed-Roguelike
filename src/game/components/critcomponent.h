@@ -2,6 +2,7 @@
 #define CRITCOMPONENT_H
 #include "../component.h"
 #include "buffcomponent.h"
+#include <cmath>
 #include <cstdint>
 #include <istream>
 #include <memory>
@@ -13,10 +14,14 @@ class CritComponent : public Component
     /*debug*/ bool isEqual(const Component *const c) const override
     {
         auto crit = static_cast<const CritComponent *>(c);
-        if (*(this->crit_effects) == *(crit->crit_effects))
+        if (*(this->crit_effects) != *(crit->crit_effects))
             return false;
-        return (this->crit_chance == crit->crit_chance &&
-                this->crit_multiplier == crit->crit_multiplier);
+        if (this->crit_chance != crit->crit_chance)
+            return false;
+        if (std::abs(this->crit_multiplier - crit->crit_multiplier) >= 0.001) //0.001 lies inside the acceptable rounding error for me
+            return false;
+
+        return true;
     }
     CritComponent *cloneImpl() const override
     {
@@ -67,6 +72,7 @@ public:
         this->crit_effects    = castToComponent<BuffComponent>(
             crit_component.crit_effects->clone());
     }
+    ComponentType getType() const override { return ComponentType::CRIT; }
 };
 
 #endif /*CRITCOMPONENT_H*/

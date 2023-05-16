@@ -65,6 +65,7 @@ public:
         this->rarity    = item_component.rarity;
         this->equipped  = item_component.equipped;
     }
+    ComponentType getType() const override { return ComponentType::INVENTORY; }
 };
 
 #endif /*ITEMCOMPONENT_H*/

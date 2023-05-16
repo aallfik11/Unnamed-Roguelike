@@ -64,6 +64,7 @@ public:
         this->current_health_points = hp.current_health_points;
         this->alive                 = hp.alive;
     }
+    ComponentType getType() const override { return ComponentType::HEALTH; }
 };
 
 #endif /*HEALTH_H*/

@@ -45,5 +45,6 @@ public:
         this->has_LOS_to_player = los.has_LOS_to_player;
         this->seeing_distance   = los.seeing_distance;
     }
+    ComponentType getType() const override { return ComponentType::LINEOFSIGHT; }
 };
 #endif /*LINEOFSIGHTCOMPONENT_H*/

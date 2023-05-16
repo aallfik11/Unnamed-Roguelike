@@ -42,6 +42,7 @@ public:
     std::string name;
     Name(std::string name = "") { this->name = name; }
     Name(const Name &nm) { this->name = nm.name; }
+    ComponentType getType() const override { return ComponentType::NAME; }
 };
 
 #endif /*NAME_H*/

@@ -15,6 +15,10 @@ class WeaponSlot : public Component, public EntityHolder
     /*debug*/ bool isEqual(const Component *const c) const override
     {
         auto w = static_cast<const WeaponSlot *>(c);
+        if(this->weapon_item == nullptr && w->weapon_item == nullptr)
+        {
+            return true;
+        }
         return (*(this->weapon_item) == *(w->weapon_item));
     }
     WeaponSlot *cloneImpl() const override
@@ -72,6 +76,7 @@ public:
         System::sendSystemMessage(SystemType::ENTITY, message);
         this->weapon_item = entity;
     }
+    ComponentType getType() const override { return ComponentType::WEAPONSLOT; }
 
     void loadEntities(std::shared_ptr<std::list<Entity *>> &entities) override
     {

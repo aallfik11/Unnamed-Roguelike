@@ -50,6 +50,7 @@ public:
         this->level              = exp.level;
         this->current_experience = exp.current_experience;
     }
+    ComponentType getType() const override { return ComponentType::EXPERIENCE; }
 };
 
 #endif /*EXPERIENCECOMPONENT_H*/

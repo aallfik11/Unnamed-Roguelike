@@ -43,6 +43,7 @@ public:
         this->x = coordinates.x;
         this->y = coordinates.y;
     }
+    ComponentType getType() const override { return ComponentType::COORDINATES; }
 };
 
 #endif /*COORDINATES_H*/

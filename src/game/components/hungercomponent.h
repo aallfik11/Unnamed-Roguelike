@@ -52,6 +52,7 @@ public:
         this->hunger     = hunger_component.hunger;
         this->max_hunger = hunger_component.max_hunger;
     }
+    ComponentType getType() const override { return ComponentType::HUNGER; }
 };
 
 #endif /*HUNGERCOMPONENT_H*/

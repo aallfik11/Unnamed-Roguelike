@@ -19,17 +19,17 @@
 class AmuletSlot : public Component, public EntityHolder
 {
 
-    /*debug*/ bool isEqual(const Component* const c) const override
+    /*debug*/ bool isEqual(const Component *const c) const override
     {
-        auto a = static_cast<const AmuletSlot*>(c);
+        auto                         a = static_cast<const AmuletSlot *>(c);
         std::unordered_set<uint32_t> this_amulet_ids;
         std::unordered_set<uint32_t> other_amulet_ids;
-        for(auto& amulet : this->amulet_slots)
+        for (auto &amulet : this->amulet_slots)
             this_amulet_ids.insert(amulet->getId());
-        for(auto& amulet : a->amulet_slots)
+        for (auto &amulet : a->amulet_slots)
             other_amulet_ids.insert(amulet->getId());
 
-        if(this_amulet_ids == other_amulet_ids)
+        if (this_amulet_ids == other_amulet_ids)
             return true;
 
         return false;
@@ -96,6 +96,8 @@ public:
             this->amulet_slots.emplace(new_amulet);
         }
     }
+
+    ComponentType getType() const override { return ComponentType::AMULETSLOT; }
 
     void loadEntities(std::shared_ptr<std::list<Entity *>> &entities) override
     {

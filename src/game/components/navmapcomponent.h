@@ -132,6 +132,7 @@ public:
         : NavMapComponent(nav_map_component.nav_map)
     {
     }
+    ComponentType getType() const override { return ComponentType::NAVMAP; }
 };
 
 #endif /*NAVMAPCOMPONENT_H*/

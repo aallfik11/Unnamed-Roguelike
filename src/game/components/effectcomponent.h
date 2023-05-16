@@ -57,6 +57,7 @@ public:
                           effect_component.effect_strength)
     {
     }
+    ComponentType getType() const override { return ComponentType::EFFECT; }
 };
 
 #endif /*EFFECTCOMPONENT_H*/

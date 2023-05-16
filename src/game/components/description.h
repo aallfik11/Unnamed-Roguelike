@@ -51,6 +51,7 @@ public:
     {
         this->description = desc.description;
     }
+    ComponentType getType() const override { return ComponentType::DESCRIPTION; }
 };
 
 #endif /*DESCRIPTION_H*/

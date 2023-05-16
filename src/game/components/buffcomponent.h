@@ -78,6 +78,8 @@ public:
         }
     }
 
+    ComponentType getType() const override { return ComponentType::BUFF; }
+
     BuffComponent(std::initializer_list<EffectComponent *> buffs_list)
     {
         for (auto &buff : buffs_list)

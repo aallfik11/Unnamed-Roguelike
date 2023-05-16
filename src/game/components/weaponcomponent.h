@@ -38,6 +38,7 @@ public:
     {
         this->damage = weapon_component.damage;
     }
+    ComponentType getType() const override { return ComponentType::WEAPON; }
 };
 
 #endif /*WEAPONCOMPONENT_H*/

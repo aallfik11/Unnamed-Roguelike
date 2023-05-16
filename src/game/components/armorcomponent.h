@@ -7,9 +7,9 @@
 
 class ArmorComponent : public Component
 {
-    /*debug*/ bool isEqual(const Component* const c) const override
+    /*debug*/ bool isEqual(const Component *const c) const override
     {
-        auto a = static_cast<const ArmorComponent*>(c);
+        auto a = static_cast<const ArmorComponent *>(c);
         return (this->armor_class == a->armor_class);
     }
     ArmorComponent *cloneImpl() const override
@@ -43,6 +43,7 @@ public:
     {
         this->armor_class = armor_component.armor_class;
     }
+    ComponentType getType() const override { return ComponentType::ARMOR; }
 };
 
 #endif /*ARMORCOMPONENT_H*/

@@ -44,6 +44,8 @@ public:
     {
         this->sprite = tile_component.sprite;
     }
+
+    ComponentType getType() const override { return ComponentType::TILE; }
 };
 
 #endif /*TILECOMPONENT_H*/

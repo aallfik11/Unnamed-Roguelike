@@ -12,9 +12,11 @@
 
 class ArmorSlot : public Component, public EntityHolder
 {
-    /*debug*/ bool isEqual(const Component* const c) const override
+    /*debug*/ bool isEqual(const Component *const c) const override
     {
-        auto a = static_cast<const ArmorSlot*>(c);
+        auto a = static_cast<const ArmorSlot *>(c);
+        if (this->armor_item == nullptr && a->armor_item == nullptr)
+            return true;
         return (*(this->armor_item) == *(a->armor_item));
     }
     ArmorSlot    *cloneImpl() const override { return new ArmorSlot(*this); }
@@ -64,6 +66,7 @@ public:
         this->armor_item = entity;
     }
 
+    ComponentType getType() const override { return ComponentType::ARMORSLOT; }
     void loadEntities(std::shared_ptr<std::list<Entity *>> &entities) override
     {
         this->armor_item = entities->front();

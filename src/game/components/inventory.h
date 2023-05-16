@@ -84,6 +84,7 @@ public:
             this->inventory.emplace_back(new_item);
         }
     }
+    ComponentType getType() const override { return ComponentType::INVENTORY; }
 
     void loadEntities(std::shared_ptr<std::list<Entity *>> &entities) override
     {
