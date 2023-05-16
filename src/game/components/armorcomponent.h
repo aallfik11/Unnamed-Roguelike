@@ -1,6 +1,7 @@
 #ifndef ARMORCOMPONENT_H
 #define ARMORCOMPONENT_H
 #include "../component.h"
+
 #include <cstdint>
 #include <istream>
 #include <ostream>
