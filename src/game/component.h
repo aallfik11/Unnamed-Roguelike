@@ -6,46 +6,6 @@
 #include <memory>
 #include <ostream>
 
-class Component
-{
-protected:
-    virtual Component    *cloneImpl() const                 = 0;
-    virtual std::ostream &serialize(std::ostream &os) const = 0;
-    virtual std::istream &deserialize(std::istream &is)     = 0;
-    /*debug*/ virtual bool isEqual(const Component* const c) const = 0;
-
-public:
-    std::unique_ptr<Component> clone() const
-    {
-        return std::unique_ptr<Component>(this->cloneImpl());
-    }
-
-    virtual ~Component() {}
-
-    // virtual std::unique_ptr<Component> deserialize(std::istream &os) = 0;
-
-    friend std::ostream &operator<<(std::ostream &os, const Component *const c)
-    {
-        return c->serialize(os);
-    };
-
-    friend std::istream &operator>>(std::istream &is, Component *const c)
-    {
-        return c->deserialize(is);
-    }
-    bool operator==(const Component& c) const {
-        return this->isEqual(&c);
-    };
-};
-
-template <class Derived, class Base = Component>
-std::unique_ptr<Derived> castToComponent(std::unique_ptr<Base> &&base_ptr)
-{
-    auto raw_base    = base_ptr.release();
-    auto raw_derived = dynamic_cast<Derived *>(raw_base);
-    return std::unique_ptr<Derived>(raw_derived);
-}
-
 enum class ComponentType : uint8_t
 {
     AI,
@@ -85,5 +45,47 @@ inline std::istream &operator>>(std::istream &is, ComponentType &type)
     type = static_cast<ComponentType>(+temp);
     return is;
 }
+class Component
+{
+protected:
+    virtual Component    *cloneImpl() const                 = 0;
+    virtual std::ostream &serialize(std::ostream &os) const = 0;
+    virtual std::istream &deserialize(std::istream &is)     = 0;
+    /*debug*/ virtual bool isEqual(const Component* const c) const = 0;
+
+public:
+    std::unique_ptr<Component> clone() const
+    {
+        return std::unique_ptr<Component>(this->cloneImpl());
+    }
+
+    virtual ~Component() {}
+
+    // virtual std::unique_ptr<Component> deserialize(std::istream &os) = 0;
+    
+    virtual ComponentType getType() const = 0;
+
+    friend std::ostream &operator<<(std::ostream &os, const Component *const c)
+    {
+        return c->serialize(os);
+    };
+
+    friend std::istream &operator>>(std::istream &is, Component *const c)
+    {
+        return c->deserialize(is);
+    }
+    /*debug*/ bool operator==(const Component& c) const {
+        return this->isEqual(&c);
+    };
+};
+
+template <class Derived, class Base = Component>
+std::unique_ptr<Derived> castToComponent(std::unique_ptr<Base> &&base_ptr)
+{
+    auto raw_base    = base_ptr.release();
+    auto raw_derived = dynamic_cast<Derived *>(raw_base);
+    return std::unique_ptr<Derived>(raw_derived);
+}
+
 
 #endif /*COMPONENT_H*/
