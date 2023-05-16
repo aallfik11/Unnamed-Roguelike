@@ -20,6 +20,8 @@ class EffectSystem : public System, public EntityHolder
 {
 
     std::unordered_set<Entity *> buffable_entities_;
+    std::list<Entity *>          addition_messages_;
+    std::list<Entity *>          removal_messages_;
 
 public:
     void addEntity(Entity *const entity) { buffable_entities_.insert(entity); }
@@ -30,6 +32,12 @@ public:
             buffable_entities_.insert(entity);
         }
     }
+
+    void removeEntity(Entity *const entity)
+    {
+        buffable_entities_.erase(entity);
+    }
+
     void applyEffect(Entity *const caller, EffectComponent *const effect_ptr)
     {
         using SystemAction::HEALTH::CURRENT;
@@ -217,7 +225,18 @@ public:
             }
         }
     }
-    void updateData() override { updateEffects(); }
+    void updateData() override
+    {
+        for (auto &entity : removal_messages_)
+        {
+            removeEntity(entity);
+        }
+        for (auto &entity : addition_messages_)
+        {
+            addEntity(entity);
+        }
+        updateEffects();
+    }
     void readSystemMessages() override
     {
         for (auto &message : (*system_messages_)[SystemType::EFFECT])
@@ -246,6 +265,16 @@ public:
             {
                 auto buffs = std::any_cast<BuffComponent *>(*argument_iterator);
                 cleanseEffects(entity, buffs);
+                break;
+            }
+            case SystemAction::EFFECT::ADD_ENTITY:
+            {
+                addition_messages_.emplace_back(entity);
+                break;
+            }
+            case SystemAction::EFFECT::REMOVE_ENTITY:
+            {
+                removal_messages_.emplace_back(entity);
                 break;
             }
             }
