@@ -1,6 +1,7 @@
 #ifndef HEALTH_H
 #define HEALTH_H
 #include "../component.h"
+#include "../observerptr.h"
 #include <algorithm>
 #include <cstdint>
 #include <istream>
@@ -9,9 +10,9 @@
 
 class Health : public Component
 {
-    /*debug*/ bool isEqual(const Component *const c) const override
+    /*debug*/ bool isEqual(const observer_ptr<const Component> c) const override
     {
-        auto h = static_cast<const Health *>(c);
+        auto h = static_observer_cast<const Health>(c);
         return (this->max_health_points == h->max_health_points &&
                 this->current_health_points == h->current_health_points &&
                 this->alive == h->alive);

@@ -4,6 +4,7 @@
 #include "../entityholder.h"
 #include "../system.h"
 #include "effectcomponent.h"
+#include "../observerptr.h"
 #include <any>
 #include <cstdint>
 #include <istream>
@@ -14,9 +15,9 @@
 
 class BuffComponent : public Component
 {
-    /*debug*/ bool isEqual(const Component *const c) const override
+    /*debug*/ bool isEqual(const observer_ptr<const Component> c) const override
     {
-        auto b = static_cast<const BuffComponent *>(c);
+        auto b = static_observer_cast<const BuffComponent >(c);
         for (auto &[effect, effect_ptr] : this->buffs)
         {
             if (b->buffs.contains(effect) == false)

@@ -1,6 +1,7 @@
 #ifndef DESCRIPTION_H
 #define DESCRIPTION_H
 #include "../component.h"
+#include "../observerptr.h"
 #include <algorithm>
 #include <istream>
 #include <memory>
@@ -9,9 +10,9 @@
 
 class Description : public Component
 {
-    /*debug*/ bool isEqual(const Component *const c) const override
+    /*debug*/ bool isEqual(const observer_ptr<const Component> c) const override
     {
-        auto d = static_cast<const Description *>(c);
+        auto d = static_observer_cast<const Description>(c);
         return (this->description == d->description);
     }
 
@@ -51,7 +52,10 @@ public:
     {
         this->description = desc.description;
     }
-    ComponentType getType() const override { return ComponentType::DESCRIPTION; }
+    ComponentType getType() const override
+    {
+        return ComponentType::DESCRIPTION;
+    }
 };
 
 #endif /*DESCRIPTION_H*/

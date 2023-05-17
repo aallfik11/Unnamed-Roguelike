@@ -1,6 +1,7 @@
 #ifndef COORDINATES_H
 #define COORDINATES_H
 #include "../component.h"
+#include "../observerptr.h"
 #include <cstdint>
 #include <istream>
 #include <memory>
@@ -8,9 +9,9 @@
 
 class Coordinates : public Component
 {
-    /*debug*/ bool isEqual(const Component *const c) const override
+    /*debug*/ bool isEqual(const observer_ptr<const Component> c) const override
     {
-        auto coords = static_cast<const Coordinates *>(c);
+        auto coords = static_observer_cast<const Coordinates>(c);
         return (this->x == coords->x && this->y == coords->y);
     }
 
@@ -43,7 +44,10 @@ public:
         this->x = coordinates.x;
         this->y = coordinates.y;
     }
-    ComponentType getType() const override { return ComponentType::COORDINATES; }
+    ComponentType getType() const override
+    {
+        return ComponentType::COORDINATES;
+    }
 };
 
 #endif /*COORDINATES_H*/

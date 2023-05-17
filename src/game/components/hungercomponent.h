@@ -1,6 +1,7 @@
 #ifndef HUNGERCOMPONENT_H
 #define HUNGERCOMPONENT_H
 #include "../component.h"
+#include "../observerptr.h"
 #include <cstdint>
 #include <istream>
 #include <memory>
@@ -9,9 +10,9 @@
 class HungerComponent : public Component
 {
 
-    /*debug*/ bool isEqual(const Component *const c) const override
+    /*debug*/ bool isEqual(const observer_ptr<const Component> c) const override
     {
-        auto h = static_cast<const HungerComponent *>(c);
+        auto h = static_observer_cast<const HungerComponent>(c);
         return (this->hunger == h->hunger && this->max_hunger == h->max_hunger);
     }
     HungerComponent *cloneImpl() const override

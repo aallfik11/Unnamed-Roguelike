@@ -1,6 +1,7 @@
 #ifndef EXPERIENCECOMPONENT_H
 #define EXPERIENCECOMPONENT_H
 #include "../component.h"
+#include "../observerptr.h"
 #include <cstdint>
 #include <istream>
 #include <memory>
@@ -8,9 +9,9 @@
 
 class ExperienceComponent : public Component
 {
-    /*debug*/ bool isEqual(const Component *const c) const override
+    /*debug*/ bool isEqual(const observer_ptr<const Component> c) const override
     {
-        auto e = static_cast<const ExperienceComponent *>(c);
+        auto e = static_observer_cast<const ExperienceComponent>(c);
         return (this->level == e->level &&
                 this->current_experience == e->current_experience);
     }

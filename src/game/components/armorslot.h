@@ -4,6 +4,7 @@
 #include "../entity.h"
 #include "../entityholder.h"
 #include "../system.h"
+#include "../observerptr.h"
 #include <any>
 #include <istream>
 #include <list>
@@ -12,9 +13,9 @@
 
 class ArmorSlot : public Component, public EntityHolder
 {
-    /*debug*/ bool isEqual(const Component *const c) const override
+    /*debug*/ bool isEqual(const observer_ptr<const Component> c) const override
     {
-        auto a = static_cast<const ArmorSlot *>(c);
+        auto a = static_observer_cast<const ArmorSlot>(c);
         if (this->armor_item == nullptr && a->armor_item == nullptr)
             return true;
         return (*(this->armor_item) == *(a->armor_item));
@@ -67,9 +68,9 @@ public:
     }
 
     ComponentType getType() const override { return ComponentType::ARMORSLOT; }
-    void loadEntities(std::shared_ptr<std::list<Entity *>> &entities) override
+    void loadEntities(std::list<observer_ptr<Entity>> entities) override
     {
-        this->armor_item = entities->front();
+        this->armor_item = entities.front();
     }
 };
 

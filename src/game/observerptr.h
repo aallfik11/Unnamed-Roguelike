@@ -9,6 +9,7 @@ template <class T> class observer_ptr
 public:
     observer_ptr() { ptr_ = nullptr; }
     observer_ptr(T *const ptr) : ptr_{ptr} {}
+    observer_ptr(const T& ref){ ptr_ = &ref;}
     observer_ptr(std::nullptr_t n) : ptr_{n} {}
 
     observer_ptr(const observer_ptr<T> &obs) { this->ptr_ = obs.ptr_; }
@@ -20,7 +21,6 @@ public:
     }
 
     T &dereference() const { return *ptr_; }
-    T *get() const { return ptr_; }
 
     operator T *() const { return this->ptr_; }
 
@@ -65,7 +65,39 @@ public:
     {
         return (n == obs.ptr_);
     }
+    template <class U>
+    friend observer_ptr<T> static_observer_cast(const observer_ptr<U> &obs);
+
+    template <class U>
+    friend observer_ptr<T> dynamic_observer_cast(const observer_ptr<U> &obs);
+
+    template <class U>
+    friend observer_ptr<T> const_observer_cast(const observer_ptr<U> &obs);
+    template <class U>
+    friend observer_ptr<T>
+    reinterpret_observer_cast(const observer_ptr<U> &obs);
 };
+
+template <class T, class U>
+observer_ptr<T> &static_observer_cast(const observer_ptr<U> &obs)
+{
+    return observer_ptr<T>(static_cast<U *>(obs.ptr_));
+}
+template <class T, class U>
+observer_ptr<T> &dynamic_observer_cast(const observer_ptr<U> &obs)
+{
+    return observer_ptr<T>(dynamic_cast<U *>(obs.ptr_));
+}
+template <class T, class U>
+observer_ptr<T> &const_observer_cast(const observer_ptr<U> &obs)
+{
+    return observer_ptr<T>(const_cast<U *>(obs.ptr_));
+}
+template <class T, class U>
+observer_ptr<T> &reinterpret_observer_cast(const observer_ptr<U> &obs)
+{
+    return observer_ptr<T>(reinterpret_cast<U *>(obs.ptr_));
+}
 
 namespace std
 {

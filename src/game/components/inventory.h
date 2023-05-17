@@ -3,6 +3,7 @@
 #include "../component.h"
 #include "../entity.h"
 #include "../entityholder.h"
+#include "../observerptr.h"
 #include "../system.h"
 #include <any>
 #include <istream>
@@ -12,9 +13,9 @@
 
 class Inventory : public Component, public EntityHolder
 {
-    /*debug*/ bool isEqual(const Component *const c) const override
+    /*debug*/ bool isEqual(const observer_ptr<const Component> c) const override
     {
-        auto i = static_cast<const Inventory *>(c);
+        auto i = static_observer_cast<const Inventory>(c);
         for (auto &entity : this->inventory)
         {
             bool found = false;
@@ -68,7 +69,7 @@ class Inventory : public Component, public EntityHolder
     }
 
 public:
-    std::list<Entity *> inventory;
+    std::list<observer_ptr<Entity>> inventory;
 
     Inventory(){};
 
@@ -86,13 +87,13 @@ public:
     }
     ComponentType getType() const override { return ComponentType::INVENTORY; }
 
-    void loadEntities(std::shared_ptr<std::list<Entity *>> &entities) override
+    void loadEntities(std::list<observer_ptr<Entity>> entities) override
     {
         if (inventory.empty() == false)
         {
             inventory.clear();
         }
-        for (auto &entity : *entities)
+        for (auto &entity : entities)
         {
             this->inventory.emplace_back(entity);
         }

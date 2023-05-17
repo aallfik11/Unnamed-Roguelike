@@ -3,6 +3,7 @@
 #include "../action.h"
 #include "../ai_enum.h"
 #include "../component.h"
+#include "../observerptr.h"
 #include <cstdint>
 #include <functional>
 #include <istream>
@@ -11,9 +12,9 @@
 
 class AIComponent : public Component
 {
-    /*debug*/ bool isEqual(const Component *const c) const override
+    /*debug*/ bool isEqual(const observer_ptr<const Component> c) const override
     {
-        auto a = static_cast<const AIComponent *>(c);
+        auto a = static_observer_cast<const AIComponent>(c);
         return (this->ai_type == a->ai_type && this->ai_state == a->ai_state &&
                 this->last_target_x == a->last_target_x &&
                 this->last_target_y == a->last_target_y);

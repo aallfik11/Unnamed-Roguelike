@@ -1,6 +1,7 @@
 #ifndef LINEOFSIGHTCOMPONENT_H
 #define LINEOFSIGHTCOMPONENT_H
 #include "../component.h"
+#include "../observerptr.h"
 #include <cstdint>
 #include <istream>
 #include <memory>
@@ -8,9 +9,9 @@
 
 class LOSComponent : public Component
 {
-    /*debug*/ bool isEqual(const Component *const c) const override
+    /*debug*/ bool isEqual(const observer_ptr<const Component> c) const override
     {
-        auto l = static_cast<const LOSComponent *>(c);
+        auto l = static_observer_cast<const LOSComponent>(c);
         return (this->has_LOS_to_player == l->has_LOS_to_player &&
                 this->seeing_distance == l->seeing_distance);
     }
@@ -45,6 +46,9 @@ public:
         this->has_LOS_to_player = los.has_LOS_to_player;
         this->seeing_distance   = los.seeing_distance;
     }
-    ComponentType getType() const override { return ComponentType::LINEOFSIGHT; }
+    ComponentType getType() const override
+    {
+        return ComponentType::LINEOFSIGHT;
+    }
 };
 #endif /*LINEOFSIGHTCOMPONENT_H*/

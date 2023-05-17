@@ -3,6 +3,7 @@
 #include "../component.h"
 #include "../entity.h"
 #include "../entityholder.h"
+#include "../observerptr.h"
 #include "../system.h"
 #include <any>
 #include <istream>
@@ -12,10 +13,10 @@
 class WeaponSlot : public Component, public EntityHolder
 {
 
-    /*debug*/ bool isEqual(const Component *const c) const override
+    /*debug*/ bool isEqual(const observer_ptr<const Component> c) const override
     {
-        auto w = static_cast<const WeaponSlot *>(c);
-        if(this->weapon_item == nullptr && w->weapon_item == nullptr)
+        auto w = static_observer_cast<const WeaponSlot>(c);
+        if (this->weapon_item == nullptr && w->weapon_item == nullptr)
         {
             return true;
         }
@@ -60,7 +61,7 @@ class WeaponSlot : public Component, public EntityHolder
     }
 
 public:
-    Entity *weapon_item;
+    observer_ptr<Entity> weapon_item;
 
     WeaponSlot(Entity *weapon_item = nullptr)
     {
@@ -78,9 +79,9 @@ public:
     }
     ComponentType getType() const override { return ComponentType::WEAPONSLOT; }
 
-    void loadEntities(std::shared_ptr<std::list<Entity *>> &entities) override
+    void loadEntities(std::list<observer_ptr<Entity>> entities) override
     {
-        this->weapon_item = *(entities->begin());
+        this->weapon_item = *entities.begin();
     }
 };
 

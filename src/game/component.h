@@ -1,6 +1,7 @@
 #ifndef COMPONENT_H
 #define COMPONENT_H
 #include "itemtypes.h"
+#include "observerptr.h"
 #include <cstdint>
 #include <istream>
 #include <memory>
@@ -51,7 +52,8 @@ protected:
     virtual Component    *cloneImpl() const                 = 0;
     virtual std::ostream &serialize(std::ostream &os) const = 0;
     virtual std::istream &deserialize(std::istream &is)     = 0;
-    /*debug*/ virtual bool isEqual(const Component* const c) const = 0;
+    /*debug*/ virtual bool
+    isEqual(const observer_ptr<const Component>) const = 0;
 
 public:
     std::unique_ptr<Component> clone() const
@@ -62,7 +64,7 @@ public:
     virtual ~Component() {}
 
     // virtual std::unique_ptr<Component> deserialize(std::istream &os) = 0;
-    
+
     virtual ComponentType getType() const = 0;
 
     friend std::ostream &operator<<(std::ostream &os, const Component *const c)
@@ -74,8 +76,9 @@ public:
     {
         return c->deserialize(is);
     }
-    /*debug*/ bool operator==(const Component& c) const {
-        return this->isEqual(&c);
+    /*debug*/ bool operator==(const Component &c) const
+    {
+        return this->isEqual(c);
     };
 };
 
@@ -86,6 +89,5 @@ std::unique_ptr<Derived> castToComponent(std::unique_ptr<Base> &&base_ptr)
     auto raw_derived = dynamic_cast<Derived *>(raw_base);
     return std::unique_ptr<Derived>(raw_derived);
 }
-
 
 #endif /*COMPONENT_H*/

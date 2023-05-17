@@ -2,6 +2,7 @@
 #define EFFECTCOMPONENT_H
 #include "../component.h"
 #include "../effect.h"
+#include "../observerptr.h"
 #include <cstdint>
 #include <istream>
 #include <memory>
@@ -9,9 +10,9 @@
 
 class EffectComponent : public Component
 {
-    /*debug*/ bool isEqual(const Component *const c) const override
+    /*debug*/ bool isEqual(const observer_ptr<const Component> c) const override
     {
-        auto e = static_cast<const EffectComponent *>(c);
+        auto e = static_observer_cast<const EffectComponent>(c);
         return (this->effect == e->effect &&
                 this->effect_strength == e->effect_strength &&
                 this->effect_duration == e->effect_duration);

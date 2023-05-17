@@ -1,16 +1,16 @@
 #ifndef ARMORCOMPONENT_H
 #define ARMORCOMPONENT_H
 #include "../component.h"
-
+#include "../observerptr.h"
 #include <cstdint>
 #include <istream>
 #include <ostream>
 
 class ArmorComponent : public Component
 {
-    /*debug*/ bool isEqual(const Component *const c) const override
+    /*debug*/ bool isEqual(const observer_ptr<const Component> c) const override
     {
-        auto a = static_cast<const ArmorComponent *>(c);
+        auto a = static_observer_cast<const ArmorComponent>(c);
         return (this->armor_class == a->armor_class);
     }
     ArmorComponent *cloneImpl() const override

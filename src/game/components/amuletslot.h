@@ -20,9 +20,9 @@
 class AmuletSlot : public Component, public EntityHolder
 {
 
-    /*debug*/ bool isEqual(const Component *const c) const override
+    /*debug*/ bool isEqual(const observer_ptr<const Component> c) const override
     {
-        auto                         a = static_cast<const AmuletSlot *>(c);
+        auto a = static_observer_cast<const AmuletSlot>(c);
         std::unordered_set<uint32_t> this_amulet_ids;
         std::unordered_set<uint32_t> other_amulet_ids;
         for (auto &amulet : this->amulet_slots)
@@ -72,9 +72,9 @@ class AmuletSlot : public Component, public EntityHolder
     }
 
 public:
-    uint8_t                            amount_equipped;
-    uint8_t                            max_slots;
-    std::unordered_set<const Entity *> amulet_slots;
+    uint8_t                                        amount_equipped;
+    uint8_t                                        max_slots;
+    std::unordered_set<observer_ptr<const Entity>> amulet_slots;
     AmuletSlot(uint8_t amount_equipped = 0, uint8_t max_slots = 5)
     {
         this->amount_equipped = amount_equipped;
@@ -100,11 +100,11 @@ public:
 
     ComponentType getType() const override { return ComponentType::AMULETSLOT; }
 
-    void loadEntities(std::shared_ptr<std::list<Entity *>> &entities) override
+    void loadEntities(std::list<observer_ptr<Entity>> entities) override
     {
-        for (auto entity : *entities)
+        for (auto entity : entities)
         {
-            amulet_slots.insert(entity);
+            amulet_slots.insert(static_observer_cast<const Entity>(entity));
         }
     }
 };

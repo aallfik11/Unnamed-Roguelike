@@ -1,6 +1,7 @@
 #ifndef WEAPONCOMPONENT_H
 #define WEAPONCOMPONENT_H
 #include "../component.h"
+#include "../observerptr.h"
 #include <cstdint>
 #include <istream>
 #include <memory>
@@ -9,9 +10,9 @@
 class WeaponComponent : public Component
 {
 
-    /*debug*/ bool isEqual(const Component *const c) const override
+    /*debug*/ bool isEqual(const observer_ptr<const Component> c) const override
     {
-        auto w = static_cast<const WeaponComponent *>(c);
+        auto w = static_observer_cast<const WeaponComponent>(c);
         return (this->damage == w->damage);
     }
     WeaponComponent *cloneImpl() const override

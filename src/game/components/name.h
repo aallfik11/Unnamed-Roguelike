@@ -1,6 +1,7 @@
 #ifndef NAME_H
 #define NAME_H
 #include "../component.h"
+#include "../observerptr.h"
 #include <algorithm>
 #include <istream>
 #include <memory>
@@ -9,9 +10,9 @@
 
 class Name : public Component
 {
-    /*debug*/ bool isEqual(const Component *const c) const override
+    /*debug*/ bool isEqual(const observer_ptr<const Component> c) const override
     {
-        auto n = static_cast<const Name*>(c);
+        auto n = static_observer_cast<const Name>(c);
         return (this->name == n->name);
     }
     Name         *cloneImpl() const override { return new Name(*this); }
