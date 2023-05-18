@@ -4,6 +4,10 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_FLAGS "-Wall -Wextra ")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+include(InstallRequiredSystemLibraries)
+set(CPACK_PACKAGE_INSTALL_DIRECTORY "Unnamed-Roguelike")
+
+
 # FTXUI Includes ---------------------------------------------------------------
 include(FetchContent)
 
@@ -42,4 +46,6 @@ target_link_libraries(Unnamed-Roguelike
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
+set(CPACK_PACKAGE_NAME "Unnamed Roguelike")
+install(TARGETS Unnamed-Roguelike RUNTIME DESTINATION bin)
 include(CPack)
