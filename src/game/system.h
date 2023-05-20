@@ -120,14 +120,13 @@ public:
         (*system_messages_)[receiver].emplace_back(message);
     }
 
-    friend std::ostream &operator<<(std::ostream       &os,
-                                    const System *const system)
+    friend std::ostream &operator<<(std::ostream &os, const System &system)
     {
-        return system->serialize(os);
+        return system.serialize(os);
     }
-    friend std::istream &operator>>(std::istream &is, System *const system)
+    friend std::istream &operator>>(std::istream &is, System &system)
     {
-        return system->deserialize(is);
+        return system.deserialize(is);
     }
 };
 
