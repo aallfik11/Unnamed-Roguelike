@@ -29,9 +29,11 @@ namespace SystemAction
 {
 enum class PLAYER
 {
-    ADD_TO_MOVEMENT_QUEUE,
-    CLEAR_MOVEMENT_QUEUE,
-    SYSTEM_TICK_FORWARD,
+    ENTITIES_UP,
+    ENTITIES_DOWN,
+    ENTITIES_LEFT,
+    ENTITIES_RIGHT,
+    MOVE,
 };
 enum class AI
 {
@@ -72,6 +74,7 @@ enum class INVENTORY
 {
     ADD,
     DROP,
+    DROP_ALL,
     TRANSFER,
     USE,
 };
