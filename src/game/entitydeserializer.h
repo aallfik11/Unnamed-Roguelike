@@ -73,19 +73,19 @@ static std::unique_ptr<Component> deserializeEntity(std::istream &is,
         temp = new WeaponSlot;
         break;
     }
-    is >> temp;
+    is >> *temp;
     return std::unique_ptr<Component>(temp);
 }
 
-std::istream &operator>>(std::istream &is, Entity *const entity)
+std::istream &operator>>(std::istream &is, Entity& entity)
 {
     std::size_t number_of_components{};
-    is >> entity->id_ >> entity->type >> number_of_components;
+    is >> entity.id_ >> entity.type >> number_of_components;
     ComponentType temp{};
     for (std::size_t i = 0; i < number_of_components; i++)
     {
         is >> temp;
-        entity->addComponent(deserializeEntity(is, temp));
+        entity.addComponent(deserializeEntity(is, temp));
     }
     return is;
 }

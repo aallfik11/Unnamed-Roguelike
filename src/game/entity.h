@@ -2,6 +2,7 @@
 #define ENTITY_H
 #include "component.h"
 #include "entitytypes.h"
+#include "observerptr.h"
 #include <algorithm>
 #include <iostream>
 #include <memory>
@@ -123,9 +124,8 @@ public:
         return static_cast<ComponentType *>(it->second.get());
     }
 
-    friend std::ostream &operator<<(std::ostream       &os,
-                                    const Entity *const entity);
-    friend std::istream &operator>>(std::istream &is, Entity *const entity);
+    friend std::ostream &operator<<(std::ostream &os, const Entity &entity);
+    friend std::istream &operator>>(std::istream &is, Entity &entity);
 
     static void resetMaxId() { max_id_ = 1; }
 
@@ -144,13 +144,13 @@ public:
     }
 };
 
-std::ostream &operator<<(std::ostream &os, const Entity *const entity)
+std::ostream &operator<<(std::ostream &os, const Entity &entity)
 {
-    os << entity->id_ << ' ' << entity->type << ' '
-       << entity->components_.size() << ' ';
-    for (const auto &[key, component] : entity->components_)
+    os << entity.id_ << ' ' << entity.type << ' ' << entity.components_.size()
+       << ' ';
+    for (const auto &[key, component] : entity.components_)
     {
-        os << component;
+        os << *component;
     }
     return os;
 
