@@ -23,11 +23,13 @@
 class InventorySystem : public System
 {
 
-    using Inv = std::list<Entity *>;
-    std::list<std::pair<Entity *, std::list<Entity *>>> addition_messages_;
-    std::list<std::pair<Entity *, uint32_t>>            drop_messages_;
-    std::list<std::pair<Entity *, Entity *>>            transfer_messages_;
-    std::list<std::pair<Entity *, uint32_t>>            usage_messages_;
+    using Inv = std::list<observer_ptr<Entity>>;
+    std::list<std::pair<observer_ptr<Entity>, std::list<observer_ptr<Entity>>>>
+                                                         addition_messages_;
+    std::list<std::pair<observer_ptr<Entity>, uint32_t>> drop_messages_;
+    std::list<std::pair<observer_ptr<Entity>, observer_ptr<Entity>>>
+                                                         transfer_messages_;
+    std::list<std::pair<observer_ptr<Entity>, uint32_t>> usage_messages_;
 
     inline Inv::iterator iterateToItem(Inv &inventory, uint32_t index)
     {
@@ -40,8 +42,9 @@ class InventorySystem : public System
         return it;
     }
 
-    inline void addEquipmentBuff(BuffComponent *const       caller_buffs,
-                                 const BuffComponent *const item_buffs)
+    inline void
+    addEquipmentBuff(const observer_ptr<BuffComponent>       caller_buffs,
+                     const observer_ptr<const BuffComponent> item_buffs)
     {
         for (auto &item_buff : item_buffs->buffs)
         {
@@ -56,8 +59,9 @@ class InventorySystem : public System
         }
     }
 
-    inline void removeEquipmentBuff(BuffComponent *const       caller_buffs,
-                                    const BuffComponent *const item_buffs)
+    inline void
+    removeEquipmentBuff(const observer_ptr<BuffComponent>       caller_buffs,
+                        const observer_ptr<const BuffComponent> item_buffs)
     {
         for (auto &item_buff : item_buffs->buffs)
         {
@@ -72,7 +76,7 @@ class InventorySystem : public System
         }
     }
 
-    inline bool stackItem(Inv &inventory, Entity *const item)
+    inline bool stackItem(Inv &inventory, const observer_ptr<Entity> item)
     {
         for (auto &inv_item : inventory)
         {
@@ -98,7 +102,7 @@ class InventorySystem : public System
     }
 
     inline bool
-    equip(Entity *const        caller,
+    equip(const observer_ptr<Entity> caller,
           const Inv::iterator &item_it) // move to private, make inline and
                                         // use in the general "use" function
     {
@@ -187,14 +191,14 @@ class InventorySystem : public System
             if (caller_amulets->amount_equipped == caller_amulets->max_slots)
                 return false;
 
-            if (caller_amulets->amulet_slots.contains(item))
+            if (caller_amulets->amulet_slots.contains(item.getConst()))
             {
                 item_component->equipped = false;
                 if (item_buffs != nullptr)
                 {
                     removeEquipmentBuff(caller_buffs, item_buffs);
                 }
-                caller_amulets->amulet_slots.erase(item);
+                caller_amulets->amulet_slots.erase(item.getConst());
                 return true;
             }
 
@@ -208,7 +212,8 @@ class InventorySystem : public System
         return false;
     }
 
-    inline void consume(Entity *const caller, const Inv::iterator &item_it)
+    inline void consume(const observer_ptr<Entity> caller,
+                        const Inv::iterator       &item_it)
     {
         auto item           = *item_it;
         auto item_component = item->getComponent<ItemComponent>();
@@ -242,8 +247,8 @@ class InventorySystem : public System
     }
 
 public:
-    void addToInventory(Entity *const                   caller,
-                        std::initializer_list<Entity *> items)
+    void addToInventory(const observer_ptr<Entity>                  caller,
+                        std::initializer_list<observer_ptr<Entity>> items)
     {
         auto target_inventory = caller->getComponent<Inventory>();
         if (target_inventory == nullptr)
@@ -263,7 +268,8 @@ public:
         }
     }
 
-    void addToInventory(Entity *const caller, const std::list<Entity *> &items)
+    void addToInventory(const observer_ptr<Entity>             caller,
+                        const std::list<observer_ptr<Entity>> &items)
     {
         auto target_inventory = caller->getComponent<Inventory>();
         if (target_inventory == nullptr)
@@ -283,9 +289,9 @@ public:
         }
     }
 
-    Entity *dropFromInventory(Entity *const  caller,
-                              const uint32_t index,
-                              bool           add_to_pos = true)
+    observer_ptr<Entity> dropFromInventory(const observer_ptr<Entity> caller,
+                                           const uint32_t             index,
+                                           const bool add_to_pos = true)
     {
         // EntityPtr item;
         auto &caller_inventory = caller->getComponent<Inventory>()->inventory;
@@ -294,13 +300,13 @@ public:
         return dropFromInventory(caller, item_iterator, add_to_pos);
     }
 
-    Entity *dropFromInventory(Entity *const        caller,
-                              const Inv::iterator &index,
-                              bool                 add_to_pos = true)
+    observer_ptr<Entity> dropFromInventory(const observer_ptr<Entity> caller,
+                                           const Inv::iterator       &index,
+                                           const bool add_to_pos = true)
     {
-        Entity *item             = nullptr;
-        auto   &caller_inventory = caller->getComponent<Inventory>()->inventory;
-        auto    item_iterator    = index;
+        observer_ptr<Entity> item = nullptr;
+        auto &caller_inventory = caller->getComponent<Inventory>()->inventory;
+        auto  item_iterator    = index;
         if (item_iterator != caller_inventory.end())
         {
             item = *item_iterator;
@@ -323,7 +329,7 @@ public:
             {
                 auto amulet_slot = caller->getComponent<AmuletSlot>();
                 amulet_slot->amount_equipped -= 1;
-                amulet_slot->amulet_slots.erase(item);
+                amulet_slot->amulet_slots.erase(item.getConst());
             }
 
             if (auto item_buffs = item->getComponent<BuffComponent>())
@@ -339,12 +345,12 @@ public:
             item_component->stack > 1)
         {
             item_component->stack -= 1;
-            Entity *dropped_item(new Entity(*item));
+            auto dropped_item      = new Entity(*item);
             dropped_item->getComponent<ItemComponent>()->stack = 1;
             sendSystemMessage(
                 SystemType::ENTITY,
                 {std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::ADD),
-                 std::make_any<Entity *>(dropped_item)});
+                 std::make_any<observer_ptr<Entity>>(dropped_item)});
 
             item = dropped_item;
         }
@@ -354,7 +360,7 @@ public:
             sendSystemMessage(SystemType::POSITION,
                               {std::make_any<SystemAction::POSITION>(
                                    SystemAction::POSITION::UPDATE),
-                               std::make_any<Entity *>(item),
+                               std::make_any<observer_ptr<Entity>>(item),
                                std::make_any<uint16_t>(caller_coords->x),
                                std::make_any<uint16_t>(caller_coords->y)});
         }
@@ -362,7 +368,7 @@ public:
         return item;
     }
 
-    void useItem(Entity *const caller, const uint32_t index)
+    void useItem(const observer_ptr<Entity> caller, const uint32_t index)
     {
         auto inventory     = caller->getComponent<Inventory>()->inventory;
         auto item_iterator = inventory.begin();
@@ -370,7 +376,7 @@ public:
         useItem(caller, item_iterator);
     }
 
-    void useItem(Entity *const caller, const Inv::iterator &index)
+    void useItem(const observer_ptr<Entity> caller, const Inv::iterator &index)
     {
         auto inventory = caller->getComponent<Inventory>()->inventory;
         // auto item      = index;
@@ -417,14 +423,15 @@ public:
             auto action =
                 std::any_cast<SystemAction::INVENTORY>(*message_iterator);
             ++message_iterator;
-            auto entity = std::any_cast<Entity *>(*message_iterator);
+            auto entity =
+                std::any_cast<observer_ptr<Entity>>(*message_iterator);
             ++message_iterator;
             switch (action)
             {
             case SystemAction::INVENTORY::ADD:
             {
-                auto items =
-                    std::any_cast<std::list<Entity *>>(*message_iterator);
+                auto items = std::any_cast<std::list<observer_ptr<Entity>>>(
+                    *message_iterator);
                 addition_messages_.emplace_back(entity, items);
                 break;
             }
@@ -438,7 +445,8 @@ public:
             {
                 auto index = std::any_cast<uint32_t>(*message_iterator);
                 ++message_iterator;
-                auto target = std::any_cast<Entity *>(*message_iterator);
+                auto target =
+                    std::any_cast<observer_ptr<Entity>>(*message_iterator);
                 transfer_messages_.emplace_back(
                     target, dropFromInventory(entity, index, false));
                 break;
@@ -461,11 +469,7 @@ public:
         drop_messages_.clear();
     }
 
-    std::ostream &serialize(std::ostream &os) const override
-    {
-        os << SystemType::INVENTORY;
-        return os;
-    }
+    std::ostream &serialize(std::ostream &os) const override { return os; }
     std::istream &deserialize(std::istream &is) override { return is; }
 };
 #endif /*INVENTORYSYSTEM_H*/

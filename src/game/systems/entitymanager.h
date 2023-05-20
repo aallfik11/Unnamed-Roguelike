@@ -18,28 +18,27 @@
 class EntityManager : public System
 {
     using EntityHashmap = std::unordered_map<uint32_t, std::unique_ptr<Entity>>;
-    using Request =
-        std::pair<EntityHolder *, std::shared_ptr<std::list<uint32_t>>>;
-    EntityHashmap       entities_;
-    std::list<uint32_t> purge_list_;
-    std::list<Entity *> add_list_;
-    std::list<Request>  request_list_;
+    using Request = std::pair<observer_ptr<EntityHolder>, std::list<uint32_t>>;
+    EntityHashmap                   entities_;
+    std::list<uint32_t>             purge_list_;
+    std::list<observer_ptr<Entity>> add_list_;
+    std::list<Request>              request_list_;
 
 public:
     uint32_t createEntity(const EntityType          type,
-                          std::vector<Component *> &components)
+                          std::vector<Component *> components)
     {
         auto id       = Entity::getMaxId();
         entities_[id] = std::make_unique<Entity>(type, components);
         return id;
     }
 
-    void addEntity(Entity *entity)
+    void addEntity(observer_ptr<Entity> entity)
     {
         entities_[entity->getId()] = std::unique_ptr<Entity>(entity);
     }
 
-    Entity *getEntity(const uint32_t entity_id) const
+    observer_ptr<Entity> getEntity(const uint32_t entity_id) const
     {
         return entities_.at(entity_id).get();
     }
@@ -60,11 +59,10 @@ public:
     {
         for (auto &request : request_list_)
         {
-            std::shared_ptr<std::list<Entity *>> entities(
-                new std::list<Entity *>);
-            for (auto &entity_id : *request.second)
+            std::list<observer_ptr<Entity>> entities;
+            for (auto &entity_id : request.second)
             {
-                (*entities).push_back(getEntity(entity_id));
+                entities.push_back(getEntity(entity_id));
             }
             request.first->loadEntities(entities);
         }
@@ -91,19 +89,21 @@ public:
             {
             case SystemAction::ENTITY::ADD:
             {
-                add_list_.push_back(std::any_cast<Entity *>(*message_it));
+                add_list_.push_back(
+                    std::any_cast<observer_ptr<Entity>>(*message_it));
                 break;
             }
             case SystemAction::ENTITY::PURGE:
             {
                 purge_list_.push_back(std::any_cast<uint32_t>(*message_it));
+                break;
             }
             case SystemAction::ENTITY::REQUEST:
             {
                 request_list_.emplace_back(std::make_pair(
-                    std::any_cast<EntityHolder *>(*message_it),
-                    std::any_cast<std::shared_ptr<std::list<uint32_t>>>(
-                        *(message_it + 1))));
+                    std::any_cast<observer_ptr<EntityHolder>>(*message_it),
+                    std::any_cast<std::list<uint32_t>>(*(message_it + 1))));
+                break;
             }
             }
         }
@@ -121,7 +121,7 @@ public:
         os << SystemType::ENTITY << ' ' << entities_.size() << std::endl;
         for (auto &[id, entity] : entities_)
         {
-            os << entity.get() << std::endl;
+            os << *entity << std::endl;
         }
         return os;
     }
@@ -130,14 +130,16 @@ public:
     {
         std::size_t entity_amount{};
         is >> entity_amount;
+        entities_.clear();
+        entities_.reserve(entity_amount);
         for (std::size_t i = 0; i < entity_amount; i++)
         {
             auto entity = std::make_unique<Entity>(true);
-            is >> entity.get();
+            is >> *entity;
             entities_[entity->getId()] = std::move(entity);
         }
-        is >> entity_amount; // to get rid of an additional newline and move the
-                             // stream to the correct read position
+        // is >> entity_amount; // to get rid of an additional newline and move the
+        //                      // stream to the correct read position
         return is;
     }
 
@@ -153,7 +155,7 @@ public:
             }
             if (*(this->entities_.at(key)) != *(e.entities_.at(key)))
             {
-                std::cerr << "ENTITY MISMATCH: "<< key << ' ';
+                std::cerr << "ENTITY MISMATCH: " << key << ' ';
                 return false;
             }
         }

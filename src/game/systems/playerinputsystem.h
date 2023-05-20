@@ -25,11 +25,11 @@
 class PlayerControlSystem : public System
 {
     // using EntityPtr = std::shared_ptr<Entity>;
-    Entity                       *player_;
-    ftxui::Component              inv_renderer_;
-    ftxui::Component              inv_input_handler_;
-    int                           inv_index_;
-    std::list<Entity *>::iterator inv_iterator_;
+    observer_ptr<Entity>                      player_;
+    ftxui::Component                          inv_renderer_;
+    ftxui::Component                          inv_input_handler_;
+    int                                       inv_index_;
+    std::list<observer_ptr<Entity>>::iterator inv_iterator_;
 
     inline void determineNextAction(const ftxui::Event &event)
     {
@@ -47,7 +47,7 @@ class PlayerControlSystem : public System
             if (event == Event::Character("r") ||
                 event == Event::Character("R"))
             {
-                auto message = {std::make_any<Entity *>(player_),
+                auto message = {std::make_any<observer_ptr<Entity>>(player_),
                                 std::make_any<uint16_t>(1),
                                 std::make_any<SystemAction::HEALTH>(
                                     SystemAction::HEALTH::HEAL |
@@ -135,7 +135,8 @@ class PlayerControlSystem : public System
     void openInventory() {}
 
 public:
-    PlayerControlSystem(Entity *const player, ftxui::Component &main_screen)
+    PlayerControlSystem(observer_ptr<Entity> const player,
+                        ftxui::Component          &main_screen)
     {
         player_ = player;
 

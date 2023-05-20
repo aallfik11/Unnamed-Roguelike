@@ -12,6 +12,7 @@
 #include "../system.h"
 #include "navmapmanager.h"
 #include <any>
+#include <cstddef>
 #include <cstdint>
 #include <istream>
 #include <list>
@@ -33,15 +34,15 @@ class AISystem : public System, public EntityHolder
      * StrengthComponent
      */
 
-    using AISet   = std::unordered_set<Entity *>;
+    using AISet   = std::unordered_set<observer_ptr<Entity>>;
     using GameMap = std::vector<std::vector<Tile>>;
 
-    AISet               ais_;
-    GameMap             map_;
-    NavMapManager      &navigation_manager_;
-    Entity             *player_;
-    std::list<Entity *> addition_messages_;
-    std::list<Entity *> removal_messages_;
+    AISet                           ais_;
+    GameMap                         map_;
+    NavMapManager                  &navigation_manager_;
+    observer_ptr<Entity>            player_;
+    std::list<observer_ptr<Entity>> addition_messages_;
+    std::list<observer_ptr<Entity>> removal_messages_;
 
 public: // temporary
     double getRunThreshold(AIType &ai_type)
@@ -68,7 +69,8 @@ public: // temporary
     // todo: make the functions take a boolean to ignore checks (to make calling
     // them from other functions faster);
 
-    void approachTarget(Entity *const caller, Entity *const target)
+    void approachTarget(const observer_ptr<Entity> caller,
+                        const observer_ptr<Entity> target)
     {
         /*if player within range, attack
           if lost LOS of player, go to the last known coords
@@ -113,13 +115,14 @@ public: // temporary
         // positon_system_.updatePosition(caller, x, y);
         auto message = {std::make_any<SystemAction::POSITION>(
                             SystemAction::POSITION::UPDATE),
-                        std::make_any<Entity *>(caller),
+                        std::make_any<observer_ptr<Entity>>(caller),
                         std::make_any<uint16_t>(x),
                         std::make_any<uint16_t>(y)};
         System::sendSystemMessage(SystemType::POSITION, message);
     }
 
-    void runAway(Entity *const caller, Entity *const target)
+    void runAway(const observer_ptr<Entity> caller,
+                 const observer_ptr<Entity> target)
     {
         /*if there's a line of sight to the player, run away, else rest
          * if no way of running exists (backed into a corner),
@@ -146,7 +149,8 @@ public: // temporary
         }
     }
 
-    void rest(Entity *const caller, Entity *const target)
+    void rest(const observer_ptr<Entity> caller,
+              const observer_ptr<Entity> target)
     {
         /*if hp high enough and there's a LOS to the player, approach
          * if hp low and LOS to player then run away
@@ -191,7 +195,7 @@ public: // temporary
         // caller_health->current_health_points += 1;
         auto message = {
             std::make_any<SystemAction::HEALTH>(SystemAction::HEALTH::UPDATE),
-            std::make_any<Entity *>(caller),
+            std::make_any<observer_ptr<Entity>>(caller),
             std::make_any<uint16_t>(1),
             std::make_any<SystemAction::HEALTH>(SystemAction::HEALTH::HEAL |
                                                 SystemAction::HEALTH::CURRENT)};
@@ -200,7 +204,8 @@ public: // temporary
         // Health component) later
     }
 
-    void attack(Entity *const caller, Entity *const target)
+    void attack(const observer_ptr<Entity> caller,
+                const observer_ptr<Entity> target)
     {
         /*if hp goes low, run away
          *if player runs away, chase,
@@ -236,21 +241,22 @@ public: // temporary
         }
 
         // AttackSystem::attack(caller, target);
-        auto message = {std::make_any<Entity *>(caller),
-                        std::make_any<Entity *>(target)};
+        auto message = {std::make_any<observer_ptr<Entity>>(caller),
+                        std::make_any<observer_ptr<Entity>>(target)};
         System::sendSystemMessage(SystemType::ATTACK, message);
     }
 
-    void wanderAround(Entity *const caller, Entity *const target)
+    void wanderAround(const observer_ptr<Entity> caller,
+                      const observer_ptr<Entity> target)
     {
         /*if player enters LOS, approach/run away
          *(depending on the circumstances)
          */
-        auto LOS                = caller->getComponent<LOSComponent>();
+        auto line_of_sight      = caller->getComponent<LOSComponent>();
         auto caller_brain       = caller->getComponent<AIComponent>();
         auto target_coordinates = target->getComponent<Coordinates>();
 
-        if (LOS->has_LOS_to_player == true)
+        if (line_of_sight->has_LOS_to_player == true)
         {
             auto caller_health   = caller->getComponent<Health>();
             auto caller_navmap   = caller->getComponent<NavMapComponent>();
@@ -292,26 +298,30 @@ public: // temporary
 
         auto message = {std::make_any<SystemAction::POSITION>(
                             SystemAction::POSITION::UPDATE),
-                        std::make_any<Entity *>(caller),
+                        std::make_any<observer_ptr<Entity>>(caller),
                         std::make_any<uint16_t>(x),
                         std::make_any<uint16_t>(y)};
         System::sendSystemMessage(SystemType::POSITION, message);
     }
 
-    // void special(Entity * const caller, Entity * const target)
+    // void special(observer_ptr<Entity>  const caller, observer_ptr<Entity>
+    // const target)
     // {
     //     /*unused for now
     //      */
     // }
 
-    // void interactWithObject(Entity * const caller, Entity * const target)
+    // void interactWithObject(observer_ptr<Entity>  const caller,
+    // observer_ptr<Entity>  const target)
     // {
     //     /*unused for now
     //      */
     // }
 
 public:
-    AISystem(GameMap &map, NavMapManager &nav_manager, Entity *const player)
+    AISystem(GameMap                   &map,
+             NavMapManager             &nav_manager,
+             observer_ptr<Entity> const player)
         : map_{map}, navigation_manager_{nav_manager}, player_{player}
     {
         // states_[APPROACH_TARGET] = std::function<Action(EntityPtr&,
@@ -385,11 +395,18 @@ public:
         // /*SPECIAL*/
     }
 
-    inline void addEntity(Entity *const entity) { ais_.emplace(entity); }
+    inline void addEntity(const observer_ptr<Entity> entity)
+    {
+        ais_.emplace(entity);
+    }
 
-    inline void deleteEntity(Entity *const entity) { ais_.erase(entity); }
+    inline void deleteEntity(const observer_ptr<Entity> entity)
+    {
+        ais_.erase(entity);
+    }
 
-    void runAI(Entity *const caller, Entity *const target)
+    void runAI(const observer_ptr<Entity> caller,
+               const observer_ptr<Entity> target)
     {
         if (!ais_.contains(caller))
             return;
@@ -452,13 +469,13 @@ public:
             case SystemAction::AI::ADD:
             {
                 addition_messages_.emplace_back(
-                    std::any_cast<Entity *>(*message_it));
+                    std::any_cast<observer_ptr<Entity>>(*message_it));
                 break;
             }
             case SystemAction::AI::REMOVE:
             {
                 removal_messages_.emplace_back(
-                    std::any_cast<Entity *>(*message_it));
+                    std::any_cast<observer_ptr<Entity>>(*message_it));
                 break;
             }
             }
@@ -488,26 +505,26 @@ public:
         {
             return is;
         }
-        std::shared_ptr<std::list<uint32_t>> entity_requests(
-            new std::list<uint32_t>);
-        uint32_t temp{};
+        ais_.clear();
+        ais_.reserve(ais_size);
+        std::list<uint32_t> entity_requests;
+        uint32_t            temp{};
         for (std::size_t i = 0; i < ais_size; i++)
         {
             is >> temp;
-            entity_requests->push_back(temp);
+            entity_requests.push_back(temp);
         }
         auto message = {
             std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::REQUEST),
-            std::make_any<EntityHolder *>(this),
-            std::make_any<std::shared_ptr<std::list<uint32_t>>>(
-                entity_requests)};
+            std::make_any<observer_ptr<EntityHolder>>(this),
+            std::make_any<std::list<uint32_t>>(entity_requests)};
         System::sendSystemMessage(SystemType::ENTITY, message);
         return is;
     }
 
-    void loadEntities(std::shared_ptr<std::list<Entity *>> &entities) override
+    void loadEntities(std::list<observer_ptr<Entity>> entities) override
     {
-        for (auto &entity : *entities)
+        for (auto &entity : entities)
         {
             addEntity(entity);
         }

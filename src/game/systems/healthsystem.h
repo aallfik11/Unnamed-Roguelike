@@ -15,13 +15,14 @@
 class HealthSystem : public System
 {
 
-    using Message = std::tuple<Entity *, uint16_t, SystemAction::HEALTH>;
+    using Message =
+        std::tuple<observer_ptr<Entity>, uint16_t, SystemAction::HEALTH>;
     std::list<Message> messages_;
 
 public:
-    inline void updateHealth(Entity *const        entity,
-                             uint16_t             amount,
-                             SystemAction::HEALTH action)
+    inline void updateHealth(observer_ptr<Entity> const entity,
+                             uint16_t                   amount,
+                             SystemAction::HEALTH       action)
     {
         if (auto health_ptr = entity->getComponent<Health>())
         {
@@ -88,7 +89,8 @@ public:
         for (auto message : (*system_messages_)[SystemType::HEALTH])
         {
             auto message_iterator = message.begin();
-            auto entity           = std::any_cast<Entity *>(*message_iterator);
+            auto entity =
+                std::any_cast<observer_ptr<Entity>>(*message_iterator);
             ++message_iterator;
             auto amount = std::any_cast<uint16_t>(*message_iterator);
             ++message_iterator;
@@ -104,11 +106,7 @@ public:
         (*system_messages_)[SystemType::HEALTH].clear();
     }
 
-    std::ostream &serialize(std::ostream &os) const override
-    {
-        os << SystemType::HEALTH << ' ';
-        return os;
-    }
+    std::ostream &serialize(std::ostream &os) const override { return os; }
     std::istream &deserialize(std::istream &is) override { return is; }
 };
 

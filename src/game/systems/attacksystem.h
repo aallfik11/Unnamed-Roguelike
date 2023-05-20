@@ -21,10 +21,10 @@
 class AttackSystem : public System
 {
 
-    std::random_device                       rd_;
-    std::mt19937                             mt_engine_;
-    std::uniform_int_distribution<>          roll_chance_;
-    std::list<std::pair<Entity *, Entity *>> messages_;
+    std::random_device              rd_;
+    std::mt19937                    mt_engine_;
+    std::uniform_int_distribution<> roll_chance_;
+    std::list<std::pair<observer_ptr<Entity>, observer_ptr<Entity>>> messages_;
 
 public:
     AttackSystem()
@@ -33,7 +33,8 @@ public:
         roll_chance_ = std::uniform_int_distribution<>(0, 100);
     }
 
-    bool attack(Entity *const attacker, Entity *const defender)
+    bool attack(const observer_ptr<Entity> attacker,
+                const observer_ptr<Entity> defender)
     {
 
         // move it down later, as if the attack misses there's no point
@@ -117,8 +118,9 @@ public:
                     auto message = {
                         std::make_any<SystemAction::EFFECT>(
                             SystemAction::EFFECT::ADD),
-                        std::make_any<Entity *>(defender),
-                        std::make_any<BuffComponent *>(defender_effects)};
+                        std::make_any<observer_ptr<Entity>>(defender),
+                        std::make_any<observer_ptr<BuffComponent>>(
+                            defender_effects)};
                     sendSystemMessage(SystemType::EFFECT, message);
                 }
             }
@@ -158,7 +160,7 @@ public:
             (attacker_base_damage * 10) / (defender_base_AC + ac_modifier);
 
         auto message = {
-            std::make_any<Entity *>(defender),
+            std::make_any<observer_ptr<Entity>>(defender),
             std::make_any<uint16_t>(damage),
             std::make_any<SystemAction::HEALTH>(SystemAction::HEALTH::DAMAGE |
                                                 SystemAction::HEALTH::CURRENT)};
@@ -181,8 +183,10 @@ public:
         for (auto &message : (*system_messages_)[SystemType::ATTACK])
         {
             auto message_iterator = message.begin();
-            auto attacker         = std::any_cast<Entity *>(*message_iterator);
-            auto defender = std::any_cast<Entity *>(*(message_iterator + 1));
+            auto attacker =
+                std::any_cast<observer_ptr<Entity>>(*message_iterator);
+            auto defender =
+                std::any_cast<observer_ptr<Entity>>(*(message_iterator + 1));
 
             messages_.emplace_back(attacker, defender);
         }
@@ -193,11 +197,7 @@ public:
         messages_.clear();
     }
 
-    std::ostream &serialize(std::ostream &os) const override
-    {
-        os << SystemType::ATTACK << ' ';
-        return os;
-    }
+    std::ostream &serialize(std::ostream &os) const override { return os; }
     std::istream &deserialize(std::istream &is) override { return is; }
 };
 

@@ -20,13 +20,13 @@ class PositionSystem : public System, public EntityHolder
     using EntityId = uint32_t;
 
     using GameMap  = std::vector<std::vector<Tile>>;
-    using Message  = std::tuple<Entity *, uint16_t, uint16_t>;
+    using Message  = std::tuple<observer_ptr<Entity>, uint16_t, uint16_t>;
 
-    std::unordered_set<Entity *>             entity_positions_;
+    std::unordered_set<observer_ptr<Entity>> entity_positions_;
     std::list<Message>                       pos_change_messages_;
     std::list<std::pair<uint16_t, uint16_t>> request_messages_;
-    std::list<Entity *>                      addition_messages_;
-    std::list<Entity *>                      removal_messages_;
+    std::list<observer_ptr<Entity>>          addition_messages_;
+    std::list<observer_ptr<Entity>>          removal_messages_;
     GameMap                                 &map_;
 
     /**
@@ -83,7 +83,8 @@ public:
      * @return true Successfully updated the position,
      * @return false Position could not be updated
      */
-    bool updatePosition(Entity *const entity, uint16_t x, uint16_t y)
+    bool
+    updatePosition(const observer_ptr<Entity> entity, uint16_t x, uint16_t y)
     {
         if (entity_positions_.contains(entity) == false)
         {
@@ -127,7 +128,7 @@ public:
      * @return true - Successfuly updated the position,
      * @return false - Position could not be updated
      */
-    bool updatePosition(Entity *const entity, Direction direction)
+    bool updatePosition(const observer_ptr<Entity> entity, Direction direction)
     {
         if (auto position = entity->getComponent<Coordinates>())
         {
@@ -157,9 +158,10 @@ public:
         return false;
     }
 
-    std::list<Entity *> getEntitiesAtCoordinates(uint16_t x, uint16_t y)
+    std::list<observer_ptr<Entity>> getEntitiesAtCoordinates(uint16_t x,
+                                                             uint16_t y)
     {
-        std::list<Entity *> entitiesAtCoordinates;
+        std::list<observer_ptr<Entity>> entitiesAtCoordinates;
         for (auto &entity : entity_positions_)
         {
             if (auto coords_ptr = entity->getComponent<Coordinates>())
@@ -178,7 +180,10 @@ public:
      *
      * @param entity
      */
-    void addEntity(Entity *const entity) { entity_positions_.emplace(entity); }
+    void addEntity(const observer_ptr<Entity> entity)
+    {
+        entity_positions_.emplace(entity);
+    }
 
     /**
      * @brief Deletes entity with a given id, does nothing if no id is matched
@@ -186,10 +191,21 @@ public:
      *
      * @param entity
      */
-    void deleteEntity(Entity *const entity) { entity_positions_.erase(entity); }
+    void deleteEntity(const observer_ptr<Entity> entity)
+    {
+        entity_positions_.erase(entity);
+    }
 
     void updateData() override
     {
+        for (auto &entity : removal_messages_)
+        {
+            deleteEntity(entity);
+        }
+        for (auto &entity : addition_messages_)
+        {
+            addEntity(entity);
+        }
         for (auto &message : pos_change_messages_)
         {
             updatePosition(std::get<0>(message),
@@ -215,7 +231,8 @@ public:
             {
             case SystemAction::POSITION::UPDATE:
             {
-                auto entity = std::any_cast<Entity *>(*message_iterator);
+                auto entity =
+                    std::any_cast<observer_ptr<Entity>>(*message_iterator);
                 ++message_iterator;
                 auto x = std::any_cast<uint16_t>(*message_iterator);
                 ++message_iterator;
@@ -232,13 +249,15 @@ public:
             }
             case SystemAction::POSITION::ADD:
             {
-                auto entity = std::any_cast<Entity *>(*message_iterator);
+                auto entity =
+                    std::any_cast<observer_ptr<Entity>>(*message_iterator);
                 addition_messages_.emplace_back(entity);
                 break;
             }
             case SystemAction::POSITION::DELETE:
             {
-                auto entity = std::any_cast<Entity *>(*message_iterator);
+                auto entity =
+                    std::any_cast<observer_ptr<Entity>>(*message_iterator);
                 removal_messages_.emplace_back(entity);
                 break;
             }
@@ -268,26 +287,26 @@ public:
         {
             return is;
         }
-        std::shared_ptr<std::list<uint32_t>> entity_requests(
-            new std::list<uint32_t>);
-        uint32_t temp{};
+        entity_positions_.clear();
+        entity_positions_.reserve(positions_size);
+        std::list<uint32_t> entity_requests;
+        uint32_t            temp{};
         for (std::size_t i = 0; i < positions_size; i++)
         {
             is >> temp;
-            entity_requests->push_back(temp);
+            entity_requests.push_back(temp);
         }
         auto message = {
             std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::REQUEST),
-            std::make_any<EntityHolder *>(this),
-            std::make_any<std::shared_ptr<std::list<uint32_t>>>(
-                entity_requests)};
+            std::make_any<observer_ptr<EntityHolder>>(this),
+            std::make_any<std::list<uint32_t>>(entity_requests)};
         System::sendSystemMessage(SystemType::ENTITY, message);
         return is;
     }
 
-    void loadEntities(std::shared_ptr<std::list<Entity *>> &entities) override
+    void loadEntities(std::list<observer_ptr<Entity>> entities) override
     {
-        for (auto &entity : *entities)
+        for (auto &entity : entities)
         {
             addEntity(entity);
         }

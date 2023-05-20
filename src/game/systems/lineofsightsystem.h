@@ -17,10 +17,10 @@ class LOS_System : public System, public EntityHolder
 {
     using GameMap = std::vector<std::vector<Tile>>;
 
-    Entity                      *player_;
-    std::unordered_set<Entity *> lines_of_sight_;
-    std::list<Entity *>          addition_messages_;
-    std::list<Entity *>          deletion_messages_;
+    observer_ptr<Entity>                     player_;
+    std::unordered_set<observer_ptr<Entity>> lines_of_sight_;
+    std::list<observer_ptr<Entity>>          addition_messages_;
+    std::list<observer_ptr<Entity>>          deletion_messages_;
 
     GameMap &map_;
 
@@ -83,18 +83,25 @@ class LOS_System : public System, public EntityHolder
     }
 
 public:
-    LOS_System(GameMap &gamemap, Entity *player)
+    LOS_System(GameMap &gamemap, observer_ptr<Entity> player)
         : player_{player}, map_{gamemap}
     {
     }
 
-    void addEntity(Entity *const entity) { lines_of_sight_.emplace(entity); }
+    void addEntity(observer_ptr<Entity> const entity)
+    {
+        lines_of_sight_.emplace(entity);
+    }
 
-    void deleteEntity(Entity *const entity) { lines_of_sight_.erase(entity); }
+    void deleteEntity(observer_ptr<Entity> const entity)
+    {
+        lines_of_sight_.erase(entity);
+    }
 
-    void assignPlayer(Entity *const player) { player_ = player; }
+    void assignPlayer(observer_ptr<Entity> const player) { player_ = player; }
 
-    void calculateLOS(Entity *const entity, Entity *const target)
+    void calculateLOS(observer_ptr<Entity> const entity,
+                      observer_ptr<Entity> const target)
     {
         auto target_coord_ptr      = target->getComponent<Coordinates>();
         auto coord_ptr             = entity->getComponent<Coordinates>();
@@ -159,20 +166,20 @@ public:
             case SystemAction::LINE_OF_SIGHT::ADD:
             {
                 addition_messages_.emplace_back(
-                    std::any_cast<Entity *>(*message_it));
+                    std::any_cast<observer_ptr<Entity>>(*message_it));
                 break;
             }
             case SystemAction::LINE_OF_SIGHT::DELETE:
             {
                 deletion_messages_.emplace_back(
-                    std::any_cast<Entity *>(*message_it));
+                    std::any_cast<observer_ptr<Entity>>(*message_it));
                 break;
             }
             case SystemAction::LINE_OF_SIGHT::CALCULATE:
             {
-                auto caller = std::any_cast<Entity *>(*message_it);
+                auto caller = std::any_cast<observer_ptr<Entity>>(*message_it);
                 ++message_it;
-                auto target = std::any_cast<Entity *>(*message_it);
+                auto target = std::any_cast<observer_ptr<Entity>>(*message_it);
                 calculateLOS(caller, target);
                 break;
             }
@@ -207,25 +214,25 @@ public:
         {
             return is;
         }
-        std::shared_ptr<std::list<uint32_t>> entity_requests(
-            new std::list<uint32_t>);
-        uint32_t temp{};
+        lines_of_sight_.clear();
+        lines_of_sight_.reserve(linesofsight_size);
+        std::list<uint32_t> entity_requests;
+        uint32_t            temp{};
         for (std::size_t i = 0; i < linesofsight_size; i++)
         {
             is >> temp;
-            entity_requests->push_back(temp);
+            entity_requests.push_back(temp);
         }
         auto message = {
             std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::REQUEST),
-            std::make_any<EntityHolder *>(this),
-            std::make_any<std::shared_ptr<std::list<uint32_t>>>(
-                entity_requests)};
+            std::make_any<observer_ptr<EntityHolder>>(this),
+            std::make_any<std::list<uint32_t>>(entity_requests)};
         System::sendSystemMessage(SystemType::ENTITY, message);
         return is;
     }
-    void loadEntities(std::shared_ptr<std::list<Entity *>> &entities) override
+    void loadEntities(std::list<observer_ptr<Entity>> entities) override
     {
-        for (auto &entity : *entities)
+        for (auto &entity : entities)
         {
             addEntity(entity);
         }

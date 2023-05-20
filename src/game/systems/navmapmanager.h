@@ -36,7 +36,7 @@ class NavMapManager : public System
     std::uniform_int_distribution<uint16_t> distro_x_;
     std::uniform_int_distribution<uint16_t> distro_y_;
     NavMap                                  nav_to_player_;
-    const Coordinates *const                player_coordinates_;
+    const observer_ptr<const Coordinates>   player_coordinates_;
 
     // std::unordered_map<EntityPtr, NavMap> nav_maps_;
 
@@ -128,7 +128,8 @@ public:
         TOWARDS
     };
 
-    NavMapManager(GameMap &map, const Coordinates *const player_coordinates)
+    NavMapManager(GameMap                              &map,
+                  const observer_ptr<const Coordinates> player_coordinates)
         : map_{map}, player_coordinates_{player_coordinates}
     {
         mt_engine_ = std::mt19937(rd_());
@@ -221,7 +222,8 @@ public:
     }
 
     std::tuple<uint16_t, uint16_t>
-    nextBestCoordinates(Entity *const entity, Destination destination) const
+    nextBestCoordinates(observer_ptr<Entity> const entity,
+                        Destination                destination) const
     {
         using NavTuple = std::tuple<uint16_t, uint16_t, NavCell>;
         auto nav_map   = entity->getComponent<NavMapComponent>()->nav_map;
