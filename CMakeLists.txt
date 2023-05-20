@@ -1,11 +1,9 @@
 cmake_minimum_required(VERSION 3.26)
 project(Unnamed-Roguelike LANGUAGES CXX VERSION 0.1.0)
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_FLAGS "-Wall -Wextra ")
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -static-libstdc++ -static-libgcc")
+set(CMAKE_EXE_LINKER_FLAGS "-static")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-include(InstallRequiredSystemLibraries)
-set(CPACK_PACKAGE_INSTALL_DIRECTORY "Unnamed-Roguelike")
 
 
 # FTXUI Includes ---------------------------------------------------------------
@@ -30,7 +28,7 @@ enable_testing()
 # set(GAMEHEADERS src/game)
 add_subdirectory(src)
 
-add_executable(Unnamed-Roguelike itemgentest.cpp)
+add_executable(Unnamed-Roguelike sertest.cpp)
 
 # target_include_directories(Unnamed-Roguelike PRIVATE ${GAMEHEADERS})
 target_link_libraries(Unnamed-Roguelike PUBLIC source)
@@ -41,11 +39,11 @@ target_link_libraries(Unnamed-Roguelike
   PRIVATE ftxui::component
 )
 
-
-
-
+include(InstallRequiredSystemLibraries)
+set(CPACK_PACKAGE_INSTALL_DIRECTORY "Unnamed-Roguelike")
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
 set(CPACK_PACKAGE_NAME "Unnamed Roguelike")
 install(TARGETS Unnamed-Roguelike RUNTIME DESTINATION bin)
+install(TARGETS source DESTINATION include)
 include(CPack)
