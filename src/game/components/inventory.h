@@ -50,19 +50,18 @@ class Inventory : public Component, public EntityHolder
         is >> inv_size;
         if (inv_size != 0)
         {
-            uint32_t                             temp_entity_id{};
-            std::shared_ptr<std::list<uint32_t>> entities_requested(
-                new std::list<uint32_t>);
+            uint32_t            temp_entity_id{};
+            std::list<uint32_t> entities_requested;
             for (std::size_t i = 0; i < inv_size; i++)
             {
                 is >> temp_entity_id;
-                entities_requested->emplace_back(temp_entity_id);
+                entities_requested.emplace_back(temp_entity_id);
             }
-            auto message = {std::make_any<SystemAction::ENTITY>(
-                                SystemAction::ENTITY::REQUEST),
-                            std::make_any<EntityHolder *>(this),
-                            std::make_any<std::shared_ptr<std::list<uint32_t>>>(
-                                entities_requested)};
+            auto message = {
+                std::make_any<SystemAction::ENTITY>(
+                    SystemAction::ENTITY::REQUEST),
+                std::make_any<observer_ptr<EntityHolder>>(this),
+                std::make_any<std::list<uint32_t>>(entities_requested)};
             System::sendSystemMessage(SystemType::ENTITY, message);
         }
         return is;
@@ -80,7 +79,7 @@ public:
             auto new_item = new Entity(*item);
             auto message  = {
                 std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::ADD),
-                std::make_any<Entity *>(new_item)};
+                std::make_any<observer_ptr<Entity>>(new_item)};
             System::sendSystemMessage(SystemType::ENTITY, message);
             this->inventory.emplace_back(new_item);
         }

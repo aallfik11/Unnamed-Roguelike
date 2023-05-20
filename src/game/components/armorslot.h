@@ -3,8 +3,8 @@
 #include "../component.h"
 #include "../entity.h"
 #include "../entityholder.h"
-#include "../system.h"
 #include "../observerptr.h"
+#include "../system.h"
 #include <any>
 #include <istream>
 #include <list>
@@ -39,30 +39,32 @@ class ArmorSlot : public Component, public EntityHolder
         is >> temp_entity_id;
         if (temp_entity_id != 0)
         {
-            std::shared_ptr<std::list<uint32_t>> entities_requested(
-                new std::list<uint32_t>);
-            entities_requested->push_back(temp_entity_id);
-            auto message = {std::make_any<SystemAction::ENTITY>(
-                                SystemAction::ENTITY::REQUEST),
-                            std::make_any<EntityHolder *>(this),
-                            std::make_any<std::shared_ptr<std::list<uint32_t>>>(
-                                entities_requested)};
+            std::list<uint32_t> entities_requested;
+            entities_requested.push_back(temp_entity_id);
+            auto message = {
+                std::make_any<SystemAction::ENTITY>(
+                    SystemAction::ENTITY::REQUEST),
+                std::make_any<observer_ptr<EntityHolder>>(this),
+                std::make_any<std::list<uint32_t>>(entities_requested)};
             System::sendSystemMessage(SystemType::ENTITY, message);
         }
         return is;
     }
 
 public:
-    Entity *armor_item;
+    observer_ptr<Entity> armor_item;
 
-    ArmorSlot(Entity *armor_item = nullptr) { this->armor_item = armor_item; }
+    ArmorSlot(observer_ptr<Entity> armor_item = nullptr)
+    {
+        this->armor_item = armor_item;
+    }
 
     ArmorSlot(const ArmorSlot &armor_slot)
     {
         auto entity  = new Entity(*(armor_slot.armor_item));
         auto message = {
             std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::ADD),
-            std::make_any<Entity *>(entity)};
+            std::make_any<observer_ptr<Entity>>(entity)};
         System::sendSystemMessage(SystemType::ENTITY, message);
         this->armor_item = entity;
     }

@@ -53,19 +53,17 @@ class AmuletSlot : public Component, public EntityHolder
         this->amount_equipped = static_cast<uint8_t>(amount_equipped);
         this->max_slots       = static_cast<uint8_t>(max_slots);
 
-        std::shared_ptr<std::list<uint32_t>> entities_requested(
-            new std::list<uint32_t>);
+        std::list<uint32_t> entities_requested;
         for (uint8_t i = 0; i < this->amount_equipped; i++)
         {
             uint32_t temp_id{};
             is >> temp_id;
-            entities_requested->push_back(temp_id);
+            entities_requested.push_back(temp_id);
         }
         auto message = {
             std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::REQUEST),
-            std::make_any<EntityHolder *>(this),
-            std::make_any<std::shared_ptr<std::list<uint32_t>>>(
-                entities_requested)};
+            std::make_any<observer_ptr<EntityHolder>>(this),
+            std::make_any<std::list<uint32_t>>(entities_requested)};
 
         System::sendSystemMessage(SystemType::ENTITY, message);
         return is;
@@ -92,7 +90,7 @@ public:
             auto new_amulet = new Entity(*amulet);
             auto message    = {
                 std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::ADD),
-                std::make_any<Entity *>(new_amulet)};
+                std::make_any<observer_ptr<Entity>>(new_amulet)};
             System::sendSystemMessage(SystemType::ENTITY, message);
             this->amulet_slots.emplace(new_amulet);
         }

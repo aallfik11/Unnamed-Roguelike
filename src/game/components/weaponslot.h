@@ -47,14 +47,13 @@ class WeaponSlot : public Component, public EntityHolder
         is >> temp_entity_id;
         if (temp_entity_id != 0)
         {
-            std::shared_ptr<std::list<uint32_t>> entities_requested(
-                new std::list<uint32_t>);
-            entities_requested->push_back(temp_entity_id);
-            auto message = {std::make_any<SystemAction::ENTITY>(
-                                SystemAction::ENTITY::REQUEST),
-                            std::make_any<EntityHolder *>(this),
-                            std::make_any<std::shared_ptr<std::list<uint32_t>>>(
-                                entities_requested)};
+            std::list<uint32_t> entities_requested;
+            entities_requested.push_back(temp_entity_id);
+            auto message = {
+                std::make_any<SystemAction::ENTITY>(
+                    SystemAction::ENTITY::REQUEST),
+                std::make_any<observer_ptr<EntityHolder>>(this),
+                std::make_any<std::list<uint32_t>>(entities_requested)};
             System::sendSystemMessage(SystemType::ENTITY, message);
         }
         return is;
@@ -63,7 +62,7 @@ class WeaponSlot : public Component, public EntityHolder
 public:
     observer_ptr<Entity> weapon_item;
 
-    WeaponSlot(Entity *weapon_item = nullptr)
+    WeaponSlot(observer_ptr<Entity> weapon_item = nullptr)
     {
         this->weapon_item = weapon_item;
     }
@@ -73,7 +72,7 @@ public:
         auto entity  = new Entity(*(weapon_slot.weapon_item));
         auto message = {
             std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::ADD),
-            std::make_any<Entity *>(entity)};
+            std::make_any<observer_ptr<Entity>>(entity)};
         System::sendSystemMessage(SystemType::ENTITY, message);
         this->weapon_item = entity;
     }
