@@ -441,6 +441,16 @@ public:
                 drop_messages_.emplace_back(entity, index);
                 break;
             }
+            case SystemAction::INVENTORY::DROP_ALL:
+            {
+                auto entity =
+                    std::any_cast<observer_ptr<Entity>>(*message_iterator);
+                auto inventory = entity->getComponent<Inventory>();
+                for (int i = 0; i < inventory->inventory.size(); ++i)
+                {
+                    drop_messages_.emplace_back(entity, i);
+                }
+            }
             case SystemAction::INVENTORY::TRANSFER:
             {
                 auto index = std::any_cast<uint32_t>(*message_iterator);
