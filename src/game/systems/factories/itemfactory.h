@@ -3,6 +3,7 @@
 #include "../../components/components_all.h"
 #include "../../effect.h"
 #include "../../entity.h"
+#include "../../observerptr.h"
 #include "../../rarity.h"
 #include "../../system.h"
 #include "../../tile.h"
@@ -364,7 +365,7 @@ public:
         ring_effect_distro_        = std::uniform_int_distribution<>(0, 1);
 
         potion_effect_map_[0]      = Effect::HEAL | Effect::APPLY_ONCE;
-        potion_effect_map_[1]      = Effect::HEAL; // regen
+        potion_effect_map_[1]      = Effect::HEAL; // regenset exec-wrapper env -u LINES -u COLUMNS
         potion_effect_map_[2]      = Effect::IRONSKIN | Effect::APPLY_ONCE;
         potion_effect_map_[3]      = Effect::STRENGTH | Effect::APPLY_ONCE;
         potion_effect_distro_      = std::uniform_int_distribution<>(0, 3);
@@ -411,7 +412,7 @@ public:
             "A crudely-made set of armor made of leather. Incapable of "
             "deflecting any but the weakest of blows";
         rarity_armor_descriptions_[Rarity::UNCOMMON] =
-            "A decently set armor made of small, metal rings intertwined with "
+            "A decent set armor made of small, metal rings intertwined with "
             "each "
             "other. It can protect from cuts, but its comfort leaves a lot "
             "to be desired";
@@ -519,7 +520,7 @@ public:
             auto y = y_pos_distro_(mt_engine_);
             while ((map_[x][y].type &
                     (TileType::HAS_CREATURE | TileType::HAS_ITEM |
-                     TileType::HAS_STAIRS | TileType::FLOOR)) != TileType::NONE)
+                     TileType::HAS_STAIRS | TileType::WALL)) != TileType::NONE)
             {
                 x = x_pos_distro_(mt_engine_);
                 y = y_pos_distro_(mt_engine_);
@@ -527,10 +528,10 @@ public:
             entity->addComponent(new Coordinates(x, y));
             auto entity_message = {
                 std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::ADD),
-                std::make_any<Entity *>(entity)};
+                std::make_any<observer_ptr<Entity>>(entity)};
             auto pos_message = {std::make_any<SystemAction::POSITION>(
                                     SystemAction::POSITION::ADD),
-                                std::make_any<Entity *>(entity)};
+                                std::make_any<observer_ptr<Entity>>(entity)};
             System::sendSystemMessage(SystemType::ENTITY, entity_message);
             System::sendSystemMessage(SystemType::POSITION, pos_message);
         }
@@ -546,7 +547,7 @@ public:
         System::sendSystemMessage(
             SystemType::ENTITY,
             {std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::ADD),
-             std::make_any<Entity *>(weapon)});
+             std::make_any<observer_ptr<Entity>>(weapon)});
         return weapon;
     }
 
@@ -560,7 +561,7 @@ public:
         System::sendSystemMessage(
             SystemType::ENTITY,
             {std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::ADD),
-             std::make_any<Entity *>(armor)});
+             std::make_any<observer_ptr<Entity>>(armor)});
         return armor;
     }
 
@@ -574,7 +575,7 @@ public:
         System::sendSystemMessage(
             SystemType::ENTITY,
             {std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::ADD),
-             std::make_any<Entity *>(ring)});
+             std::make_any<observer_ptr<Entity>>(ring)});
         return ring;
     }
 
@@ -587,7 +588,7 @@ public:
         System::sendSystemMessage(
             SystemType::ENTITY,
             {std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::ADD),
-             std::make_any<Entity *>(potion)});
+             std::make_any<observer_ptr<Entity>>(potion)});
         return potion;
     }
 
@@ -600,7 +601,7 @@ public:
         System::sendSystemMessage(
             SystemType::ENTITY,
             {std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::ADD),
-             std::make_any<Entity *>(food)});
+             std::make_any<observer_ptr<Entity>>(food)});
         return food;
     }
 
@@ -623,7 +624,7 @@ public:
             auto y = y_pos_distro_(mt_engine_);
             while ((map_[x][y].type &
                     (TileType::HAS_CREATURE | TileType::HAS_ITEM |
-                     TileType::HAS_STAIRS | TileType::FLOOR)) != TileType::NONE)
+                     TileType::HAS_STAIRS | TileType::WALL)) != TileType::NONE)
             {
                 x = x_pos_distro_(mt_engine_);
                 y = y_pos_distro_(mt_engine_);
@@ -631,10 +632,10 @@ public:
             entity->addComponent(new Coordinates(x, y));
             auto entity_message = {
                 std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::ADD),
-                std::make_any<Entity *>(entity)};
+                std::make_any<observer_ptr<Entity>>(entity)};
             auto pos_message = {std::make_any<SystemAction::POSITION>(
                                     SystemAction::POSITION::ADD),
-                                std::make_any<Entity *>(entity)};
+                                std::make_any<observer_ptr<Entity>>(entity)};
             System::sendSystemMessage(SystemType::ENTITY, entity_message);
             System::sendSystemMessage(SystemType::POSITION, pos_message);
         }
@@ -658,7 +659,7 @@ public:
 
         auto sys_message = {
             std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::ADD),
-            std::make_any<Entity *>(item)};
+            std::make_any<observer_ptr<Entity>>(item)};
         System::sendSystemMessage(SystemType::ENTITY, sys_message);
 
         components.clear();
