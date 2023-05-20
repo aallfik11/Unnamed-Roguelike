@@ -1,6 +1,7 @@
 #ifndef HEALTHSYSTEM_H
 #define HEALTHSYSTEM_H
 #include "../components/health.h"
+#include "../components/inventory.h"
 #include "../entity.h"
 #include "../entitytypes.h"
 #include "../system.h"
@@ -60,6 +61,9 @@ public:
                     {
                         health_ptr->max_health_points     = 0;
                         health_ptr->current_health_points = 0;
+                        health_ptr->alive                 = false;
+                        entity->type &= ~EntityType::LIVING;
+                        entity->type |= EntityType::KILLED;
                     }
                     else
                     {
@@ -71,6 +75,21 @@ public:
                 }
                 else
                     health_ptr->max_health_points = max_health + amount;
+            }
+            if (health_ptr->alive == false)
+            {
+                sendSystemMessage(
+                    SystemType::AI,
+                    {std::make_any<SystemAction::AI>(SystemAction::AI::REMOVE),
+                     std::make_any<observer_ptr<Entity>>(entity)});
+                if (entity->hasComponent<Inventory>() == true)
+                {
+                    sendSystemMessage(
+                        SystemType::INVENTORY,
+                        {std::make_any<SystemAction::INVENTORY>(
+                             SystemAction::INVENTORY::DROP_ALL),
+                         std::make_any<observer_ptr<Entity>>(entity)});
+                }
             }
         }
     }
