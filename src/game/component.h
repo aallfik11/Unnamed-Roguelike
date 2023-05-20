@@ -67,14 +67,14 @@ public:
 
     virtual ComponentType getType() const = 0;
 
-    friend std::ostream &operator<<(std::ostream &os, const Component *const c)
+    friend std::ostream &operator<<(std::ostream &os, const Component &c)
     {
-        return c->serialize(os);
+        return c.serialize(os);
     };
 
-    friend std::istream &operator>>(std::istream &is, Component *const c)
+    friend std::istream &operator>>(std::istream &is, Component &c)
     {
-        return c->deserialize(is);
+        return c.deserialize(is);
     }
     /*debug*/ bool operator==(const Component &c) const
     {
