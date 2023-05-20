@@ -2,9 +2,9 @@
 #define BUFFCOMPONENT_H
 #include "../component.h"
 #include "../entityholder.h"
+#include "../observerptr.h"
 #include "../system.h"
 #include "effectcomponent.h"
-#include "../observerptr.h"
 #include <any>
 #include <cstdint>
 #include <istream>
@@ -17,7 +17,7 @@ class BuffComponent : public Component
 {
     /*debug*/ bool isEqual(const observer_ptr<const Component> c) const override
     {
-        auto b = static_observer_cast<const BuffComponent >(c);
+        auto b = static_observer_cast<const BuffComponent>(c);
         for (auto &[effect, effect_ptr] : this->buffs)
         {
             if (b->buffs.contains(effect) == false)
@@ -37,7 +37,7 @@ class BuffComponent : public Component
         os << ComponentType::BUFF << ' ' << this->buffs.size() << ' ';
         for (auto &buff : this->buffs)
         {
-            os << buff.first << ' ' << buff.second.get();
+            os << buff.first << ' ' << *(buff.second);
         }
         return os;
     }

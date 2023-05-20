@@ -32,7 +32,7 @@ class CritComponent : public Component
     std::ostream &serialize(std::ostream &os) const override
     {
         os << ComponentType::CRIT << ' ' << +this->crit_chance << ' '
-           << this->crit_multiplier << ' ' << this->crit_effects.get();
+           << this->crit_multiplier << ' ' << *(this->crit_effects);
         return os;
     }
     std::istream &deserialize(std::istream &is) override
@@ -41,7 +41,7 @@ class CritComponent : public Component
         int           crit_chance{};
         this->crit_effects = std::make_unique<BuffComponent>();
         is >> crit_chance >> this->crit_multiplier >> placeholder >>
-            this->crit_effects.get();
+            *(this->crit_effects);
         this->crit_chance = static_cast<uint8_t>(crit_chance);
         return is;
     }
