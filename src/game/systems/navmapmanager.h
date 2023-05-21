@@ -288,8 +288,6 @@ public:
     void          updateData() override { calculatePlayerNavMap(); }
     void          readSystemMessages() override {}
     void          clearSystemMessages() override {}
-    std::ostream &serialize(std::ostream &os) const override { return os; }
-    std::istream &deserialize(std::istream &is) override { return is; }
 };
 
 #endif /*NAVMAPMANAGER*/

@@ -125,8 +125,6 @@ public:
         (*system_messages_)[SystemType::HEALTH].clear();
     }
 
-    std::ostream &serialize(std::ostream &os) const override { return os; }
-    std::istream &deserialize(std::istream &is) override { return is; }
 };
 
 #endif /*HEALTHSYSTEM_H*/
