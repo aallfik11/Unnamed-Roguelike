@@ -23,6 +23,7 @@ enum class SystemType
     MAP_MANAGER,
     NAVMAP_MANAGER,
     POSITION,
+    EXPERIENCE,
 };
 
 namespace SystemAction
@@ -100,6 +101,11 @@ enum class POSITION
     ADD,
     DELETE
 };
+enum class EXPERIENCE
+{
+    ADD,
+    FORCE_LEVEL_UP,
+};
 }; // namespace SystemAction
 
 class System
@@ -111,11 +117,11 @@ public:
     static std::shared_ptr<MessageMap> system_messages_;
 
 public:
-    virtual void          updateData()                      = 0;
-    virtual void          readSystemMessages()              = 0;
-    virtual void          clearSystemMessages()             = 0;
-    virtual std::ostream &serialize(std::ostream &os) const = 0;
-    virtual std::istream &deserialize(std::istream &is)     = 0;
+    virtual void          updateData()          = 0;
+    virtual void          readSystemMessages()  = 0;
+    virtual void          clearSystemMessages() = 0;
+    virtual std::ostream &serialize(std::ostream &os) const { return os; };
+    virtual std::istream &deserialize(std::istream &is) { return is; };
 
     static void sendSystemMessage(SystemType                      receiver,
                                   std::initializer_list<std::any> message)
