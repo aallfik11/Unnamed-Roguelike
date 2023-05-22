@@ -99,11 +99,13 @@ enum class POSITION
     UPDATE,
     GET,
     ADD,
-    DELETE
+    DELETE,
+    RECEIVE_PLAYER_COORDINATES,
 };
 enum class EXPERIENCE
 {
     ADD,
+    ADD_TO_PLAYER,
     FORCE_LEVEL_UP,
 };
 }; // namespace SystemAction

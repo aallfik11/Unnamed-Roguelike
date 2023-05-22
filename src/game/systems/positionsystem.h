@@ -27,6 +27,7 @@ class PositionSystem : public System, public EntityHolder
     std::list<std::pair<uint16_t, uint16_t>> request_messages_;
     std::list<observer_ptr<Entity>>          addition_messages_;
     std::list<observer_ptr<Entity>>          removal_messages_;
+    std::pair<uint16_t, uint16_t>            player_coordinates_;
     GameMap                                 &map_;
 
     /**
@@ -212,10 +213,32 @@ public:
                            std::get<1>(message),
                            std::get<2>(message));
         }
-
-        for (auto &message : request_messages_)
-        {
-        }
+        auto player_x = player_coordinates_.first;
+        auto player_y = player_coordinates_.second;
+        System::sendSystemMessage(
+            SystemType::PLAYER,
+            {std::make_any<SystemAction::PLAYER>(
+                 SystemAction::PLAYER::ENTITIES_UP),
+             std::make_any<std::list<observer_ptr<Entity>>>(
+                 getEntitiesAtCoordinates(player_x, player_y - 1))});
+        System::sendSystemMessage(
+            SystemType::PLAYER,
+            {std::make_any<SystemAction::PLAYER>(
+                 SystemAction::PLAYER::ENTITIES_DOWN),
+             std::make_any<std::list<observer_ptr<Entity>>>(
+                 getEntitiesAtCoordinates(player_x, player_y + 1))});
+        System::sendSystemMessage(
+            SystemType::PLAYER,
+            {std::make_any<SystemAction::PLAYER>(
+                 SystemAction::PLAYER::ENTITIES_LEFT),
+             std::make_any<std::list<observer_ptr<Entity>>>(
+                 getEntitiesAtCoordinates(player_x - 1, player_y))});
+        System::sendSystemMessage(
+            SystemType::PLAYER,
+            {std::make_any<SystemAction::PLAYER>(
+                 SystemAction::PLAYER::ENTITIES_RIGHT),
+             std::make_any<std::list<observer_ptr<Entity>>>(
+                 getEntitiesAtCoordinates(player_x + 1, player_y))});
     }
 
     void readSystemMessages()
@@ -259,6 +282,14 @@ public:
                 auto entity =
                     std::any_cast<observer_ptr<Entity>>(*message_iterator);
                 removal_messages_.emplace_back(entity);
+                break;
+            }
+            case SystemAction::POSITION::RECEIVE_PLAYER_COORDINATES:
+            {
+                auto x = std::any_cast<uint16_t>(*message_iterator);
+                ++message_iterator;
+                auto y = std::any_cast<uint16_t>(*message_iterator);
+                player_coordinates_ = {x, y};
                 break;
             }
             }
