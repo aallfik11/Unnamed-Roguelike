@@ -1,5 +1,6 @@
 #ifndef HEALTHSYSTEM_H
 #define HEALTHSYSTEM_H
+#include "../components/experiencecomponent.h"
 #include "../components/health.h"
 #include "../components/inventory.h"
 #include "../entity.h"
@@ -82,6 +83,13 @@ public:
                     SystemType::AI,
                     {std::make_any<SystemAction::AI>(SystemAction::AI::REMOVE),
                      std::make_any<observer_ptr<Entity>>(entity)});
+                sendSystemMessage(
+                    SystemType::EXPERIENCE,
+                    {std::make_any<SystemAction::EXPERIENCE>(
+                         SystemAction::EXPERIENCE::ADD_TO_PLAYER),
+                     std::make_any<uint32_t>(
+                         entity->getComponent<ExperienceComponent>()
+                             ->current_experience)});
                 if (entity->hasComponent<Inventory>() == true)
                 {
                     sendSystemMessage(
@@ -124,7 +132,6 @@ public:
         messages_.clear();
         (*system_messages_)[SystemType::HEALTH].clear();
     }
-
 };
 
 #endif /*HEALTHSYSTEM_H*/
