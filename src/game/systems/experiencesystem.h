@@ -12,11 +12,12 @@
 #include <list>
 #include <ostream>
 
-class ExperienceSystem : public System
+class ExperienceSystem : public System, public EntityHolder
 {
 
     std::list<std::pair<observer_ptr<Entity>, uint32_t>> update_messages_;
     std::list<observer_ptr<Entity>>                      force_lvl_ups;
+    observer_ptr<Entity>                                 player_;
 
     void levelUp(const observer_ptr<Entity> entity) const
     {
@@ -43,6 +44,9 @@ class ExperienceSystem : public System
     }
 
 public:
+    ExperienceSystem() = delete;
+    ExperienceSystem(observer_ptr<Entity> player) : player_{player} {}
+
     void updateData() override
     {
         for (auto &[entity, amount] : update_messages_)
@@ -71,6 +75,12 @@ public:
                 update_messages_.emplace_back(entity, xp_amount);
                 break;
             }
+            case SystemAction::EXPERIENCE::ADD_TO_PLAYER:
+            {
+                auto xp_amount = std::any_cast<uint32_t>(*message_it);
+                update_messages_.emplace_back(player_, xp_amount);
+                break;
+            }
             case SystemAction::EXPERIENCE::FORCE_LEVEL_UP:
             {
                 auto entity = std::any_cast<observer_ptr<Entity>>(*message_it);
@@ -85,6 +95,21 @@ public:
         (*system_messages_)[SystemType::EXPERIENCE].clear();
         update_messages_.clear();
         force_lvl_ups.clear();
+    }
+
+    std::istream &deserialize(std::istream &is) override
+    {
+        sendSystemMessage(
+            SystemType::ENTITY,
+            {std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::REQUEST),
+             std::make_any<observer_ptr<EntityHolder>>(this),
+             std::make_any<std::list<uint32_t>>(std::list<uint32_t>({1}))});
+        return is;
+    }
+
+    void loadEntities(std::list<observer_ptr<Entity>> player) override
+    {
+        player_ = player.front();
     }
 };
 
