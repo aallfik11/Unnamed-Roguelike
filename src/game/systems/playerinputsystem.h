@@ -13,6 +13,7 @@
 #include "../components/weaponslot.h"
 #include "../directions.h"
 #include "../entity.h"
+#include "../entityholder.h"
 #include "../itemtypes.h"
 #include "../rarity.h"
 #include "../system.h"
@@ -23,10 +24,11 @@
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/color.hpp>
+#include <istream>
 #include <list>
 #include <memory>
 
-class PlayerControlSystem : public System
+class PlayerControlSystem : public System, public EntityHolder
 {
     observer_ptr<Entity>                      player_;
     ftxui::Component                          inv_renderer_;
@@ -237,10 +239,10 @@ public:
 
         for (auto &entity : entities_at_direction)
         {
-            if (entity->type == EntityType::CREATURE &&
-                entity->getComponent<Health>()->alive == true)
+            if ((entity->type & EntityType::CREATURE) != EntityType::NONE &&
+                (entity->type & EntityType::KILLED) == EntityType::NONE)
             {
-                last_hit_enemy_ = entity;
+                last_hit_enemy_        = entity;
                 last_hit_entity_timer_ = 5;
                 return EntityType::CREATURE;
             }
@@ -301,6 +303,8 @@ public:
                 SystemType::ATTACK,
                 {std::make_any<observer_ptr<Entity>>(player_),
                  std::make_any<observer_ptr<Entity>>(last_hit_enemy_)});
+            next_x = coordinates->x;
+            next_y = coordinates->y;
             break;
         }
         case EntityType::ITEM:
@@ -324,6 +328,12 @@ public:
             break;
         }
         }
+        System::sendSystemMessage(
+            SystemType::POSITION,
+            {std::make_any<SystemAction::POSITION>(
+                 SystemAction::POSITION::RECEIVE_PLAYER_COORDINATES),
+             std::make_any<uint16_t>(next_x),
+             std::make_any<uint16_t>(next_y)});
     }
     void readSystemMessages() override
     {
@@ -388,6 +398,19 @@ public:
             else
                 --last_hit_entity_timer_;
         }
+    }
+    std::istream &deserialize(std::istream &is) override
+    {
+        sendSystemMessage(
+            SystemType::ENTITY,
+            {std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::REQUEST),
+             std::make_any<observer_ptr<EntityHolder>>(this),
+             std::make_any<std::list<uint32_t>>(std::list<uint32_t>({1}))});
+        return is;
+    }
+    void loadEntities(std::list<observer_ptr<Entity>> player) override
+    {
+        this->player_ = player.front();
     }
 };
 
