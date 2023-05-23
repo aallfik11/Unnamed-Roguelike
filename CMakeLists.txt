@@ -28,7 +28,7 @@ enable_testing()
 # set(GAMEHEADERS src/game)
 add_subdirectory(src)
 
-add_executable(Unnamed-Roguelike sertest.cpp)
+add_executable(Unnamed-Roguelike menutest.cpp)
 
 # target_include_directories(Unnamed-Roguelike PRIVATE ${GAMEHEADERS})
 target_link_libraries(Unnamed-Roguelike PUBLIC source)
