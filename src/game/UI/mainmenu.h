@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <fstream>
 #include <ftxui/component/component.hpp>
+#include <ftxui/component/loop.hpp>
 #include <ftxui/component/screen_interactive.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <map>
@@ -40,6 +41,7 @@ public:
     }
     void renderMainMenu(LaunchOptions &launch_options)
     {
+        launch_options = LaunchOptions::NONE;
         using namespace ftxui;
         auto screen  = ScreenInteractive::Fullscreen();
         auto rg_text = Renderer(
@@ -77,63 +79,93 @@ public:
             CatchEvent(main_menu,
                        [&](Event event)
                        {
-                           if (event == Event::Return)
+                           if (event != Event::Return)
                            {
-                               if (menu_index < 1)
-                               {
-                                   launch_options =
-                                       LaunchOptions(menu_index + 1);
-                                   screen.Exit();
-                                   return true;
-                               }
-                               if (menu_index == 2)
-                               {
-                                   renderHighScores();
-                                   return true;
-                               }
-                               if (menu_index == 3)
-                               {
-                                   launch_options = EXIT;
-                                   screen.Exit();
-                                   return true;
-                               }
+                               return container->OnEvent(event);
                            }
-                           return container->OnEvent(event);
+                           else if (menu_index <= 1)
+                           {
+                               launch_options = LaunchOptions(menu_index + 1);
+                               screen.Exit();
+                           }
+                           else if (menu_index == 2)
+                           {
+                               renderHighScores();
+                           }
+                           else if (menu_index == 3)
+                           {
+                               launch_options = EXIT;
+                               screen.Exit();
+                           }
+                           return true;
                        });
-        screen.Loop(inputHandler);
+        // screen.Loop(inputHandler);
+        auto menu_loop = Loop(&screen, inputHandler);
+        while (launch_options == LaunchOptions::NONE)
+        {
+            menu_loop.RunOnceBlocking();
+        }
     }
+
     void renderHighScores()
     {
         using namespace ftxui;
-        auto hs_screen = ScreenInteractive::Fullscreen();
+        auto      hs_screen = ScreenInteractive::Fullscreen();
+        Component hs_renderer;
 
         std::ifstream highscore_file("highscores.txt");
         std::multimap<uint64_t, std::string, std::greater<uint64_t>> score_map;
         std::string                                                  nick{};
         uint64_t                                                     score{};
-        while (highscore_file >> nick >> score)
-        {
-            score_map.insert({score, nick});
-        }
-        highscore_file.close();
 
-        auto hs_renderer = Renderer(
-            [&]
-            {
-                int      i = 0;
-                Elements top10;
-                for (auto score_it = score_map.begin();
-                     i < 10 && score_it != score_map.end();
-                     ++score_it, ++i)
+        if (highscore_file.is_open() == false)
+        {
+            hs_renderer = Renderer(
+                []
                 {
-                    top10.push_back(
-                        hbox({text(score_it->second),
-                              text(std::to_string(score_it->first))}));
+                    return vbox({paragraphAlignCenter(
+                               "No highscores found. Try "
+                               "playing the game first :)")}) |
+                           center;
+                });
+        }
+        else
+        {
+            while (highscore_file >> nick >> score)
+            {
+                score_map.insert({score, nick});
+            }
+            highscore_file.close();
+
+            hs_renderer = Renderer(
+                [&]
+                {
+                    int      i = 0;
+                    Elements top10;
+                    for (auto score_it = score_map.begin();
+                         i < 10 && score_it != score_map.end();
+                         ++score_it, ++i)
+                    {
+                        top10.push_back(
+                            hbox({text(score_it->second),
+                                  text(std::to_string(score_it->first))}));
+                    }
+                    return vbox({text("Top 10 Highscores"), vbox({top10})}) |
+                           center;
+                });
+        }
+        auto hs_input_handler = CatchEvent(
+            hs_renderer,
+            [&](Event event)
+            {
+                if (event == Event::Escape || event == Event::Character('q'))
+                {
+                    hs_screen.Exit();
+                    return true;
                 }
-                return vbox({text("Top 10 Highscores"), vbox({top10})}) |
-                       center;
+                return false;
             });
-        hs_screen.Loop(hs_renderer);
+        hs_screen.Loop(hs_input_handler);
     }
 };
 #endif /*MAINMENU_H*/
