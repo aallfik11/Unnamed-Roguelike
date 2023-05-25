@@ -24,6 +24,7 @@ enum class SystemType
     NAVMAP_MANAGER,
     POSITION,
     EXPERIENCE,
+    LOG,
 };
 
 namespace SystemAction
@@ -107,6 +108,10 @@ enum class EXPERIENCE
     ADD,
     ADD_TO_PLAYER,
     FORCE_LEVEL_UP,
+};
+enum class LOG
+{
+    ADD_TO_LOGS,
 };
 }; // namespace SystemAction
 
