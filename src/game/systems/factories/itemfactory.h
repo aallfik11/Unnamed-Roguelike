@@ -142,8 +142,8 @@ class ItemFactory
                   new Name(name),
                   new Description(description),
                   new WeaponComponent(damage),
-                  new CritComponent(
-                     crit_chance, crit_multiplier, weapon_buffs)});
+                  new CritComponent(crit_chance, crit_multiplier, weapon_buffs),
+                  new TileComponent(TileAppearance::WEAPON)});
             weapons.emplace_back(weapon);
         }
         return weapons;
@@ -190,7 +190,8 @@ class ItemFactory
                 {new ItemComponent(ItemType::ARMOR, 1, 1, armor_rarity),
                  new ArmorComponent(armor_class),
                  new Name(name),
-                 new Description(description)}));
+                 new Description(description),
+                 new TileComponent(TileAppearance::ARMOR)}));
         }
         return armors;
     }
@@ -233,7 +234,8 @@ class ItemFactory
                  new Name(name),
                  new Description(description),
                  new BuffComponent(
-                     {new EffectComponent(effect, effect_strength)})}));
+                     {new EffectComponent(effect, effect_strength)}),
+                 new TileComponent(TileAppearance::RING)}));
         }
         return rings;
     }
@@ -275,7 +277,8 @@ class ItemFactory
                  new Name(name),
                  new Description(description),
                  new BuffComponent({new EffectComponent(
-                     effect, effect_strength, effect_duration)})}));
+                     effect, effect_strength, effect_duration)}),
+                 new TileComponent(TileAppearance::POTION)}));
         }
         return potions;
     }
@@ -310,7 +313,8 @@ class ItemFactory
                 {new ItemComponent(ItemType::FOOD, 1, 8, food_rarity),
                  new HungerComponent(hunger_replenished),
                  new Name(name),
-                 new Description(description)}));
+                 new Description(description),
+                 new TileComponent(TileAppearance::FOOD)}));
         }
         return food;
     }
@@ -365,10 +369,11 @@ public:
         ring_effect_distro_        = std::uniform_int_distribution<>(0, 1);
 
         potion_effect_map_[0]      = Effect::HEAL | Effect::APPLY_ONCE;
-        potion_effect_map_[1]      = Effect::HEAL; // regenset exec-wrapper env -u LINES -u COLUMNS
-        potion_effect_map_[2]      = Effect::IRONSKIN | Effect::APPLY_ONCE;
-        potion_effect_map_[3]      = Effect::STRENGTH | Effect::APPLY_ONCE;
-        potion_effect_distro_      = std::uniform_int_distribution<>(0, 3);
+        potion_effect_map_[1] =
+            Effect::HEAL; // regenset exec-wrapper env -u LINES -u COLUMNS
+        potion_effect_map_[2] = Effect::IRONSKIN | Effect::APPLY_ONCE;
+        potion_effect_map_[3] = Effect::STRENGTH | Effect::APPLY_ONCE;
+        potion_effect_distro_ = std::uniform_int_distribution<>(0, 3);
 
         // analogously to damage ranges
         rarity_armor_ranges_[Rarity::COMMON]    = {11, 15};
