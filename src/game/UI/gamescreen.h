@@ -19,6 +19,7 @@
 
 class GameScreen
 {
+    public:
     observer_ptr<std::vector<std::vector<Tile>>>       game_map_;
     std::unordered_map<TileAppearance, ftxui::Element> appearances_;
 
@@ -51,7 +52,7 @@ public:
     {
         using namespace ftxui;
         auto wall_color        = Color::RGB(176, 176, 176);
-        floor_color            = Color::RGB(88, 88, 88);
+        floor_color            = Color::RGB(66, 66, 66);
         auto stairs_color      = Color::RGB(22, 22, 22);
         auto weapon_color      = Color::RGB(240, 240, 240);
         auto armor_color       = Color::RGB(240, 240, 240);
