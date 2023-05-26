@@ -48,7 +48,7 @@ int main()
     //     sprites.push_back(appearance);
     // }
     // std::cout << scr.appearances_.size();
-    auto screen   = ScreenInteractive::FitComponent();
+    auto screen   = ScreenInteractive::Fullscreen();
     // screen.Loop(
     //     Renderer([&] { return window(text("sprites"), vbox(sprites)); }));
     auto renderer = Renderer(
@@ -62,10 +62,11 @@ int main()
                 {
                     // if (map[i][j].appearance == TileAppearance::WALL)
                     // {
-                    //     cells.push_back(text(" ") | bgcolor(Color::Grey0));
+                        cells.push_back(text(" ") | bgcolor(Color::Grey0));
                     // }
                     // else
-                        cells.push_back(scr.appearances_[map[i][j].appearance]);
+                        // cells.push_back(scr.appearances_[map[i][j].appearance]);
+                    // cells.push_back(scr.appearances_[TileAppearance::WALL]);
                 }
                 cols.push_back(vbox(cells));
             }
