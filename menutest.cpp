@@ -16,27 +16,27 @@ int main()
     it_fac.generateItems();
     mon_fac.generateMonsters();
 
-    for (auto &message : (*System::system_messages_)[SystemType::ENTITY])
-    {
-        auto                 message_it = message.begin();
-        SystemAction::ENTITY action =
-            std::any_cast<SystemAction::ENTITY>(*message_it);
-        message_it++;
-        switch (action)
-        {
-        case SystemAction::ENTITY::ADD:
-        {
-            auto entity = std::any_cast<observer_ptr<Entity>>(*message_it);
-            if (entity->hasComponent<Coordinates>())
-            {
-                auto coord = entity->getComponent<Coordinates>();
-                map[coord->x][coord->y].appearance =
-                    entity->getComponent<TileComponent>()->sprite;
-            }
-            break;
-        }
-        }
-    }
+    // for (auto &message : (*System::system_messages_)[SystemType::ENTITY])
+    // {
+    //     auto                 message_it = message.begin();
+    //     SystemAction::ENTITY action =
+    //         std::any_cast<SystemAction::ENTITY>(*message_it);
+    //     message_it++;
+    //     switch (action)
+    //     {
+    //     case SystemAction::ENTITY::ADD:
+    //     {
+    //         auto entity = std::any_cast<observer_ptr<Entity>>(*message_it);
+    //         if (entity->hasComponent<Coordinates>())
+    //         {
+    //             auto coord = entity->getComponent<Coordinates>();
+    //             map[coord->x][coord->y].appearance =
+    //                 entity->getComponent<TileComponent>()->sprite;
+    //         }
+    //         break;
+    //     }
+    //     }
+    // }
     GameScreen scr;
 
     LaunchOptions options{};
@@ -48,7 +48,7 @@ int main()
     //     sprites.push_back(appearance);
     // }
     // std::cout << scr.appearances_.size();
-    auto screen = ScreenInteractive::FitComponent();
+    auto screen   = ScreenInteractive::FitComponent();
     // screen.Loop(
     //     Renderer([&] { return window(text("sprites"), vbox(sprites)); }));
     auto renderer = Renderer(
@@ -60,7 +60,12 @@ int main()
                 Elements cells;
                 for (int j = 0; j < 50; ++j)
                 {
-                    cells.push_back(scr.appearances_[map[i][j].appearance]);
+                    // if (map[i][j].appearance == TileAppearance::WALL)
+                    // {
+                    //     cells.push_back(text(" ") | bgcolor(Color::Grey0));
+                    // }
+                    // else
+                        cells.push_back(scr.appearances_[map[i][j].appearance]);
                 }
                 cols.push_back(vbox(cells));
             }
