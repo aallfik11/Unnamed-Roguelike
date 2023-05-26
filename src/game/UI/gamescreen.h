@@ -80,8 +80,8 @@ public:
 
         // appearances_[TileAppearance::NONE] =
         //     text("") | color(Color::RGB()) | bgcolor(Color::RGB());
-        appearances_[TileAppearance::WALL]   = text(" ") | bgcolor(wall_color);
-        appearances_[TileAppearance::FLOOR]  = text(" ") | bgcolor(floor_color);
+        appearances_[TileAppearance::WALL]   = text("1") | bgcolor(wall_color);
+        appearances_[TileAppearance::FLOOR]  = text("0") | bgcolor(floor_color);
         appearances_[TileAppearance::STAIRS] = text("#") | color(stairs_color);
         appearances_[TileAppearance::WEAPON] = text("/") | color(weapon_color);
         appearances_[TileAppearance::ARMOR]  = text("%") | color(armor_color);
