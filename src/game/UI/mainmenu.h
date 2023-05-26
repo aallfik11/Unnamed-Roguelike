@@ -110,8 +110,8 @@ public:
     void renderHighScores()
     {
         using namespace ftxui;
-        auto      hs_screen = ScreenInteractive::Fullscreen();
-        Component hs_renderer;
+        auto             hs_screen = ScreenInteractive::Fullscreen();
+        ftxui::Component hs_renderer;
 
         std::ifstream highscore_file("highscores.txt");
         std::multimap<uint64_t, std::string, std::greater<uint64_t>> score_map;
