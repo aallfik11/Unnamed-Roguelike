@@ -177,7 +177,16 @@ public:
                 {
                     cell.appearance = TileAppearance::FLOOR;
                 }
-
+            }
+        }
+        while (true)
+        {
+            auto x = random_x(twister_engine);
+            auto y = random_y(twister_engine);
+            if ((map[x][y].type & TileType::WALL) == TileType::NONE)
+            {
+                map[x][y].type |= TileType::HAS_STAIRS;
+                break;
             }
         }
         return std::shared_ptr<GameMap>(new GameMap(map));
