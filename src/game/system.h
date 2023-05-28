@@ -115,9 +115,10 @@ enum class LOG
 };
 }; // namespace SystemAction
 
+
 class System
 {
-public:
+    protected:
     using MessageMap =
         std::unordered_map<SystemType, std::list<std::vector<std::any>>>;
 
