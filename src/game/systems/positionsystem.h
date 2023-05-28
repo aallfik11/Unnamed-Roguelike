@@ -38,7 +38,7 @@ class PositionSystem : public System, public EntityHolder
      * @return true - Coordinates are valid,
      * @return false - Coordinates are not valid
      */
-    bool checkCoordinateValidity(uint16_t x, uint16_t y)
+    bool checkCoordinateValidity(uint16_t x, uint16_t y) const
     {
         if (map_.empty())
             return false;
@@ -57,7 +57,7 @@ class PositionSystem : public System, public EntityHolder
      * @return true - Collission,
      * @return false - No collision
      */
-    bool checkCollision(uint16_t x, uint16_t y)
+    bool checkCollision(uint16_t x, uint16_t y) const
     {
         if (checkCoordinateValidity(x, y) == false)
             return true;
@@ -160,7 +160,7 @@ public:
     }
 
     std::list<observer_ptr<Entity>> getEntitiesAtCoordinates(uint16_t x,
-                                                             uint16_t y)
+                                                             uint16_t y) 
     {
         std::list<observer_ptr<Entity>> entitiesAtCoordinates;
         for (auto &entity : entity_positions_)
@@ -184,6 +184,16 @@ public:
     void addEntity(const observer_ptr<Entity> entity)
     {
         entity_positions_.emplace(entity);
+        if (auto entity_coords = entity->getComponent<Coordinates>())
+        {
+            TileType entity_tile_type = TileType::NONE;
+            if ((entity->type & (EntityType::CREATURE | EntityType::PLAYER)) !=
+                EntityType::NONE)
+                entity_tile_type = TileType::HAS_CREATURE;
+            else
+                entity_tile_type = TileType::HAS_ITEM;
+            map_[entity_coords->x][entity_coords->y].type |= entity_tile_type;
+        }
     }
 
     /**
@@ -194,6 +204,16 @@ public:
      */
     void deleteEntity(const observer_ptr<Entity> entity)
     {
+        if (auto entity_coords = entity->getComponent<Coordinates>())
+        {
+            TileType entity_tile_type = TileType::NONE;
+            if ((entity->type & (EntityType::CREATURE | EntityType::PLAYER)) !=
+                EntityType::NONE)
+                entity_tile_type = TileType::HAS_CREATURE;
+            else
+                entity_tile_type = TileType::HAS_ITEM;
+            map_[entity_coords->x][entity_coords->y].type &= ~entity_tile_type;
+        }
         entity_positions_.erase(entity);
     }
 
