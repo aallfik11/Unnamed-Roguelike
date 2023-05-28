@@ -60,6 +60,8 @@ public:
 
     T *operator->() const { return ptr_; }
 
+    T& operator[] (int index) const {return ptr_[index];}
+
     friend std::ostream &operator<<(std::ostream          &os,
                                     const observer_ptr<T> &obs)
     {
