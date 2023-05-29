@@ -7,6 +7,8 @@
 #include "../components/experiencecomponent.h"
 #include "../components/health.h"
 #include "../components/hungercomponent.h"
+#include "../components/itemcomponent.h"
+#include "../components/name.h"
 #include "../components/tilecomponent.h"
 #include "../components/weaponcomponent.h"
 #include "../components/weaponslot.h"
@@ -59,7 +61,7 @@ public: // debug
     PositionSystem                              &pos_system_;
     ftxui::Color                                 floor_color;
 
-    inline ftxui::Color getTextColorByRarity(Rarity rarity) const
+    inline ftxui::Color getColorByRarity(Rarity rarity) const
     {
         using namespace ftxui;
 
@@ -70,7 +72,7 @@ public: // debug
         case Rarity::UNCOMMON:
             return ftxui::Color::Green3;
         case Rarity::RARE:
-            return ftxui::Color::Aquamarine1;
+            return ftxui::Color::Cyan;
         case Rarity::EPIC:
             return ftxui::Color::Purple;
         case Rarity::LEGENDARY:
@@ -78,6 +80,64 @@ public: // debug
         default:
             return ftxui::Color::White;
         }
+    }
+
+    inline ftxui::Color getColorByEffect(Effect effect) const
+    {
+        using namespace ftxui;
+        effect &= ~(Effect::APPLIED | Effect::PERMANENT | Effect::APPLY_ONCE);
+        switch (effect)
+        {
+        case Effect::HEAL:
+            return Color::Pink1;
+        case Effect::BLEED:
+            return Color::Red;
+        case Effect::BLIND:
+            return Color::GrayLight;
+        case Effect::POISON:
+            return Color::Green;
+        case Effect::IRONSKIN:
+            return Color::Yellow;
+        case Effect::STRENGTH:
+            return Color::DarkRed;
+        default:
+            return Color::White;
+        }
+    }
+
+    std::string getEffectName(Effect effect) const
+    {
+        auto effect_cpy = effect;
+        effect_cpy &= ~(Effect::APPLIED | Effect::PERMANENT | Effect::APPLY_ONCE);
+        std::string name = "";
+        switch (effect_cpy)
+        {
+        case Effect::HEAL:
+            name = "HEAL";
+            break;
+        case Effect::BLEED:
+            name = "BLEED";
+            break;
+        case Effect::BLIND:
+            name = "BLIND";
+            break;
+        case Effect::POISON:
+            name = "POISON";
+            break;
+        case Effect::IRONSKIN:
+          name = "IRONSKIN";
+          break;
+        case Effect::STRENGTH:
+            name = "STRENGTH";
+            break;
+        default:
+            name = "INVALID";
+        }
+        if((effect & Effect::PERMANENT) != Effect::NONE)
+        {
+            name += " PERM";
+        }
+        return name;
     }
 
     inline void
@@ -198,11 +258,16 @@ public: // debug
     ftxui::Element getPlayerHpBar()
     {
         using namespace ftxui;
-        auto player_hp = player_->getComponent<Health>();
-        auto hp_percent =
-            player_hp->current_health_points / player_hp->max_health_points;
+        auto player_hp  = player_->getComponent<Health>();
+        auto hp_percent = player_hp->current_health_points /
+                          static_cast<float>(player_hp->max_health_points);
 
-        return gaugeRight(hp_percent) | borderRounded;
+        return vbox(
+            {text(std::to_string(player_hp->current_health_points) + " / " +
+                  std::to_string(player_hp->max_health_points)) |
+                 hcenter,
+             gaugeRight(hp_percent) | color(Color::RGB(255, 0, 0)) |
+                 borderRounded});
     }
 
     ftxui::Element getPlayerXpBar()
@@ -216,22 +281,30 @@ public: // debug
         {
             adjusted_xp -= i * 25;
         }
-        auto xp_percentage = adjusted_xp / ((player_xp->level + 1) * 25);
-        return hbox({text(std::to_string(player_xp->level)) | borderRounded,
-                     gaugeRight(xp_percentage) | borderRounded,
-                     text(std::to_string(player_xp->level + 1))});
+        auto xp_percentage =
+            adjusted_xp / static_cast<float>((player_xp->level + 1) * 25);
+        return vbox(
+            {text(std::to_string(adjusted_xp) + " / " +
+                  std::to_string((player_xp->level + 1) * 25)),
+             hbox({text(std::to_string(player_xp->level)) | borderRounded,
+                   gaugeRight(xp_percentage) | color(Color::YellowLight) |
+                       borderRounded,
+                   text(std::to_string(player_xp->level + 1)) |
+                       borderRounded})});
     }
 
     ftxui::Element getPlayerHungerBar()
     {
         using namespace ftxui;
         auto player_hunger  = player_->getComponent<HungerComponent>();
-        auto hunger_percent = player_hunger->hunger / player_hunger->max_hunger;
+        auto hunger_percent = player_hunger->hunger /
+                              static_cast<float>(player_hunger->max_hunger);
 
         return vbox(
             {text("Nutrition: " + std::to_string(player_hunger->hunger) +
                   " / " + std::to_string(player_hunger->max_hunger)),
-             gaugeRight(hunger_percent) | borderRounded});
+             gaugeRight(hunger_percent) | color(Color::RGB(155, 103, 60)) |
+                 borderRounded});
     }
 
     ftxui::Element getPlayerAttackRating()
@@ -266,14 +339,54 @@ public: // debug
         return vbox(text("Armor Class"), text(armor_rating)) | borderRounded;
     }
 
-    ftxui::Element getPlayerEquipment() {
+    ftxui::Element getPlayerEquipment()
+    {
         using namespace ftxui;
-
+        Elements    equipment;
+        std::string item_name{};
+        Rarity      item_rarity{};
+        if (auto weapon = player_->getComponent<WeaponSlot>()->weapon_item)
+        {
+            item_name   = weapon->getConstComponent<Name>()->name;
+            item_rarity = weapon->getConstComponent<ItemComponent>()->rarity;
+            equipment.push_back(text(item_name) | hcenter |
+                                color(getColorByRarity(item_rarity)));
+        }
+        if (auto armor = player_->getComponent<ArmorSlot>()->armor_item)
+        {
+            item_name   = armor->getConstComponent<Name>()->name;
+            item_rarity = armor->getConstComponent<ItemComponent>()->rarity;
+            equipment.push_back(text(item_name) | hcenter |
+                                color(getColorByRarity(item_rarity)));
+        }
+        for (auto &ring : player_->getComponent<AmuletSlot>()->amulet_slots)
+        {
+            item_name   = ring->getConstComponent<Name>()->name;
+            item_rarity = ring->getConstComponent<ItemComponent>()->rarity;
+            equipment.push_back(text(item_name) | hcenter |
+                                color(getColorByRarity(item_rarity)));
+        }
+        return vbox(equipment) | borderRounded;
     }
 
-    ftxui::Element getPlayerEffects() {}
+    ftxui::Element getPlayerEffects()
+    {
+        using namespace ftxui;
+        Elements buffs;
+        for (auto &buff : player_->getConstComponent<BuffComponent>()->buffs)
+        {
+            buffs.push_back(text(getEffectName(buff.first)) | hcenter |
+                            bgcolor(getColorByEffect(buff.first)));
+        }
+        return vbox(buffs) | borderRounded;
+    }
 
-    ftxui::Element getLastDamagedEnemy() {}
+    ftxui::Element getLastDamagedEnemy()
+    {
+        using namespace ftxui;
+        // to be done :)
+        return vbox();
+    }
 
 public:
     void assignNewMap(observer_ptr<std::vector<std::vector<Tile>>> map)
@@ -288,8 +401,9 @@ public:
     void render() {}
 
     GameScreen(observer_ptr<std::vector<std::vector<Tile>>> map,
+               observer_ptr<Entity>                         player,
                PositionSystem                              &pos_sys)
-        : game_map_{map}, pos_system_{pos_sys}
+        : game_map_{map}, player_{player}, pos_system_{pos_sys}
     {
         using namespace ftxui;
         // colors
