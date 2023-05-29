@@ -124,6 +124,19 @@ public:
         return static_cast<ComponentType *>(it->second.get());
     }
 
+    template <class ComponentType>
+    observer_ptr<const ComponentType> getConstComponent() const
+    {
+        if (auto it = components_.find(typeid(ComponentType));
+            it != components_.end())
+        {
+            auto component_ptr =
+                static_cast<const ComponentType *>(it->second.get());
+            return observer_ptr<const ComponentType>(component_ptr);
+        }
+        return nullptr;
+    }
+
     friend std::ostream &operator<<(std::ostream &os, const Entity &entity);
     friend std::istream &operator>>(std::istream &is, Entity &entity);
 
