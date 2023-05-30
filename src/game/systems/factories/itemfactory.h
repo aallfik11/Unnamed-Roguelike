@@ -369,11 +369,10 @@ public:
         ring_effect_distro_        = std::uniform_int_distribution<>(0, 1);
 
         potion_effect_map_[0]      = Effect::HEAL | Effect::APPLY_ONCE;
-        potion_effect_map_[1] =
-            Effect::HEAL; // regenset exec-wrapper env -u LINES -u COLUMNS
-        potion_effect_map_[2] = Effect::IRONSKIN | Effect::APPLY_ONCE;
-        potion_effect_map_[3] = Effect::STRENGTH | Effect::APPLY_ONCE;
-        potion_effect_distro_ = std::uniform_int_distribution<>(0, 3);
+        potion_effect_map_[1]      = Effect::HEAL;
+        potion_effect_map_[2]      = Effect::IRONSKIN | Effect::APPLY_ONCE;
+        potion_effect_map_[3]      = Effect::STRENGTH | Effect::APPLY_ONCE;
+        potion_effect_distro_      = std::uniform_int_distribution<>(0, 3);
 
         // analogously to damage ranges
         rarity_armor_ranges_[Rarity::COMMON]    = {11, 15};
@@ -661,6 +660,26 @@ public:
         {
             item->addComponent(component);
         }
+
+        TileAppearance item_appearance{};
+        switch (item->getComponent<ItemComponent>()->type)
+        {
+        case ItemType::WEAPON:
+            item_appearance = TileAppearance::WEAPON;
+            break;
+        case ItemType::ARMOR:
+            item_appearance = TileAppearance::ARMOR;
+            break;
+        case ItemType::RING:
+            item_appearance = TileAppearance::RING;
+            break;
+        case ItemType::POTION:
+            item_appearance = TileAppearance::POTION;
+            break;
+        case ItemType::FOOD:
+            item_appearance = TileAppearance::FOOD;
+        }
+        item->addComponent(new TileComponent(item_appearance));
 
         auto sys_message = {
             std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::ADD),
