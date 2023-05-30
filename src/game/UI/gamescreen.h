@@ -20,6 +20,8 @@
 #include "../systems/positionsystem.h"
 #include "../tile.h"
 #include <barrier>
+#include <ftxui/component/component.hpp>
+#include <ftxui/component/event.hpp>
 #include <ftxui/component/screen_interactive.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <memory>
@@ -105,10 +107,11 @@ public: // debug
         }
     }
 
-    std::string getEffectName(Effect effect) const
+    inline std::string getEffectName(Effect effect) const
     {
         auto effect_cpy = effect;
-        effect_cpy &= ~(Effect::APPLIED | Effect::PERMANENT | Effect::APPLY_ONCE);
+        effect_cpy &=
+            ~(Effect::APPLIED | Effect::PERMANENT | Effect::APPLY_ONCE);
         std::string name = "";
         switch (effect_cpy)
         {
@@ -125,15 +128,15 @@ public: // debug
             name = "POISON";
             break;
         case Effect::IRONSKIN:
-          name = "IRONSKIN";
-          break;
+            name = "IRONSKIN";
+            break;
         case Effect::STRENGTH:
             name = "STRENGTH";
             break;
         default:
             name = "INVALID";
         }
-        if((effect & Effect::PERMANENT) != Effect::NONE)
+        if ((effect & Effect::PERMANENT) != Effect::NONE)
         {
             name += " PERM";
         }
@@ -255,7 +258,7 @@ public: // debug
                      getPlayerEffects()});
     }
 
-    ftxui::Element getPlayerHpBar()
+    inline ftxui::Element getPlayerHpBar()
     {
         using namespace ftxui;
         auto player_hp  = player_->getComponent<Health>();
@@ -270,7 +273,7 @@ public: // debug
                  borderRounded});
     }
 
-    ftxui::Element getPlayerXpBar()
+    inline ftxui::Element getPlayerXpBar()
     {
         using namespace ftxui;
         auto player_xp   = player_->getComponent<ExperienceComponent>();
@@ -293,7 +296,7 @@ public: // debug
                        borderRounded})});
     }
 
-    ftxui::Element getPlayerHungerBar()
+    inline ftxui::Element getPlayerHungerBar()
     {
         using namespace ftxui;
         auto player_hunger  = player_->getComponent<HungerComponent>();
@@ -307,7 +310,7 @@ public: // debug
                  borderRounded});
     }
 
-    ftxui::Element getPlayerAttackRating()
+    inline ftxui::Element getPlayerAttackRating()
     {
         using namespace ftxui;
         std::string attack_damage{};
@@ -323,7 +326,7 @@ public: // debug
         return vbox(text("Attack Damage"), text(attack_damage)) | borderRounded;
     }
 
-    ftxui::Element getPlayerArmorRating()
+    inline ftxui::Element getPlayerArmorRating()
     {
 
         using namespace ftxui;
@@ -339,7 +342,7 @@ public: // debug
         return vbox(text("Armor Class"), text(armor_rating)) | borderRounded;
     }
 
-    ftxui::Element getPlayerEquipment()
+    inline ftxui::Element getPlayerEquipment()
     {
         using namespace ftxui;
         Elements    equipment;
@@ -369,7 +372,7 @@ public: // debug
         return vbox(equipment) | borderRounded;
     }
 
-    ftxui::Element getPlayerEffects()
+    inline ftxui::Element getPlayerEffects()
     {
         using namespace ftxui;
         Elements buffs;
@@ -381,7 +384,7 @@ public: // debug
         return vbox(buffs) | borderRounded;
     }
 
-    ftxui::Element getLastDamagedEnemy()
+    inline ftxui::Element getLastDamagedEnemy()
     {
         using namespace ftxui;
         // to be done :)
@@ -398,7 +401,17 @@ public:
     {
         this->player_ = player;
     }
-    void render() {}
+    ftxui::Element render()
+    {
+        using namespace ftxui;
+        return hbox({
+
+                   getSidebar(),
+                   separatorLight(),
+                   getMapBox(),
+               }) |
+               borderRounded | center | flex_shrink;
+    }
 
     GameScreen(observer_ptr<std::vector<std::vector<Tile>>> map,
                observer_ptr<Entity>                         player,
