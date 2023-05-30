@@ -125,6 +125,7 @@ class System
     static std::shared_ptr<MessageMap> system_messages_;
 
 public:
+    friend class GameScreen;
     virtual void          updateData()          = 0;
     virtual void          readSystemMessages()  = 0;
     virtual void          clearSystemMessages() = 0;
