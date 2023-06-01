@@ -1,4 +1,6 @@
 #include "src/game/UI/gamescreen.h"
+#include "src/game/UI/inventory.h"
+#include "src/game/UI/logs.h"
 #include "src/game/UI/mainmenu.h"
 #include "src/game/systems/effectsystem.h"
 #include "src/game/systems/entitymanager.h"
@@ -14,7 +16,26 @@
 int main()
 {
     // MainMenu      main_menu;
-    int                            load = 1;
+    int       load = 0;
+    LogSystem log_sys;
+    Logs      logs(log_sys);
+
+    std::vector<std::string> log_tests = {
+        "log1",
+        "somewhat long message happens here",
+        "very very very very very very very very very very very very very very "
+        "very very very very very very very very very very very very very very "
+        "very very very very very very very very very very very very very very "
+        "very very very very very very very very very very very very very long "
+        "messagelog (unlikely)"};
+    for (auto &log : log_tests)
+    {
+        System::sendSystemMessage(SystemType::LOG,
+                                  {std::make_any<std::string>(log)});
+    }
+
+    log_sys.readSystemMessages();
+
     // std::cin >> load;
     std::random_device             rd;
     std::mt19937                   mt(rd());
@@ -155,5 +176,6 @@ int main()
                                               return false;
                                           });
     auto loop         = ftxui::Loop(&scr, eventhandler);
-    loop.Run();
+    // loop.Run();
+    logs.open();
 }
