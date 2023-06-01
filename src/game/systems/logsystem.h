@@ -6,11 +6,10 @@
 #include <list>
 #include <string>
 
-class Logs;
-
 class LogSystem : public System
 {
     friend class GameScreen;
+    friend class Logs;
     std::list<std::string> logs_;
 
 public:
@@ -23,7 +22,10 @@ public:
         }
     }
     void updateData() override {}
-    void clearSystemMessages() override {}
+    void clearSystemMessages() override
+    {
+        (*system_messages_)[SystemType::LOG].clear();
+    }
 };
 
 #endif /*LOGSYSTEM_H*/
