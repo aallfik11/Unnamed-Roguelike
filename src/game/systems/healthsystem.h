@@ -77,7 +77,8 @@ public:
                 else
                     health_ptr->max_health_points = max_health + amount;
             }
-            if (health_ptr->alive == false)
+            if (health_ptr->alive == false &&
+                (entity->type & EntityType::PLAYER) == EntityType::NONE)
             {
                 sendSystemMessage(
                     SystemType::AI,
