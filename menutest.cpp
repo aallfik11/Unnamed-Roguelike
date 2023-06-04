@@ -8,6 +8,7 @@
 #include "src/game/systems/factories/monsterfactory.h"
 #include "src/game/systems/generators/cavegenerator.h"
 #include "src/game/systems/generators/debugmapgenerator.h"
+#include "src/game/systems/inventorysystem.h"
 #include "src/game/systems/positionsystem.h"
 #include <chrono>
 #include <filesystem>
@@ -16,9 +17,11 @@
 int main()
 {
     // MainMenu      main_menu;
-    int       load = 0;
-    LogSystem log_sys;
-    Logs      logs(log_sys);
+    int         load = 0;
+    LogSystem   log_sys;
+    Logs        logs(log_sys);
+    InventoryUI inv_ui;
+    InventorySystem inv_sys;
 
     std::vector<std::string> log_tests = {
         "log1",
@@ -101,6 +104,13 @@ int main()
         inventory->inventory.push_back(weapon);
         inventory->inventory.push_back(armor);
         inventory->inventory.push_back(ring);
+        std::list<observer_ptr<Entity>> items_to_add;
+        for(int i = 0; i < 5; ++i)
+        {
+            items_to_add.emplace_back(it_fac.generateFoodRation());
+        }
+        items_to_add.emplace_back(it_fac.generatePotion());
+        inv_sys.addToInventory(player, items_to_add);
 
         eff_sys.addEntity(player);
         eff_sys.addEffects(player, ring->getComponent<BuffComponent>());
@@ -165,17 +175,36 @@ int main()
             return game_screen.render();
         });
 
-    auto eventhandler = ftxui::CatchEvent(renderer,
-                                          [&](ftxui::Event event)
-                                          {
-                                              if (event == ftxui::Event::Escape)
-                                              {
-                                                  scr.Exit();
-                                                  return true;
-                                              }
-                                              return false;
-                                          });
-    auto loop         = ftxui::Loop(&scr, eventhandler);
-    // loop.Run();
-    logs.open();
+    using namespace ftxui;
+
+    auto eventhandler =
+        ftxui::CatchEvent(renderer,
+                          [&](Event event)
+                          {
+                              if (event.is_mouse())
+                              {
+                                  return false;
+                              }
+                              if (event == Event::Escape)
+                              {
+                                  scr.Exit();
+                                  return true;
+                              }
+                              if (event == Event::Character("l") ||
+                                  event == Event::Character("L"))
+                              {
+                                  logs.open();
+                                  return true;
+                              }
+                              if (event == Event::Character("i") ||
+                                  event == Event::Character("I"))
+                              {
+                                  inv_ui.render(player, scr);
+                                  return true;
+                              }
+                              return false;
+                          });
+    auto loop = ftxui::Loop(&scr, eventhandler);
+    loop.Run();
+    // logs.open();
 }
