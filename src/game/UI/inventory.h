@@ -25,6 +25,9 @@
 
 class InventoryUI
 {
+    bool is_stats_open_;
+    bool is_desc_open_;
+
     inline ftxui::Color getColorByRarity(Rarity rarity) const
     {
         using namespace ftxui;
@@ -106,6 +109,7 @@ class InventoryUI
         using namespace ftxui;
         auto  item_component = item->getComponent<ItemComponent>();
         Color col            = getColorByRarity(item_component->rarity);
+        auto  is_equipped    = item_component->equipped;
 
         MenuEntryOption option;
         option.animated_colors.foreground.enabled = true;
@@ -116,10 +120,10 @@ class InventoryUI
         // ftxui::Color::DarkSlateGray1;
         // option.animated_colors.background.inactive = ftxui::Color::Black;
 
-        option.transform = [&item_component, col](EntryState state)
+        option.transform = [is_equipped, col](EntryState state)
         {
             Element elem = text(state.label) | color(col);
-            if (item_component->equipped)
+            if (is_equipped == true)
             {
                 elem = hbox({elem, text(" E") | color(Color::White)});
             }
@@ -131,9 +135,86 @@ class InventoryUI
         };
         return option;
     }
+    std::string getEffectDuration(Effect                        key,
+                                  observer_ptr<EffectComponent> effect)
+    {
+        std::string duration{};
+        if ((key & Effect::PERMANENT) == Effect::NONE)
+        {
+            duration =
+                " - " + std::to_string(effect->effect_duration) + " turns";
+        }
+        return duration;
+    }
+
+    ftxui::Element getItemStats(observer_ptr<Entity> item)
+    {
+        using namespace ftxui;
+        Elements stats;
+        if (auto attack_rating = item->getComponent<WeaponComponent>())
+        {
+            stats.emplace_back(
+                text("Attack Power: " + std::to_string(attack_rating->damage)));
+        }
+
+        if (auto armor_rating = item->getComponent<ArmorComponent>())
+        {
+            stats.emplace_back(text("Armor Class: " +
+                                    std::to_string(armor_rating->armor_class)));
+        }
+        if (auto food_value = item->getComponent<HungerComponent>())
+        {
+            stats.emplace_back(
+                text("Saturation: " + std::to_string(food_value->hunger)));
+        }
+        if (auto crit_component = item->getComponent<CritComponent>())
+        {
+            stats.emplace_back(text(
+                "Crit Chance: " + std::to_string(crit_component->crit_chance) +
+                "%"));
+            stats.emplace_back(
+                text("Crit Damage Multiplier: " +
+                     std::to_string(crit_component->crit_multiplier)));
+            if (crit_component->crit_effects->buffs.empty() != true)
+            {
+                stats.emplace_back(text("On-Crit Effects: "));
+                for (auto &[key, effect] : crit_component->crit_effects->buffs)
+                {
+                    stats.emplace_back(
+                        hbox({text(getEffectName(key) + " ") |
+                                  color(getColorByEffect(key)),
+                              text(std::to_string(effect->effect_strength) +
+                                   getEffectDuration(key, effect.get()))}));
+                }
+            }
+        }
+        if (auto buffs = item->getComponent<BuffComponent>())
+        {
+            if (buffs->buffs.empty() != true)
+            {
+                stats.emplace_back(text("Effects: "));
+                for (auto &[key, effect] : buffs->buffs)
+                {
+                    // auto key_clean = key & ~(Effect::APPLIED |
+                    // Effect::PERMANENT | Effect::APPLY_ONCE);
+                    stats.emplace_back(
+                        hbox({text(getEffectName(key) + " ") |
+                                  color(getColorByEffect(key)),
+                              text(std::to_string(effect->effect_strength) +
+                                   getEffectDuration(key, effect.get()))}));
+                }
+            }
+        }
+        return vbox(stats);
+    }
 
 public:
-    void render(observer_ptr<Entity> player)
+    InventoryUI()
+    {
+        is_desc_open_  = false;
+        is_stats_open_ = false;
+    }
+    void render(observer_ptr<Entity> player, ftxui::ScreenInteractive &scr)
     {
         auto &inventory = player->getComponent<Inventory>()->inventory;
         using namespace ftxui;
@@ -149,10 +230,45 @@ public:
             items.emplace_back(MenuEntry(item->getComponent<Name>()->name,
                                          getItemMenuEntry(item)));
         }
-        auto scr           = ScreenInteractive::Fullscreen();
+
+        // auto scr           = ScreenInteractive::Fullscreen();
         auto inv_container = Container::Vertical(items, &inventory_index);
-        auto key_handler   = CatchEvent(
-            inv_container,
+
+        auto renderer      = Renderer(
+            [&]
+            {
+                auto item = *std::next(inventory.begin(), inventory_index);
+                if (is_stats_open_ == true)
+                {
+                    return dbox(
+                        {inv_container->Render(),
+                         window(text(item->getComponent<Name>()->name) |
+                                    color(getColorByRarity(
+                                        item->getComponent<ItemComponent>()
+                                            ->rarity)) |
+                                    center,
+                                getItemStats(item)) |
+                             clear_under | center | flex_shrink});
+                }
+                if (is_desc_open_ == true)
+                {
+                    return dbox(
+                        {inv_container->Render(),
+                         window(text(item->getComponent<Name>()->name) |
+                                    color(getColorByRarity(
+                                        item->getComponent<ItemComponent>()
+                                            ->rarity)) |
+                                    center,
+                                paragraphAlignJustify(
+                                    item->getComponent<Description>()
+                                        ->description)) |
+                             clear_under | center | flex_shrink});
+                }
+                return inv_container->Render();
+            });
+
+        auto key_handler = CatchEvent(
+            renderer,
             [&](Event event)
             {
                 if (event == Event::Return)
@@ -170,17 +286,21 @@ public:
                 }
                 if (event == Event::Escape)
                 {
-
+                    scr.Exit();
                     return true;
                 }
                 if (event == Event::Character('s') ||
                     event == Event::Character('S'))
                 {
+                    is_desc_open_  = false;
+                    is_stats_open_ = (is_stats_open_) ? false : true;
                     return true;
                 }
                 if (event == Event::Character('d') ||
                     event == Event::Character('D'))
                 {
+                    is_desc_open_  = (is_desc_open_) ? false : true;
+                    is_stats_open_ = false;
                     return true;
                 }
                 if (event == Event::Character('r') ||
@@ -191,6 +311,7 @@ public:
 
                 return inv_container->OnEvent(event);
             });
+        scr.Loop(key_handler);
     }
 };
 
