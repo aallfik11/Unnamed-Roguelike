@@ -91,6 +91,11 @@ public:
                      std::make_any<uint32_t>(
                          entity->getComponent<ExperienceComponent>()
                              ->current_experience)});
+                sendSystemMessage(
+                    SystemType::POSITION,
+                    {std::make_any<SystemAction::POSITION>(
+                         SystemAction::POSITION::DELETE),
+                     std::make_any<observer_ptr<Entity>>(entity)});
                 if (entity->hasComponent<Inventory>() == true)
                 {
                     sendSystemMessage(

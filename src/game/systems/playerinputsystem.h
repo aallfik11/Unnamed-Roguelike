@@ -147,88 +147,13 @@ class PlayerControlSystem : public System, public EntityHolder
     void openInventory() {}
 
 public:
-    PlayerControlSystem(observer_ptr<Entity> const player,
-                        ftxui::Component          &main_screen)
+    PlayerControlSystem(observer_ptr<Entity> const player)
     {
         player_                = player;
         next_movement_         = Direction::NONE;
         last_hit_entity_timer_ = 0;
 
         using namespace ftxui;
-
-        inv_renderer_ = Renderer(
-            main_screen,
-            [&]
-            {
-                auto &player_inventory =
-                    player_->getComponent<Inventory>()->inventory;
-
-                inv_iterator_ = player_inventory.begin();
-                inv_index_    = 0;
-
-                Components entries;
-                for (auto &item : player_inventory)
-                {
-                    auto &name           = item->getComponent<Name>()->name;
-                    auto  item_component = item->getComponent<ItemComponent>();
-                    entries.emplace_back(
-                        MenuEntry(name, getItemAppearance(item_component)));
-                }
-
-                auto inv_container = Container::Vertical(entries, &inv_index_);
-
-                return dbox(main_screen->Render(),
-                            inv_container->Render() | center | flex_shrink |
-                                clear_under);
-            });
-
-        auto iterateToItem = [&](int8_t n)
-        {
-            auto size = player_->getComponent<Inventory>()->inventory.size();
-
-            if (inv_index_ + n < size && inv_index_ + n >= 0)
-            {
-                (n > 0) ? inv_iterator_++ : inv_iterator_--;
-                inv_index_ += n;
-            }
-        };
-
-        inv_input_handler_ = CatchEvent(inv_renderer_,
-                                        [&](Event event)
-                                        {
-                                            if (event.is_mouse())
-                                                return false;
-
-                                            if (event == Event::ArrowUp)
-                                            {
-                                                iterateToItem(-1);
-                                                return true;
-                                            }
-
-                                            if (event == Event::ArrowDown)
-                                            {
-                                                iterateToItem(1);
-                                                return true;
-                                            }
-
-                                            if (event == Event::Character('d'))
-                                            {
-                                                iterateToItem(1);
-                                                return true;
-                                            }
-                                            if (event == Event::Character('s'))
-                                            {
-                                                iterateToItem(1);
-                                                return true;
-                                            }
-
-                                            if (event == Event::Character('r'))
-                                            {
-                                                // drop item
-                                                return true;
-                                            }
-                                            return false;
-                                        });
     }
 
     EntityType checkMovementDestination(
@@ -313,6 +238,7 @@ public:
                 SystemType::INVENTORY,
                 {std::make_any<SystemAction::INVENTORY>(
                      SystemAction::INVENTORY::ADD),
+                std::make_any<observer_ptr<Entity>>(player_),
                  std::make_any<std::list<observer_ptr<Entity>>>(
                      entities_at_destination)});
         }
