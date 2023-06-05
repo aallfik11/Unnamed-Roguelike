@@ -14,6 +14,7 @@
 #include "../observerptr.h"
 #include "../rarity.h"
 #include "../system.h"
+#include "../systems/inventorysystem.h"
 #include <any>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/event.hpp>
@@ -25,8 +26,9 @@
 
 class InventoryUI
 {
-    bool is_stats_open_;
-    bool is_desc_open_;
+    bool             is_stats_open_;
+    bool             is_desc_open_;
+    InventorySystem &inv_sys_;
 
     inline ftxui::Color getColorByRarity(Rarity rarity) const
     {
@@ -209,7 +211,7 @@ class InventoryUI
     }
 
 public:
-    InventoryUI()
+    InventoryUI(InventorySystem &inv_sys) : inv_sys_{inv_sys}
     {
         is_desc_open_  = false;
         is_stats_open_ = false;
@@ -273,14 +275,16 @@ public:
             {
                 if (event == Event::Return)
                 {
-                    System::sendSystemMessage(
-                        SystemType::INVENTORY,
-                        {std::make_any<SystemAction::INVENTORY>(
-                             SystemAction::INVENTORY::USE),
-                         std::make_any<observer_ptr<Entity>>(player),
-                         std::make_any<uint32_t>(static_cast<uint32_t>(
-                             inventory_index))}); // bad idea for now, can lead
-                                                  // to exploits
+                    // System::sendSystemMessage(
+                    //     SystemType::INVENTORY,
+                    //     {std::make_any<SystemAction::INVENTORY>(
+                    //          SystemAction::INVENTORY::USE),
+                    //      std::make_any<observer_ptr<Entity>>(player),
+                    //      std::make_any<uint32_t>(static_cast<uint32_t>(
+                    //          inventory_index))}); // bad idea for now, can
+                    //          lead
+                    //                               // to exploits
+                    inv_sys_.useItem(player, inventory_index);
 
                     return true;
                 }
@@ -306,6 +310,17 @@ public:
                 if (event == Event::Character('r') ||
                     event == Event::Character('R'))
                 {
+                    auto inv_size = inventory.size();
+                    inv_sys_.dropFromInventory(player, inventory_index);
+                    if (inventory.size() != inv_size)
+                    {
+                        if (inventory_index != 0)
+                        {
+                            --inventory_index;
+                        }
+                        else
+                            ++inventory_index;
+                    }
                     return true;
                 }
 
