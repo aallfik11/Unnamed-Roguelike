@@ -13,7 +13,7 @@ class ItemComponent : public Component
 {
     /*debug*/ bool isEqual(const observer_ptr<const Component> c) const override
     {
-        auto i = static_observer_cast<const ItemComponent>(c);
+        auto i = static_cast<const ItemComponent *>(c);
         return (this->type == i->type && this->stack == i->stack &&
                 this->max_stack == i->max_stack && this->rarity == i->rarity &&
                 this->equipped == i->equipped);

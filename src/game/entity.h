@@ -2,7 +2,7 @@
 #define ENTITY_H
 #include "component.h"
 #include "entitytypes.h"
-#include "observerptr.h"
+// #include "observerptr.h"
 #include <algorithm>
 #include <iostream>
 #include <memory>
@@ -125,14 +125,12 @@ public:
     }
 
     template <class ComponentType>
-    observer_ptr<const ComponentType> getConstComponent() const
+    const ComponentType* getConstComponent() const
     {
         if (auto it = components_.find(typeid(ComponentType));
             it != components_.end())
         {
-            auto component_ptr =
-                static_cast<const ComponentType *>(it->second.get());
-            return observer_ptr<const ComponentType>(component_ptr);
+        return static_cast<const ComponentType *>(it->second.get());
         }
         return nullptr;
     }

@@ -22,7 +22,7 @@ class AmuletSlot : public Component, public EntityHolder
 
     /*debug*/ bool isEqual(const observer_ptr<const Component> c) const override
     {
-        auto a = static_observer_cast<const AmuletSlot>(c);
+        auto a = static_cast<const AmuletSlot*>(c);
         std::unordered_set<uint32_t> this_amulet_ids;
         std::unordered_set<uint32_t> other_amulet_ids;
         for (auto &amulet : this->amulet_slots)
@@ -65,7 +65,7 @@ class AmuletSlot : public Component, public EntityHolder
             auto message = {
                 std::make_any<SystemAction::ENTITY>(
                     SystemAction::ENTITY::REQUEST),
-                std::make_any<observer_ptr<EntityHolder>>(this),
+                std::make_any<EntityHolder*>(this),
                 std::make_any<std::list<uint32_t>>(entities_requested)};
 
             System::sendSystemMessage(SystemType::ENTITY, message);
@@ -94,7 +94,7 @@ public:
             auto new_amulet = new Entity(*amulet);
             auto message    = {
                 std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::ADD),
-                std::make_any<observer_ptr<Entity>>(new_amulet)};
+                std::make_any<Entity>(new_amulet)};
             System::sendSystemMessage(SystemType::ENTITY, message);
             this->amulet_slots.emplace(new_amulet);
         }
@@ -106,7 +106,7 @@ public:
     {
         for (auto entity : entities)
         {
-            amulet_slots.insert(static_observer_cast<const Entity>(entity));
+            amulet_slots.insert(entity);
         }
     }
 };

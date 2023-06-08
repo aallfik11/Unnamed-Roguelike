@@ -13,7 +13,7 @@ class CritComponent : public Component
 
     /*debug*/ bool isEqual(const observer_ptr<const Component> c) const override
     {
-        auto crit = static_observer_cast<const CritComponent>(c);
+        auto crit = static_cast<const CritComponent *>(c);
         if (*(this->crit_effects) != *(crit->crit_effects))
             return false;
         if (this->crit_chance != crit->crit_chance)

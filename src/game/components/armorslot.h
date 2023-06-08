@@ -15,7 +15,7 @@ class ArmorSlot : public Component, public EntityHolder
 {
     /*debug*/ bool isEqual(const observer_ptr<const Component> c) const override
     {
-        auto a = static_observer_cast<const ArmorSlot>(c);
+        auto a = static_cast<const ArmorSlot *>(c);
         if (this->armor_item == nullptr && a->armor_item == nullptr)
             return true;
         return (*(this->armor_item) == *(a->armor_item));
@@ -52,12 +52,9 @@ class ArmorSlot : public Component, public EntityHolder
     }
 
 public:
-    observer_ptr<Entity> armor_item;
+    Entity *armor_item;
 
-    ArmorSlot(observer_ptr<Entity> armor_item = nullptr)
-    {
-        this->armor_item = armor_item;
-    }
+    ArmorSlot(Entity *armor_item = nullptr) { this->armor_item = armor_item; }
 
     ArmorSlot(const ArmorSlot &armor_slot)
     {

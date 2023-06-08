@@ -11,7 +11,7 @@ class Coordinates : public Component
 {
     /*debug*/ bool isEqual(const observer_ptr<const Component> c) const override
     {
-        auto coords = static_observer_cast<const Coordinates>(c);
+        auto coords = static_cast<const Coordinates *>(c);
         return (this->x == coords->x && this->y == coords->y);
     }
 

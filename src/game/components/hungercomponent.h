@@ -12,7 +12,7 @@ class HungerComponent : public Component
 
     /*debug*/ bool isEqual(const observer_ptr<const Component> c) const override
     {
-        auto h = static_observer_cast<const HungerComponent>(c);
+        auto h = static_cast<const HungerComponent *>(c);
         return (this->hunger == h->hunger && this->max_hunger == h->max_hunger);
     }
     HungerComponent *cloneImpl() const override

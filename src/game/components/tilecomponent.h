@@ -13,7 +13,7 @@ class TileComponent : public Component
 {
     /*debug*/ bool isEqual(const observer_ptr<const Component> c) const override
     {
-        auto t = static_observer_cast<const TileComponent>(c);
+        auto t = static_cast<const TileComponent *>(c);
         return (this->sprite == t->sprite);
     }
     TileComponent *cloneImpl() const override

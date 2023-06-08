@@ -15,7 +15,7 @@ class WeaponSlot : public Component, public EntityHolder
 
     /*debug*/ bool isEqual(const observer_ptr<const Component> c) const override
     {
-        auto w = static_observer_cast<const WeaponSlot>(c);
+        auto w = static_cast<const WeaponSlot *>(c);
         if (this->weapon_item == nullptr && w->weapon_item == nullptr)
         {
             return true;
@@ -60,9 +60,9 @@ class WeaponSlot : public Component, public EntityHolder
     }
 
 public:
-    observer_ptr<Entity> weapon_item;
+    Entity *weapon_item;
 
-    WeaponSlot(observer_ptr<Entity> weapon_item = nullptr)
+    WeaponSlot(Entity *weapon_item = nullptr)
     {
         this->weapon_item = weapon_item;
     }

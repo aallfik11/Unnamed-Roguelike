@@ -17,7 +17,7 @@ class BuffComponent : public Component
 {
     /*debug*/ bool isEqual(const observer_ptr<const Component> c) const override
     {
-        auto b = static_observer_cast<const BuffComponent>(c);
+        auto b = static_cast<const BuffComponent*>(c);
         for (auto &[effect, effect_ptr] : this->buffs)
         {
             if (b->buffs.contains(effect) == false)

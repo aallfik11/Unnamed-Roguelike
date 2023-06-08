@@ -10,7 +10,7 @@ class ArmorComponent : public Component
 {
     /*debug*/ bool isEqual(const observer_ptr<const Component> c) const override
     {
-        auto a = static_observer_cast<const ArmorComponent>(c);
+        auto a = static_cast<const ArmorComponent*>(c);
         return (this->armor_class == a->armor_class);
     }
     ArmorComponent *cloneImpl() const override

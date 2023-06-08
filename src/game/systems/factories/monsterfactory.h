@@ -2,7 +2,6 @@
 #define MONSTERFACTORY_H
 #include "../../components/components_all.h"
 #include "../../monsters.h"
-#include "../../observerptr.h"
 #include "../../system.h"
 #include "../../tile.h"
 #include "itemfactory.h"
@@ -336,17 +335,17 @@ class MonsterFactory
     Entity *generateBaseMonster()
     {
         return new Entity(EntityType::CREATURE,
-                          {new Name(),
-                           new AIComponent(),
-                           new LOSComponent(),
-                           new NavMapComponent(),
-                           new Health(),
-                           new WeaponComponent(),
-                           new ArmorComponent(),
-                           new CritComponent(),
-                           new BuffComponent(),
-                           new Coordinates(),
-                           new TileComponent(),
+                          {new Name,
+                           new AIComponent,
+                           new LOSComponent,
+                           new NavMapComponent,
+                           new Health,
+                           new WeaponComponent,
+                           new ArmorComponent,
+                           new CritComponent,
+                           new BuffComponent,
+                           new Coordinates,
+                           new TileComponent,
                            new ExperienceComponent});
     }
 
@@ -670,7 +669,7 @@ class MonsterFactory
         System::sendSystemMessage(SystemType::POSITION,
                                   {std::make_any<SystemAction::POSITION>(
                                        SystemAction::POSITION::UPDATE),
-                                   std::make_any<observer_ptr<Entity>>(monster),
+                                   std::make_any<Entity*>(monster),
                                    std::make_any<uint16_t>(x),
                                    std::make_any<uint16_t>(y)});
     }
@@ -790,24 +789,24 @@ public:
             placeMonster(monster);
             auto message = {
                 std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::ADD),
-                std::make_any<observer_ptr<Entity>>(monster)};
+                std::make_any<Entity*>(monster)};
             System::sendSystemMessage(SystemType::ENTITY, message);
             System::sendSystemMessage(
                 SystemType::AI,
                 {std::make_any<SystemAction::AI>(SystemAction::AI::ADD),
-                 std::make_any<observer_ptr<Entity>>(monster)});
+                 std::make_any<Entity*>(monster)});
 
             System::sendSystemMessage(
                 SystemType::LINE_OF_SIGHT,
                 {std::make_any<SystemAction::LINE_OF_SIGHT>(
                      SystemAction::LINE_OF_SIGHT::ADD),
-                 std::make_any<observer_ptr<Entity>>(monster)});
+                 std::make_any<Entity*>(monster)});
 
             System::sendSystemMessage(
                 SystemType::EFFECT,
                 {std::make_any<SystemAction::EFFECT>(
                      SystemAction::EFFECT::ADD_ENTITY),
-                 std::make_any<observer_ptr<Entity>>(monster)});
+                 std::make_any<Entity*>(monster)});
         }
 
         return monsters;

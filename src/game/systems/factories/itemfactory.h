@@ -532,10 +532,10 @@ public:
             entity->addComponent(new Coordinates(x, y));
             auto entity_message = {
                 std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::ADD),
-                std::make_any<observer_ptr<Entity>>(entity)};
+                std::make_any<Entity*>(entity)};
             auto pos_message = {std::make_any<SystemAction::POSITION>(
                                     SystemAction::POSITION::ADD),
-                                std::make_any<observer_ptr<Entity>>(entity)};
+                                std::make_any<Entity*>(entity)};
             System::sendSystemMessage(SystemType::ENTITY, entity_message);
             System::sendSystemMessage(SystemType::POSITION, pos_message);
         }

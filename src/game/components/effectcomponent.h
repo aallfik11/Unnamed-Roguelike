@@ -12,7 +12,7 @@ class EffectComponent : public Component
 {
     /*debug*/ bool isEqual(const observer_ptr<const Component> c) const override
     {
-        auto e = static_observer_cast<const EffectComponent>(c);
+        auto e = static_cast<const EffectComponent *>(c);
         return (this->effect == e->effect &&
                 this->effect_strength == e->effect_strength &&
                 this->effect_duration == e->effect_duration);

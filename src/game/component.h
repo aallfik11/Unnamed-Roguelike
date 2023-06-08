@@ -78,7 +78,7 @@ public:
     }
     /*debug*/ bool operator==(const Component &c) const
     {
-        return this->isEqual(c);
+        return this->isEqual(&c);
     };
 };
 

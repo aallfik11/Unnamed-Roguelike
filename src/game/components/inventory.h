@@ -15,7 +15,7 @@ class Inventory : public Component, public EntityHolder
 {
     /*debug*/ bool isEqual(const observer_ptr<const Component> c) const override
     {
-        auto i = static_observer_cast<const Inventory>(c);
+        auto i = static_cast<const Inventory *>(c);
         for (auto &entity : this->inventory)
         {
             bool found = false;
@@ -68,7 +68,7 @@ class Inventory : public Component, public EntityHolder
     }
 
 public:
-    std::list<observer_ptr<Entity>> inventory;
+    std::list<Entity *> inventory;
 
     Inventory(){};
 

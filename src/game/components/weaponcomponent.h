@@ -12,7 +12,7 @@ class WeaponComponent : public Component
 
     /*debug*/ bool isEqual(const observer_ptr<const Component> c) const override
     {
-        auto w = static_observer_cast<const WeaponComponent>(c);
+        auto w = static_cast<const WeaponComponent *>(c);
         return (this->damage == w->damage);
     }
     WeaponComponent *cloneImpl() const override

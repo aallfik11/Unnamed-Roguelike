@@ -12,7 +12,7 @@ class Description : public Component
 {
     /*debug*/ bool isEqual(const observer_ptr<const Component> c) const override
     {
-        auto d = static_observer_cast<const Description>(c);
+        auto d = static_cast<const Description *>(c);
         return (this->description == d->description);
     }
 

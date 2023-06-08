@@ -67,7 +67,7 @@ class NavMapComponent : public Component
 {
     /*debug*/ bool isEqual(const observer_ptr<const Component> c) const override
     {
-        auto n = static_observer_cast<const NavMapComponent>(c);
+        auto n = static_cast<const NavMapComponent *>(c);
         for (std::size_t i = 0; i < this->nav_map.size(); ++i)
         {
             if (this->nav_map[i] != n->nav_map[i])
