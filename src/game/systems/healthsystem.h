@@ -22,9 +22,9 @@ class HealthSystem : public System
     std::list<Message> messages_;
 
 public:
-    inline void updateHealth(observer_ptr<Entity> const entity,
-                             uint16_t                   amount,
-                             SystemAction::HEALTH       action)
+    inline void updateHealth(observer_ptr<Entity> entity,
+                             uint16_t             amount,
+                             SystemAction::HEALTH action)
     {
         if (auto health_ptr = entity->getComponent<Health>())
         {
