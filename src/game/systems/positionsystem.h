@@ -15,6 +15,17 @@
 #include <unordered_set>
 #include <utility>
 
+namespace std
+{
+template <> struct hash<observer_ptr<Entity>>
+{
+    auto operator()(const observer_ptr<Entity> &entity_ptr) const -> size_t
+    {
+        return hash<uint32_t>()(entity_ptr->getId());
+    }
+};
+} // namespace std
+
 class PositionSystem : public System, public EntityHolder
 {
     using EntityId = uint32_t;
@@ -27,7 +38,6 @@ class PositionSystem : public System, public EntityHolder
     std::list<std::pair<uint16_t, uint16_t>> request_messages_;
     std::list<observer_ptr<Entity>>          addition_messages_;
     std::list<observer_ptr<Entity>>          removal_messages_;
-    std::pair<uint16_t, uint16_t>            player_coordinates_;
     GameMap                                 &map_;
 
     /**
@@ -160,7 +170,7 @@ public:
     }
 
     std::list<observer_ptr<Entity>> getEntitiesAtCoordinates(uint16_t x,
-                                                             uint16_t y) 
+                                                             uint16_t y)
     {
         std::list<observer_ptr<Entity>> entitiesAtCoordinates;
         for (auto &entity : entity_positions_)
@@ -204,16 +214,16 @@ public:
      */
     void deleteEntity(const observer_ptr<Entity> entity)
     {
-        if (auto entity_coords = entity->getComponent<Coordinates>())
-        {
-            TileType entity_tile_type = TileType::NONE;
-            if ((entity->type & (EntityType::CREATURE | EntityType::PLAYER)) !=
-                EntityType::NONE)
-                entity_tile_type = TileType::HAS_CREATURE;
-            else
-                entity_tile_type = TileType::HAS_ITEM;
-            map_[entity_coords->x][entity_coords->y].type &= ~entity_tile_type;
-        }
+        auto entity_coords        = entity->getComponent<Coordinates>();
+
+        TileType entity_tile_type = TileType::NONE;
+        if ((entity->type & (EntityType::CREATURE | EntityType::PLAYER)) !=
+            EntityType::NONE)
+            entity_tile_type = TileType::HAS_CREATURE;
+        else
+            entity_tile_type = TileType::HAS_ITEM;
+        map_[entity_coords->x][entity_coords->y].type &= ~entity_tile_type;
+
         entity_positions_.erase(entity);
     }
 
@@ -233,32 +243,6 @@ public:
                            std::get<1>(message),
                            std::get<2>(message));
         }
-        auto player_x = player_coordinates_.first;
-        auto player_y = player_coordinates_.second;
-        System::sendSystemMessage(
-            SystemType::PLAYER,
-            {std::make_any<SystemAction::PLAYER>(
-                 SystemAction::PLAYER::ENTITIES_UP),
-             std::make_any<std::list<observer_ptr<Entity>>>(
-                 getEntitiesAtCoordinates(player_x, player_y - 1))});
-        System::sendSystemMessage(
-            SystemType::PLAYER,
-            {std::make_any<SystemAction::PLAYER>(
-                 SystemAction::PLAYER::ENTITIES_DOWN),
-             std::make_any<std::list<observer_ptr<Entity>>>(
-                 getEntitiesAtCoordinates(player_x, player_y + 1))});
-        System::sendSystemMessage(
-            SystemType::PLAYER,
-            {std::make_any<SystemAction::PLAYER>(
-                 SystemAction::PLAYER::ENTITIES_LEFT),
-             std::make_any<std::list<observer_ptr<Entity>>>(
-                 getEntitiesAtCoordinates(player_x - 1, player_y))});
-        System::sendSystemMessage(
-            SystemType::PLAYER,
-            {std::make_any<SystemAction::PLAYER>(
-                 SystemAction::PLAYER::ENTITIES_RIGHT),
-             std::make_any<std::list<observer_ptr<Entity>>>(
-                 getEntitiesAtCoordinates(player_x + 1, player_y))});
     }
 
     void readSystemMessages()
@@ -304,14 +288,6 @@ public:
                 removal_messages_.emplace_back(entity);
                 break;
             }
-            case SystemAction::POSITION::RECEIVE_PLAYER_COORDINATES:
-            {
-                auto x = std::any_cast<uint16_t>(*message_iterator);
-                ++message_iterator;
-                auto y = std::any_cast<uint16_t>(*message_iterator);
-                player_coordinates_ = {x, y};
-                break;
-            }
             }
         }
     }
@@ -319,6 +295,10 @@ public:
     void clearSystemMessages() override
     {
         (*system_messages_)[SystemType::POSITION].clear();
+        addition_messages_.clear();
+        removal_messages_.clear();
+        pos_change_messages_.clear();
+        request_messages_.clear();
     }
 
     virtual std::ostream &serialize(std::ostream &os) const override
