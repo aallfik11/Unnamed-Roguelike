@@ -203,6 +203,7 @@ class InventorySystem : public System
             }
 
             caller_amulets->amulet_slots.emplace(item);
+            item_component->equipped = true;
             if (item_buffs != nullptr)
             {
                 addEquipmentBuff(caller_buffs, item_buffs);
@@ -368,6 +369,43 @@ public:
         return item;
     }
 
+    void dropAllItems(observer_ptr<Entity> caller)
+    {
+        auto caller_coords = caller->getComponent<Coordinates>();
+        for (auto &item : caller->getComponent<Inventory>()->inventory)
+        {
+            auto item_component = item->getComponent<ItemComponent>();
+
+            for (int i = 0; i < item_component->stack; ++i)
+            {
+                auto dropped_item = new Entity(*item);
+                dropped_item->getComponent<ItemComponent>()->stack = 1;
+                sendSystemMessage(
+                    SystemType::ENTITY,
+                    {std::make_any<SystemAction::ENTITY>(
+                         SystemAction::ENTITY::ADD),
+                     std::make_any<observer_ptr<Entity>>(dropped_item)});
+
+                if (item_component->equipped == true)
+                {
+                    item_component->equipped = false;
+                }
+                sendSystemMessage(
+                    SystemType::POSITION,
+                    {std::make_any<SystemAction::POSITION>(
+                         SystemAction::POSITION::UPDATE),
+                     std::make_any<observer_ptr<Entity>>(dropped_item),
+                     std::make_any<uint16_t>(caller_coords->x),
+                     std::make_any<uint16_t>(caller_coords->y)});
+            }
+            sendSystemMessage(SystemType::ENTITY,
+                              {std::make_any<SystemAction::ENTITY>(
+                                   SystemAction::ENTITY::PURGE),
+                               std::make_any<uint32_t>(item->getId())});
+        }
+        caller->getComponent<Inventory>()->inventory.clear();
+    }
+
     void useItem(const observer_ptr<Entity> caller, const uint32_t index)
     {
         auto inventory     = caller->getComponent<Inventory>()->inventory;
@@ -387,7 +425,6 @@ public:
             equip(caller, index);
         }
         else if ((item_type & ItemType::CONSUMABLE) != ItemType::NONE)
-            ;
         {
             consume(caller, index);
         }
@@ -445,11 +482,12 @@ public:
             {
                 auto entity =
                     std::any_cast<observer_ptr<Entity>>(*message_iterator);
-                auto inventory = entity->getComponent<Inventory>();
-                for (int i = 0; i < inventory->inventory.size(); ++i)
-                {
-                    drop_messages_.emplace_back(entity, i);
-                }
+                // auto inventory = entity->getComponent<Inventory>();
+                // for (int i = 0; i < inventory->inventory.size(); ++i)
+                // {
+                //     drop_messages_.emplace_back(entity, i);
+                // }
+                dropAllItems(entity);
             }
             case SystemAction::INVENTORY::TRANSFER:
             {
@@ -478,6 +516,5 @@ public:
         transfer_messages_.clear();
         drop_messages_.clear();
     }
-
 };
 #endif /*INVENTORYSYSTEM_H*/
