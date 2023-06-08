@@ -44,11 +44,11 @@ int main()
                                  new Inventory});
 
     int            depth = 0;
-    ItemFactory    it_fac(map, depth);
-    MonsterFactory monster_fac(it_fac, map, depth);
-
-    it_fac.generateItems();
-    monster_fac.generateMonsters();
+    // ItemFactory    it_fac(map, depth);
+    // MonsterFactory monster_fac(it_fac, map, depth);
+    //
+    // it_fac.generateItems();
+    // monster_fac.generateMonsters();
 
     NavMapManager nav_map_manager(
         map, entity_manager.getEntity(1)->getComponent<Coordinates>());
@@ -88,81 +88,15 @@ int main()
 
     using namespace ftxui;
 
-    auto scr            = ScreenInteractive::Fullscreen();
+    auto scr      = ScreenInteractive::Fullscreen();
 
-    auto renderer       = Renderer([&] { return game_screen.render(); });
+    auto renderer = Renderer([&] { return game_screen.render(); });
 
-    bool exit           = false;
-    bool update_systems = false;
-
-    auto input_handler  = CatchEvent(
-        renderer,
-        [&](Event event)
-        {
-            if (event.is_mouse())
-            {
-                update_systems = false;
-                return false;
-            }
-            if (event == Event::Escape)
-            {
-                // scr.Exit();
-                update_systems = false;
-                exit           = true;
-                return true;
-            }
-            if (event == Event::Character("i") ||
-                event == Event::Character("I"))
-            {
-                inv_ui.render(entity_manager.getEntity(1), scr);
-                return false;
-            }
-            if (event == Event::ArrowUp)
-            {
-                System::sendSystemMessage(
-                    SystemType::PLAYER,
-                    {std::make_any<SystemAction::PLAYER>(
-                         SystemAction::PLAYER::MOVE),
-                     std::make_any<::Direction>(::Direction::UP)});
-                update_systems = true;
-                return true;
-            }
-            if (event == Event::ArrowDown)
-            {
-                System::sendSystemMessage(
-                    SystemType::PLAYER,
-                    {std::make_any<SystemAction::PLAYER>(
-                         SystemAction::PLAYER::MOVE),
-                     std::make_any<::Direction>(::Direction::DOWN)});
-                update_systems = true;
-                return true;
-            }
-            if (event == Event::ArrowLeft)
-            {
-                System::sendSystemMessage(
-                    SystemType::PLAYER,
-                    {std::make_any<SystemAction::PLAYER>(
-                         SystemAction::PLAYER::MOVE),
-                     std::make_any<::Direction>(::Direction::LEFT)});
-                update_systems = true;
-                return true;
-            }
-            if (event == Event::ArrowRight)
-            {
-                System::sendSystemMessage(
-                    SystemType::PLAYER,
-                    {std::make_any<SystemAction::PLAYER>(
-                         SystemAction::PLAYER::MOVE),
-                     std::make_any<::Direction>(::Direction::RIGHT)});
-                update_systems = true;
-                return true;
-            }
-            return false;
-        });
-
+    bool                            exit           = false;
+    bool                            update_systems = false;
     std::list<observer_ptr<System>> systems;
 
-    PlayerControlSystem player_sys(entity_manager.getEntity(1));
+    PlayerControlSystem player_sys(entity_manager.getEntity(1), pos_system);
     EffectSystem        effect_sys;
     AttackSystem        attack_sys;
     HealthSystem        health_sys;
@@ -178,17 +112,91 @@ int main()
     systems.emplace_back(&exp_sys);
     systems.emplace_back(&pos_system);
 
+    auto input_handler = CatchEvent(
+        renderer,
+        [&](Event event)
+        {
+            if (event.is_mouse())
+            {
+                update_systems = false;
+                // return false;
+            }
+            if (event == Event::Escape)
+            {
+                // scr.Exit();
+                update_systems = false;
+                exit           = true;
+                return true;
+            }
+            if (event == Event::Character("i") ||
+                event == Event::Character("I"))
+            {
+                inv_ui.render(entity_manager.getEntity(1), scr);
+                update_systems = false;
+                return false;
+            }
+            if (event == Event::ArrowUp)
+            {
+                System::sendSystemMessage(
+                    SystemType::PLAYER,
+                    {std::make_any<SystemAction::PLAYER>(
+                         SystemAction::PLAYER::MOVE),
+                     std::make_any<::Direction>(::Direction::UP)});
+                update_systems = true;
+            }
+            if (event == Event::ArrowDown)
+            {
+                System::sendSystemMessage(
+                    SystemType::PLAYER,
+                    {std::make_any<SystemAction::PLAYER>(
+                         SystemAction::PLAYER::MOVE),
+                     std::make_any<::Direction>(::Direction::DOWN)});
+                update_systems = true;
+            }
+            if (event == Event::ArrowLeft)
+            {
+                System::sendSystemMessage(
+                    SystemType::PLAYER,
+                    {std::make_any<SystemAction::PLAYER>(
+                         SystemAction::PLAYER::MOVE),
+                     std::make_any<::Direction>(::Direction::LEFT)});
+                update_systems = true;
+            }
+            if (event == Event::ArrowRight)
+            {
+                System::sendSystemMessage(
+                    SystemType::PLAYER,
+                    {std::make_any<SystemAction::PLAYER>(
+                         SystemAction::PLAYER::MOVE),
+                     std::make_any<::Direction>(::Direction::RIGHT)});
+                update_systems = true;
+            }
+            if (update_systems)
+            {
+
+                for (auto &system : systems)
+                {
+                    system->readSystemMessages();
+                    system->updateData();
+                    system->clearSystemMessages();
+                }
+                update_systems = false;
+            }
+            return false;
+        });
+
     auto loop = Loop(&scr, input_handler);
 
-    while (player_hp > 0 || exit == false)
+    while (player_hp > 0 && exit == false)
     {
         loop.RunOnce();
-        if (update_systems)
-            for (auto &system : systems)
-            {
-                system->readSystemMessages();
-                system->updateData();
-                system->clearSystemMessages();
-            }
+        // loop.RunOnce();
+        // if (update_systems)
+        //     for (auto &system : systems)
+        //     {
+        //         system->readSystemMessages();
+        //         system->updateData();
+        //         system->clearSystemMessages();
+        //     }
     }
 }
