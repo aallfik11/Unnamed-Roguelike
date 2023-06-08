@@ -17,6 +17,7 @@
 #include "../itemtypes.h"
 #include "../rarity.h"
 #include "../system.h"
+#include "positionsystem.h"
 #include <cmath>
 #include <cstdint>
 #include <ftxui/component/component.hpp>
@@ -30,18 +31,11 @@
 
 class PlayerControlSystem : public System, public EntityHolder
 {
-    observer_ptr<Entity>                      player_;
-    ftxui::Component                          inv_renderer_;
-    ftxui::Component                          inv_input_handler_;
-    int                                       inv_index_;
-    std::list<observer_ptr<Entity>>::iterator inv_iterator_;
-    std::list<observer_ptr<Entity>>           entities_up_;
-    std::list<observer_ptr<Entity>>           entities_down_;
-    std::list<observer_ptr<Entity>>           entities_left_;
-    std::list<observer_ptr<Entity>>           entities_right_;
-    Direction                                 next_movement_;
-    observer_ptr<Entity>                      last_hit_enemy_;
-    int                                       last_hit_entity_timer_;
+    observer_ptr<Entity> player_;
+    PositionSystem      &pos_sys_;
+    Direction            next_movement_;
+    observer_ptr<Entity> last_hit_enemy_;
+    int                  last_hit_entity_timer_;
 
     inline void determineNextAction(const ftxui::Event &event)
     {
@@ -147,7 +141,9 @@ class PlayerControlSystem : public System, public EntityHolder
     void openInventory() {}
 
 public:
-    PlayerControlSystem(observer_ptr<Entity> const player)
+    PlayerControlSystem(observer_ptr<Entity> const player,
+                        PositionSystem             &pos_sys)
+        : pos_sys_{pos_sys}
     {
         player_                = player;
         next_movement_         = Direction::NONE;
@@ -179,40 +175,39 @@ public:
     {
         EntityType entity_type_at_destination = EntityType::NONE;
         std::list<observer_ptr<Entity>> entities_at_destination;
-        auto     coordinates = player_->getComponent<Coordinates>();
-        uint16_t next_x      = coordinates->x;
-        uint16_t next_y      = coordinates->y;
+        auto coordinates = player_->getComponent<Coordinates>();
+        auto current_x   = coordinates->x;
+        auto current_y   = coordinates->y;
+        auto next_x      = current_x;
+        auto next_y      = current_y;
         switch (next_movement_)
         {
         case Direction::UP:
         {
-            entity_type_at_destination = checkMovementDestination(entities_up_);
-            entities_at_destination    = entities_up_;
-            --next_y;
+            next_y                     = current_y - 1;
+            entity_type_at_destination = checkMovementDestination(
+                pos_sys_.getEntitiesAtCoordinates(current_x, next_y));
             break;
         }
         case Direction::DOWN:
         {
-            entity_type_at_destination =
-                checkMovementDestination(entities_down_);
-            entities_at_destination = entities_down_;
-            ++next_y;
+            next_y                     = current_y + 1;
+            entity_type_at_destination = checkMovementDestination(
+                pos_sys_.getEntitiesAtCoordinates(current_x, next_y));
             break;
         }
         case Direction::LEFT:
         {
-            entity_type_at_destination =
-                checkMovementDestination(entities_left_);
-            entities_at_destination = entities_left_;
-            --next_x;
+            next_x                     = current_x - 1;
+            entity_type_at_destination = checkMovementDestination(
+                pos_sys_.getEntitiesAtCoordinates(next_x, current_y));
             break;
         }
         case Direction::RIGHT:
         {
-            entity_type_at_destination =
-                checkMovementDestination(entities_right_);
-            entities_at_destination = entities_right_;
-            ++next_x;
+            next_x                     = current_x + 1;
+            entity_type_at_destination = checkMovementDestination(
+                pos_sys_.getEntitiesAtCoordinates(next_x, current_y));
             break;
         }
         case Direction::NONE:
@@ -228,8 +223,6 @@ public:
                 SystemType::ATTACK,
                 {std::make_any<observer_ptr<Entity>>(player_),
                  std::make_any<observer_ptr<Entity>>(last_hit_enemy_)});
-            next_x = coordinates->x;
-            next_y = coordinates->y;
             break;
         }
         case EntityType::ITEM:
@@ -238,9 +231,16 @@ public:
                 SystemType::INVENTORY,
                 {std::make_any<SystemAction::INVENTORY>(
                      SystemAction::INVENTORY::ADD),
-                std::make_any<observer_ptr<Entity>>(player_),
+                 std::make_any<observer_ptr<Entity>>(player_),
                  std::make_any<std::list<observer_ptr<Entity>>>(
                      entities_at_destination)});
+            for (auto &item : entities_at_destination)
+
+                System::sendSystemMessage(
+                    SystemType::POSITION,
+                    {std::make_any<SystemAction::POSITION>(
+                         SystemAction::POSITION::DELETE),
+                     std::make_any<observer_ptr<Entity>>(item)});
         }
         case EntityType::NONE:
         {
@@ -254,12 +254,6 @@ public:
             break;
         }
         }
-        System::sendSystemMessage(
-            SystemType::POSITION,
-            {std::make_any<SystemAction::POSITION>(
-                 SystemAction::POSITION::RECEIVE_PLAYER_COORDINATES),
-             std::make_any<uint16_t>(next_x),
-             std::make_any<uint16_t>(next_y)});
     }
     void readSystemMessages() override
     {
@@ -271,30 +265,6 @@ public:
             ++message_it;
             switch (message_type)
             {
-            case SystemAction::PLAYER::ENTITIES_UP:
-            {
-                entities_up_ =
-                    std::any_cast<std::list<observer_ptr<Entity>>>(*message_it);
-                break;
-            }
-            case SystemAction::PLAYER::ENTITIES_DOWN:
-            {
-                entities_down_ =
-                    std::any_cast<std::list<observer_ptr<Entity>>>(*message_it);
-                break;
-            }
-            case SystemAction::PLAYER::ENTITIES_LEFT:
-            {
-                entities_left_ =
-                    std::any_cast<std::list<observer_ptr<Entity>>>(*message_it);
-                break;
-            }
-            case SystemAction::PLAYER::ENTITIES_RIGHT:
-            {
-                entities_right_ =
-                    std::any_cast<std::list<observer_ptr<Entity>>>(*message_it);
-                break;
-            }
             case SystemAction::PLAYER::MOVE:
             {
                 next_movement_ = std::any_cast<Direction>(*message_it);
@@ -306,10 +276,6 @@ public:
     void clearSystemMessages() override
     {
         (*System::system_messages_)[SystemType::PLAYER].clear();
-        entities_up_.clear();
-        entities_down_.clear();
-        entities_left_.clear();
-        entities_right_.clear();
         next_movement_ = Direction::NONE;
         if (last_hit_enemy_ != nullptr)
         {
