@@ -21,7 +21,7 @@
 int main()
 {
     MainMenu           main_menu;
-    LaunchOptions      option;
+    LaunchOptions      option{};
     std::random_device rd;
     std::mt19937       mt(rd());
     // main_menu.renderMainMenu(option);
