@@ -165,7 +165,7 @@ public: // debug
         for (int x = starting_index; x < index_guard; ++x)
         {
             Elements cells(G_MAP_HEIGHT);
-            for (std::size_t y = 0; y < (*game_map_)[x].size(); ++y)
+            for (std::size_t y = 0; y < G_MAP_HEIGHT; ++y)
             {
                 auto entities_at_coordinates =
                     pos_system_.getEntitiesAtCoordinates(x, y);
