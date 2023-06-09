@@ -191,14 +191,14 @@ class InventorySystem : public System
             if (caller_amulets->amount_equipped == caller_amulets->max_slots)
                 return false;
 
-            if (caller_amulets->amulet_slots.contains(item.getConst()))
+            if (caller_amulets->amulet_slots.contains(item))
             {
                 item_component->equipped = false;
                 if (item_buffs != nullptr)
                 {
                     removeEquipmentBuff(caller_buffs, item_buffs);
                 }
-                caller_amulets->amulet_slots.erase(item.getConst());
+                caller_amulets->amulet_slots.erase(item);
                 return true;
             }
 
@@ -330,7 +330,7 @@ public:
             {
                 auto amulet_slot = caller->getComponent<AmuletSlot>();
                 amulet_slot->amount_equipped -= 1;
-                amulet_slot->amulet_slots.erase(item.getConst());
+                amulet_slot->amulet_slots.erase(item);
             }
 
             if (auto item_buffs = item->getComponent<BuffComponent>())
