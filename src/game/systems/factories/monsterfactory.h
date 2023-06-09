@@ -331,7 +331,7 @@ class MonsterFactory
                 {item_factory_.generateFoodRation(rarity_modifier)});
         }
     }
-
+    public: //temp for debug
     Entity *generateBaseMonster()
     {
         return new Entity(EntityType::CREATURE,
