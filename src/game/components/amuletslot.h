@@ -2,6 +2,7 @@
 #define AMULETSLOT_H
 #include "../component.h"
 #include "../entity.h"
+#include "../entityhash.h"
 #include "../entityholder.h"
 #include "../observerptr.h"
 #include "../system.h"
@@ -22,7 +23,7 @@ class AmuletSlot : public Component, public EntityHolder
 
     /*debug*/ bool isEqual(const observer_ptr<const Component> c) const override
     {
-        auto a = static_cast<const AmuletSlot*>(c);
+        auto                         a = static_cast<const AmuletSlot *>(c);
         std::unordered_set<uint32_t> this_amulet_ids;
         std::unordered_set<uint32_t> other_amulet_ids;
         for (auto &amulet : this->amulet_slots)
@@ -65,7 +66,7 @@ class AmuletSlot : public Component, public EntityHolder
             auto message = {
                 std::make_any<SystemAction::ENTITY>(
                     SystemAction::ENTITY::REQUEST),
-                std::make_any<EntityHolder*>(this),
+                std::make_any<EntityHolder *>(this),
                 std::make_any<std::list<uint32_t>>(entities_requested)};
 
             System::sendSystemMessage(SystemType::ENTITY, message);
