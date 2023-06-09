@@ -166,6 +166,11 @@ public:
     {
         const std::lock_guard<std::mutex> lock(render_mutex);
         std::list<observer_ptr<Entity>>   entities_at_coordinates;
+
+        if((map_[x][y].type & (TileType::HAS_ITEM | TileType::HAS_CREATURE)) == TileType::NONE)
+            return entities_at_coordinates;
+
+
         for (auto &entity : entity_positions_)
         {
             if (auto coords_ptr = entity->getComponent<Coordinates>())
