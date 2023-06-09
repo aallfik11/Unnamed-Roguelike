@@ -60,6 +60,7 @@ public:
 
     Entity(const Entity &entity) : Entity()
     {
+        this->type = entity.type;
         for (auto &component : entity.components_)
         {
             this->addComponent(component.second->clone());
