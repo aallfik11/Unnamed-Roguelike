@@ -105,11 +105,11 @@ int main()
     systems.emplace_back(&entity_manager);
     systems.emplace_back(&player_sys);
     systems.emplace_back(&ai_system);
-    systems.emplace_back(&inv_sys);
     systems.emplace_back(&attack_sys);
     systems.emplace_back(&effect_sys);
     systems.emplace_back(&health_sys);
     systems.emplace_back(&exp_sys);
+    systems.emplace_back(&inv_sys);
     systems.emplace_back(&pos_system);
 
     auto input_handler = CatchEvent(
