@@ -24,7 +24,7 @@ int main()
     LaunchOptions      option{};
     std::random_device rd;
     std::mt19937       mt(rd());
-    // main_menu.renderMainMenu(option);
+    main_menu.renderMainMenu(option);
     auto               map = *CaveGenerator::generate(mt, 100, 50);
     EntityManager      entity_manager;
 
@@ -44,11 +44,11 @@ int main()
                                  new Inventory});
 
     int            depth = 0;
-    // ItemFactory    it_fac(map, depth);
-    // MonsterFactory monster_fac(it_fac, map, depth);
-    //
-    // it_fac.generateItems();
-    // monster_fac.generateMonsters();
+    ItemFactory    it_fac(map, depth);
+    MonsterFactory monster_fac(it_fac, map, depth);
+
+    it_fac.generateItems();
+    monster_fac.generateMonsters();
 
     NavMapManager nav_map_manager(
         map, entity_manager.getEntity(1)->getComponent<Coordinates>());
