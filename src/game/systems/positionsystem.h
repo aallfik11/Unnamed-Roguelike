@@ -5,6 +5,7 @@
 #include "../coordhash.h"
 #include "../directions.h"
 #include "../entity.h"
+#include "../entityhash.h"
 #include "../entityholder.h"
 #include "../entitytypes.h"
 #include "../system.h"
@@ -12,19 +13,9 @@
 #include <any>
 #include <cstdint>
 #include <list>
+#include <mutex>
 #include <unordered_set>
 #include <utility>
-
-namespace std
-{
-template <> struct hash<observer_ptr<Entity>>
-{
-    auto operator()(const observer_ptr<Entity> &entity_ptr) const -> size_t
-    {
-        return hash<uint32_t>()(entity_ptr->getId());
-    }
-};
-} // namespace std
 
 class PositionSystem : public System, public EntityHolder
 {
@@ -38,6 +29,7 @@ class PositionSystem : public System, public EntityHolder
     std::list<std::pair<uint16_t, uint16_t>> request_messages_;
     std::list<observer_ptr<Entity>>          addition_messages_;
     std::list<observer_ptr<Entity>>          removal_messages_;
+    std::mutex                               render_mutex;
     GameMap                                 &map_;
 
     /**
@@ -172,18 +164,19 @@ public:
     std::list<observer_ptr<Entity>> getEntitiesAtCoordinates(uint16_t x,
                                                              uint16_t y)
     {
-        std::list<observer_ptr<Entity>> entitiesAtCoordinates;
+        const std::lock_guard<std::mutex> lock(render_mutex);
+        std::list<observer_ptr<Entity>>   entities_at_coordinates;
         for (auto &entity : entity_positions_)
         {
             if (auto coords_ptr = entity->getComponent<Coordinates>())
             {
                 if (coords_ptr->x == x && coords_ptr->y == y)
                 {
-                    entitiesAtCoordinates.emplace_back(entity);
+                    entities_at_coordinates.emplace_back(entity);
                 }
             }
         }
-        return entitiesAtCoordinates;
+        return entities_at_coordinates;
     }
 
     /**
