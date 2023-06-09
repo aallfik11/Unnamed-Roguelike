@@ -404,6 +404,7 @@ public:
                                std::make_any<uint32_t>(item->getId())});
         }
         caller->getComponent<Inventory>()->inventory.clear();
+        return;
     }
 
     void useItem(const observer_ptr<Entity> caller, const uint32_t index)
@@ -480,14 +481,15 @@ public:
             }
             case SystemAction::INVENTORY::DROP_ALL:
             {
-                auto entity =
-                    std::any_cast<observer_ptr<Entity>>(*message_iterator);
+                // auto entity =
+                //     std::any_cast<observer_ptr<Entity>>(*message_iterator);
                 // auto inventory = entity->getComponent<Inventory>();
                 // for (int i = 0; i < inventory->inventory.size(); ++i)
                 // {
                 //     drop_messages_.emplace_back(entity, i);
                 // }
                 dropAllItems(entity);
+                break;
             }
             case SystemAction::INVENTORY::TRANSFER:
             {
