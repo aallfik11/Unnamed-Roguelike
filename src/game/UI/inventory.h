@@ -122,12 +122,19 @@ class InventoryUI
         // ftxui::Color::DarkSlateGray1;
         // option.animated_colors.background.inactive = ftxui::Color::Black;
 
-        option.transform = [is_equipped, col](EntryState state)
+        option.transform = [item_component, col](EntryState state)
         {
             Element elem = text(state.label) | color(col);
-            if (is_equipped == true)
+            if (item_component->equipped == true)
             {
                 elem = hbox({elem, text(" E") | color(Color::White)});
+            }
+
+            if ((item_component->type & ItemType::STACKABLE) != ItemType::NONE)
+            {
+                elem = hbox({elem,
+                             text(" " + std::to_string(item_component->stack)) |
+                                 color(Color::White)});
             }
 
             if (state.focused)
@@ -209,6 +216,15 @@ class InventoryUI
         }
         return vbox(stats);
     }
+    void fixIndex(int &index, const std::size_t inventory_size)
+    {
+        auto current_index = index;
+        index              = 0;
+        for (std::size_t i = 0; i < current_index && i < inventory_size; ++i)
+        {
+            ++index;
+        }
+    }
 
 public:
     InventoryUI(InventorySystem &inv_sys) : inv_sys_{inv_sys}
@@ -218,56 +234,64 @@ public:
     }
     void render(observer_ptr<Entity> player, ftxui::ScreenInteractive &scr)
     {
-        auto &inventory = player->getComponent<Inventory>()->inventory;
         using namespace ftxui;
-        int        inventory_index = 0;
-        Components items;
-        if (inventory.empty())
-        {
-            items.emplace_back(
-                MenuEntry("Inventory empty, try picking some items up first"));
-        }
-        for (auto &item : inventory)
-        {
-            items.emplace_back(MenuEntry(item->getComponent<Name>()->name,
-                                         getItemMenuEntry(item)));
-        }
+        int              inventory_index = 0;
+        ftxui::Component inv_container;
 
-        // auto scr           = ScreenInteractive::Fullscreen();
-        auto inv_container = Container::Vertical(items, &inventory_index);
-
-        auto renderer      = Renderer(
+        // Components items;
+        inv_container = Container::Vertical(Components(), &inventory_index);
+        auto renderer = Renderer(
             [&]
             {
-                auto item = *std::next(inventory.begin(), inventory_index);
-                if (is_stats_open_ == true)
-                {
-                    return dbox(
-                        {inv_container->Render(),
-                         window(text(item->getComponent<Name>()->name) |
-                                    color(getColorByRarity(
-                                        item->getComponent<ItemComponent>()
-                                            ->rarity)) |
-                                    center,
-                                getItemStats(item)) |
-                             clear_under | center | flex_shrink});
-                }
-                if (is_desc_open_ == true)
-                {
-                    return dbox(
-                        {inv_container->Render(),
-                         window(text(item->getComponent<Name>()->name) |
-                                    color(getColorByRarity(
-                                        item->getComponent<ItemComponent>()
-                                            ->rarity)) |
-                                    center,
-                                paragraphAlignJustify(
-                                    item->getComponent<Description>()
-                                        ->description)) |
-                             clear_under | center | flex_shrink});
-                }
-                return inv_container->Render();
+                // auto &inventory = player->getComponent<Inventory>()->inventory;
+                // inv_container->DetachAllChildren();
+                // // items.clear();
+                // if (inventory.empty())
+                // {
+                    inv_container->Add(MenuEntry(
+                        "Inventory empty, try picking some items up first"));
+                    return inv_container->Render();
+                // }
+                // for (auto &item : inventory)
+                // {
+                //     inv_container->Add(
+                //         MenuEntry(item->getComponent<Name>()->name,
+                //                   getItemMenuEntry(item)));
+                // }
+                //
+                // // auto scr           = ScreenInteractive::Fullscreen();
+                // auto item = *std::next(inventory.begin(), inventory_index);
+                // if (is_stats_open_ == true)
+                // {
+                //     return dbox(
+                //         {inv_container->Render(),
+                //          window(text(item->getComponent<Name>()->name) |
+                //                     color(getColorByRarity(
+                //                         item->getComponent<ItemComponent>()
+                //                             ->rarity)) |
+                //                     center,
+                //                 getItemStats(item)) |
+                //              clear_under | center | flex_shrink});
+                // }
+                // if (is_desc_open_ == true)
+                // {
+                //     return dbox(
+                //         {inv_container->Render(),
+                //          window(text(item->getComponent<Name>()->name) |
+                //                     color(getColorByRarity(
+                //                         item->getComponent<ItemComponent>()
+                //                             ->rarity)) |
+                //                     center,
+                //                 paragraphAlignJustify(
+                //                     item->getComponent<Description>()
+                //                         ->description)) |
+                //              clear_under | center | flex_shrink});
+                // }
+                // return inv_container->Render();
             });
+
+        const auto &inventory_size =
+            player->getComponent<Inventory>()->inventory.size();
 
         auto key_handler = CatchEvent(
             renderer,
@@ -275,17 +299,11 @@ public:
             {
                 if (event == Event::Return)
                 {
-                    // System::sendSystemMessage(
-                    //     SystemType::INVENTORY,
-                    //     {std::make_any<SystemAction::INVENTORY>(
-                    //          SystemAction::INVENTORY::USE),
-                    //      std::make_any<observer_ptr<Entity>>(player),
-                    //      std::make_any<uint32_t>(static_cast<uint32_t>(
-                    //          inventory_index))}); // bad idea for now, can
-                    //          lead
-                    //                               // to exploits
-                    inv_sys_.useItem(player, inventory_index);
-
+                    if (inventory_size != 0)
+                    {
+                        inv_sys_.useItem(player, inventory_index);
+                        fixIndex(inventory_index, inventory_size);
+                    }
                     return true;
                 }
                 if (event == Event::Escape)
@@ -310,16 +328,11 @@ public:
                 if (event == Event::Character('r') ||
                     event == Event::Character('R'))
                 {
-                    auto inv_size = inventory.size();
-                    inv_sys_.dropFromInventory(player, inventory_index);
-                    if (inventory.size() != inv_size)
+                    // auto inv_size = inventory.size();
+                    if (inventory_size != 0)
                     {
-                        if (inventory_index != 0)
-                        {
-                            --inventory_index;
-                        }
-                        else
-                            ++inventory_index;
+                        inv_sys_.dropFromInventory(player, inventory_index);
+                        fixIndex(inventory_index, inventory_size);
                     }
                     return true;
                 }
