@@ -17,6 +17,7 @@ public:
         Tile floor;
         Tile wall;
         wall.type = TileType::WALL;
+        wall.appearance = TileAppearance::WALL;
         std::vector<Tile> top_and_bottom(size_y);
         for (auto &cell : top_and_bottom)
         {
