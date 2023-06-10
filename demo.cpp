@@ -54,6 +54,12 @@ int main()
 
     it_fac.generateItems();
     monster_fac.generateMonsters();
+    std::list<Entity*> food;
+    for(int i = 0; i < 10; ++i)
+    {
+        food.emplace_back(it_fac.generateFoodRation());
+    }
+    
     // auto monster = monster_fac.generateBaseMonster();
     // monster_fac.generateBat(monster);
     // monster_fac.placeMonster(monster);
@@ -110,6 +116,8 @@ int main()
 
     InventorySystem inv_sys;
     InventoryUI     inv_ui(inv_sys);
+
+    inv_sys.addToInventory(entity_manager.getEntity(1), food);
 
     using namespace ftxui;
 
