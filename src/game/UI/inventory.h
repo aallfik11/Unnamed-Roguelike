@@ -15,6 +15,7 @@
 #include "../rarity.h"
 #include "../system.h"
 #include "../systems/inventorysystem.h"
+#include <algorithm>
 #include <any>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/event.hpp>
@@ -218,12 +219,15 @@ class InventoryUI
     }
     void fixIndex(int &index, const std::size_t inventory_size)
     {
-        auto current_index = index;
-        index              = 0;
-        for (std::size_t i = 0; i < current_index && i < inventory_size; ++i)
-        {
-            ++index;
-        }
+        // auto current_index = index;
+        // index              = 0;
+        // for (std::size_t i = 0; i < current_index && i < inventory_size; ++i)
+        // {
+        //     ++index;
+        // }
+        index =
+            std::max(0, std::min(static_cast<int>(inventory_size - 1), index));
+        return;
     }
 
 public:
@@ -243,55 +247,52 @@ public:
         auto renderer = Renderer(
             [&]
             {
-                // auto &inventory = player->getComponent<Inventory>()->inventory;
-                // inv_container->DetachAllChildren();
-                // // items.clear();
-                // if (inventory.empty())
-                // {
+                auto &inventory = player->getComponent<Inventory>()->inventory;
+                inv_container->DetachAllChildren();
+                // items.clear();
+                if (inventory.empty())
+                {
                     inv_container->Add(MenuEntry(
                         "Inventory empty, try picking some items up first"));
                     return inv_container->Render();
-                // }
-                // for (auto &item : inventory)
-                // {
-                //     inv_container->Add(
-                //         MenuEntry(item->getComponent<Name>()->name,
-                //                   getItemMenuEntry(item)));
-                // }
-                //
-                // // auto scr           = ScreenInteractive::Fullscreen();
-                // auto item = *std::next(inventory.begin(), inventory_index);
-                // if (is_stats_open_ == true)
-                // {
-                //     return dbox(
-                //         {inv_container->Render(),
-                //          window(text(item->getComponent<Name>()->name) |
-                //                     color(getColorByRarity(
-                //                         item->getComponent<ItemComponent>()
-                //                             ->rarity)) |
-                //                     center,
-                //                 getItemStats(item)) |
-                //              clear_under | center | flex_shrink});
-                // }
-                // if (is_desc_open_ == true)
-                // {
-                //     return dbox(
-                //         {inv_container->Render(),
-                //          window(text(item->getComponent<Name>()->name) |
-                //                     color(getColorByRarity(
-                //                         item->getComponent<ItemComponent>()
-                //                             ->rarity)) |
-                //                     center,
-                //                 paragraphAlignJustify(
-                //                     item->getComponent<Description>()
-                //                         ->description)) |
-                //              clear_under | center | flex_shrink});
-                // }
-                // return inv_container->Render();
-            });
+                }
+                for (auto &item : inventory)
+                {
+                    inv_container->Add(
+                        MenuEntry(item->getComponent<Name>()->name,
+                                  getItemMenuEntry(item)));
+                }
 
-        const auto &inventory_size =
-            player->getComponent<Inventory>()->inventory.size();
+                // auto scr           = ScreenInteractive::Fullscreen();
+                auto item = *std::next(inventory.begin(), inventory_index);
+                if (is_stats_open_ == true)
+                {
+                    return dbox(
+                        {inv_container->Render(),
+                         window(text(item->getComponent<Name>()->name) |
+                                    color(getColorByRarity(
+                                        item->getComponent<ItemComponent>()
+                                            ->rarity)) |
+                                    center,
+                                getItemStats(item)) |
+                             clear_under | center | flex_shrink});
+                }
+                if (is_desc_open_ == true)
+                {
+                    return dbox(
+                        {inv_container->Render(),
+                         window(text(item->getComponent<Name>()->name) |
+                                    color(getColorByRarity(
+                                        item->getComponent<ItemComponent>()
+                                            ->rarity)) |
+                                    center,
+                                paragraphAlignJustify(
+                                    item->getComponent<Description>()
+                                        ->description)) |
+                             clear_under | center | flex_shrink});
+                }
+                return inv_container->Render();
+            });
 
         auto key_handler = CatchEvent(
             renderer,
@@ -299,17 +300,11 @@ public:
             {
                 if (event == Event::Return)
                 {
-                    if (inventory_size != 0)
-                    {
-                        inv_sys_.useItem(player, inventory_index);
-                        fixIndex(inventory_index, inventory_size);
-                    }
-                    return true;
+                    inv_sys_.useItem(player, inventory_index);
                 }
                 if (event == Event::Escape)
                 {
                     scr.Exit();
-                    return true;
                 }
                 if (event == Event::Character('s') ||
                     event == Event::Character('S'))
@@ -329,15 +324,13 @@ public:
                     event == Event::Character('R'))
                 {
                     // auto inv_size = inventory.size();
-                    if (inventory_size != 0)
-                    {
-                        inv_sys_.dropFromInventory(player, inventory_index);
-                        fixIndex(inventory_index, inventory_size);
-                    }
-                    return true;
+                    inv_sys_.dropFromInventory(player, inventory_index);
                 }
 
-                return inv_container->OnEvent(event);
+                fixIndex(inventory_index,
+                         player->getComponent<Inventory>()->inventory.size());
+                inv_container->OnEvent(event);
+                return true;
             });
         scr.Loop(key_handler);
     }
