@@ -81,30 +81,38 @@ public:
         {
         case Direction::UP:
         {
-            next_y                     = current_y - 1;
-            entity_type_at_destination = checkMovementDestination(
-                pos_sys_.getEntitiesAtCoordinates(current_x, next_y));
+            next_y = current_y - 1;
+            entities_at_destination =
+                pos_sys_.getEntitiesAtCoordinates(current_x, next_y);
+            entity_type_at_destination =
+                checkMovementDestination(entities_at_destination);
             break;
         }
         case Direction::DOWN:
         {
-            next_y                     = current_y + 1;
-            entity_type_at_destination = checkMovementDestination(
-                pos_sys_.getEntitiesAtCoordinates(current_x, next_y));
+            next_y = current_y + 1;
+            entities_at_destination =
+                pos_sys_.getEntitiesAtCoordinates(current_x, next_y);
+            entity_type_at_destination =
+                checkMovementDestination(entities_at_destination);
             break;
         }
         case Direction::LEFT:
         {
-            next_x                     = current_x - 1;
-            entity_type_at_destination = checkMovementDestination(
-                pos_sys_.getEntitiesAtCoordinates(next_x, current_y));
+            next_x = current_x - 1;
+            entities_at_destination =
+                pos_sys_.getEntitiesAtCoordinates(next_x, current_y);
+            entity_type_at_destination =
+                checkMovementDestination(entities_at_destination);
             break;
         }
         case Direction::RIGHT:
         {
-            next_x                     = current_x + 1;
-            entity_type_at_destination = checkMovementDestination(
-                pos_sys_.getEntitiesAtCoordinates(next_x, current_y));
+            next_x = current_x + 1;
+            entities_at_destination =
+                pos_sys_.getEntitiesAtCoordinates(next_x, current_y);
+            entity_type_at_destination =
+                checkMovementDestination(entities_at_destination);
             break;
         }
         case Direction::NONE:
