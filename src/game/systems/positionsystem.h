@@ -222,6 +222,8 @@ public:
             entity_tile_type = TileType::HAS_ITEM;
         map_[entity_coords->x][entity_coords->y].type &= ~entity_tile_type;
 
+        entity->removeComponent<Coordinates>();
+
         entity_positions_.erase(entity);
         return;
     }
