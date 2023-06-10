@@ -9,6 +9,7 @@
 #include "src/game/systems/factories/itemfactory.h"
 #include "src/game/systems/factories/monsterfactory.h"
 #include "src/game/systems/generators/cavegenerator.h"
+#include "src/game/systems/generators/debugmapgenerator.h"
 #include "src/game/systems/healthsystem.h"
 #include "src/game/systems/inventorysystem.h"
 #include "src/game/systems/lineofsightsystem.h"
@@ -25,14 +26,18 @@ int main()
     std::random_device rd;
     std::mt19937       mt(rd());
     main_menu.renderMainMenu(option);
-    auto               map = *CaveGenerator::generate(mt, 100, 50);
-    EntityManager      entity_manager;
+    if(option == LaunchOptions::EXIT)
+    {
+        return 0;
+    }
+    auto          map = *CaveGenerator::generate(mt, 100, 50);
+    EntityManager entity_manager;
 
     entity_manager.createEntity(EntityType::PLAYER,
                                 {new WeaponSlot,
-                                 new WeaponComponent(3),
+                                 new WeaponComponent(1000),
                                  new ArmorSlot,
-                                 new ArmorComponent,
+                                 new ArmorComponent(100),
                                  new AmuletSlot,
                                  new CritComponent,
                                  new ExperienceComponent,
@@ -49,6 +54,26 @@ int main()
 
     it_fac.generateItems();
     monster_fac.generateMonsters();
+    // auto monster = monster_fac.generateBaseMonster();
+    // monster_fac.generateBat(monster);
+    // monster_fac.placeMonster(monster);
+    // auto message = {
+    //     std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::ADD),
+    //     std::make_any<Entity *>(monster)};
+    // System::sendSystemMessage(SystemType::ENTITY, message);
+    // System::sendSystemMessage(
+    //     SystemType::AI,
+    //     {std::make_any<SystemAction::AI>(SystemAction::AI::ADD),
+    //      std::make_any<Entity *>(monster)});
+    //
+    // System::sendSystemMessage(SystemType::LINE_OF_SIGHT,
+    //                           {std::make_any<SystemAction::LINE_OF_SIGHT>(
+    //                                SystemAction::LINE_OF_SIGHT::ADD),
+    //                            std::make_any<Entity *>(monster)});
+    // System::sendSystemMessage(
+    //     SystemType::EFFECT,
+    //     {std::make_any<SystemAction::EFFECT>(SystemAction::EFFECT::ADD_ENTITY),
+    //      std::make_any<Entity *>(monster)});
 
     NavMapManager nav_map_manager(
         map, entity_manager.getEntity(1)->getComponent<Coordinates>());
@@ -100,10 +125,12 @@ int main()
     EffectSystem        effect_sys;
     AttackSystem        attack_sys;
     HealthSystem        health_sys;
+    LOS_System          los_system(map, entity_manager.getEntity(1));
     ExperienceSystem    exp_sys(entity_manager.getEntity(1));
 
     systems.emplace_back(&entity_manager);
     systems.emplace_back(&player_sys);
+    systems.emplace_back(&los_system);
     systems.emplace_back(&ai_system);
     systems.emplace_back(&attack_sys);
     systems.emplace_back(&effect_sys);
