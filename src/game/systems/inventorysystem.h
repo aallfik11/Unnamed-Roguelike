@@ -223,7 +223,8 @@ class InventorySystem : public System
         {
             auto hunger_component = caller->getComponent<HungerComponent>();
 
-            (food_component->hunger >= hunger_component->max_hunger)
+            (food_component->hunger + hunger_component->hunger >=
+             hunger_component->max_hunger)
                 ? hunger_component->hunger  = hunger_component->max_hunger
                 : hunger_component->hunger += food_component->hunger;
         }
@@ -243,7 +244,13 @@ class InventorySystem : public System
         }
         else
         {
-            caller->getComponent<Inventory>()->inventory.erase(item_it);
+            auto &caller_inventory =
+                caller->getComponent<Inventory>()->inventory;
+            caller_inventory.erase(item_it);
+            sendSystemMessage(SystemType::ENTITY,
+                              {std::make_any<SystemAction::ENTITY>(
+                                   SystemAction::ENTITY::PURGE),
+                               std::make_any<uint32_t>(item->getId())});
         }
     }
 
@@ -376,6 +383,10 @@ public:
         {
             auto item_component = item->getComponent<ItemComponent>();
 
+            if (item_component->equipped == true)
+            {
+                item_component->equipped = false;
+            }
             for (int i = 0; i < item_component->stack; ++i)
             {
                 auto dropped_item = new Entity(*item);
@@ -386,10 +397,6 @@ public:
                          SystemAction::ENTITY::ADD),
                      std::make_any<observer_ptr<Entity>>(dropped_item)});
 
-                if (item_component->equipped == true)
-                {
-                    item_component->equipped = false;
-                }
                 sendSystemMessage(
                     SystemType::POSITION,
                     {std::make_any<SystemAction::POSITION>(
@@ -481,13 +488,6 @@ public:
             }
             case SystemAction::INVENTORY::DROP_ALL:
             {
-                // auto entity =
-                //     std::any_cast<observer_ptr<Entity>>(*message_iterator);
-                // auto inventory = entity->getComponent<Inventory>();
-                // for (int i = 0; i < inventory->inventory.size(); ++i)
-                // {
-                //     drop_messages_.emplace_back(entity, i);
-                // }
                 dropAllItems(entity);
                 break;
             }
