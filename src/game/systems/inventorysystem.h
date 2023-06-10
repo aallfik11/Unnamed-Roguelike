@@ -303,7 +303,11 @@ public:
     {
         // EntityPtr item;
         auto &caller_inventory = caller->getComponent<Inventory>()->inventory;
-        auto  item_iterator    = caller_inventory.begin();
+        if (caller_inventory.empty())
+        {
+            return nullptr;
+        }
+        auto item_iterator = caller_inventory.begin();
         std::advance(item_iterator, index);
         return dropFromInventory(caller, item_iterator, add_to_pos);
     }
@@ -312,14 +316,13 @@ public:
                                            const Inv::iterator       &index,
                                            const bool add_to_pos = true)
     {
-        observer_ptr<Entity> item = nullptr;
         auto &caller_inventory = caller->getComponent<Inventory>()->inventory;
-        auto  item_iterator    = index;
-        if (item_iterator != caller_inventory.end())
+        if (index == caller_inventory.end())
         {
-            item = *item_iterator;
-            caller_inventory.erase(item_iterator);
+            return nullptr;
         }
+        observer_ptr<Entity> item          = *index;
+        auto                 item_iterator = index;
 
         auto item_component = item->getComponent<ItemComponent>();
         if (item_component->equipped)
@@ -338,12 +341,11 @@ public:
                 auto amulet_slot = caller->getComponent<AmuletSlot>();
                 amulet_slot->amount_equipped -= 1;
                 amulet_slot->amulet_slots.erase(item);
-            }
-
-            if (auto item_buffs = item->getComponent<BuffComponent>())
-            {
-                removeEquipmentBuff(caller->getComponent<BuffComponent>(),
-                                    item_buffs);
+                if (auto item_buffs = item->getComponent<BuffComponent>())
+                {
+                    removeEquipmentBuff(caller->getComponent<BuffComponent>(),
+                                        item_buffs);
+                }
             }
 
             item_component->equipped = false;
@@ -362,15 +364,22 @@ public:
 
             item = dropped_item;
         }
+        else
+        {
+
+            if (item_iterator != caller_inventory.end())
+            {
+                caller_inventory.erase(item_iterator);
+            }
+        }
         if (add_to_pos == true)
         {
-            auto caller_coords = caller->getComponent<Coordinates>();
+            item->removeComponent<Coordinates>();
+            item->addComponent(caller->getComponent<Coordinates>()->clone());
             sendSystemMessage(SystemType::POSITION,
                               {std::make_any<SystemAction::POSITION>(
-                                   SystemAction::POSITION::UPDATE),
-                               std::make_any<observer_ptr<Entity>>(item),
-                               std::make_any<uint16_t>(caller_coords->x),
-                               std::make_any<uint16_t>(caller_coords->y)});
+                                   SystemAction::POSITION::ADD),
+                               std::make_any<observer_ptr<Entity>>(item)});
         }
 
         return item;
@@ -397,13 +406,20 @@ public:
                          SystemAction::ENTITY::ADD),
                      std::make_any<observer_ptr<Entity>>(dropped_item)});
 
+                if (dropped_item->hasComponent<Coordinates>())
+                {
+                    auto coords = dropped_item->getComponent<Coordinates>();
+                    coords->x   = caller_coords->x;
+                    coords->y   = caller_coords->y;
+                }
+                else
+                    dropped_item->addComponent(caller_coords->clone());
+
                 sendSystemMessage(
                     SystemType::POSITION,
                     {std::make_any<SystemAction::POSITION>(
-                         SystemAction::POSITION::UPDATE),
-                     std::make_any<observer_ptr<Entity>>(dropped_item),
-                     std::make_any<uint16_t>(caller_coords->x),
-                     std::make_any<uint16_t>(caller_coords->y)});
+                         SystemAction::POSITION::ADD),
+                     std::make_any<observer_ptr<Entity>>(dropped_item)});
             }
             sendSystemMessage(SystemType::ENTITY,
                               {std::make_any<SystemAction::ENTITY>(
@@ -416,7 +432,12 @@ public:
 
     void useItem(const observer_ptr<Entity> caller, const uint32_t index)
     {
-        auto inventory     = caller->getComponent<Inventory>()->inventory;
+        if (index < 0)
+            return;
+        auto &inventory = caller->getComponent<Inventory>()->inventory;
+        if (inventory.empty())
+            return;
+
         auto item_iterator = inventory.begin();
         std::advance(item_iterator, index);
         useItem(caller, item_iterator);
@@ -424,9 +445,11 @@ public:
 
     void useItem(const observer_ptr<Entity> caller, const Inv::iterator &index)
     {
-        auto inventory = caller->getComponent<Inventory>()->inventory;
-        // auto item      = index;
-
+        auto &inventory = caller->getComponent<Inventory>()->inventory;
+        if (index == inventory.end())
+        {
+            return;
+        }
         auto item_type = (*index)->getComponent<ItemComponent>()->type;
         if ((item_type & ItemType::EQUIPABLE) != ItemType::NONE)
         {
