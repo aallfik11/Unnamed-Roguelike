@@ -83,39 +83,53 @@ int main()
     auto            food   = it_fac.generateFoodRation();
     auto            player = entity_manager.getEntity(1);
     inv_sys.addToInventory(player, {potion, food});
+    const auto& inv_size = player->getComponent<Inventory>()->inventory.size();
+    auto initial_size = inv_size;
+    updateSystemData(entity_manager);
 
     using namespace ftxui;
     InventoryUI inv_ui(inv_sys);
 
-    int  i           = 0;
-    int  loop_amount = 10000;
-    auto screen      = ScreenInteractive::FitComponent();
-    auto renderer    = Renderer(
+    int        i           = 0;
+    int        loop_amount = 1000;
+    auto       screen      = ScreenInteractive::FitComponent();
+    std::mutex screen_lock;
+    auto       renderer = Renderer(
         [&]
         {
+            screen_lock.lock();
+            // screen.Post(Event::Escape);
             inv_ui.render(player, screen);
             ++i;
+            screen_lock.unlock();
             return vbox(
-                {text(std::to_string(i) + "/" + std::to_string(loop_amount)) |
+                {text(std::to_string(i) + "/" + std::to_string(loop_amount) + "inv size: " + std::to_string(inv_size)) |
                      hcenter,
                  gaugeRight(i / static_cast<float>(loop_amount)) |
                      size(ftxui::Direction::WIDTH, Constraint::EQUAL, 100) |
                      borderLight});
         });
     auto         loop = Loop(&screen, renderer);
-    std::jthread refresher(
-        [&]
-        {
-            using namespace std::chrono_literals;
-            while (i < loop_amount)
-            {
-                std::this_thread::sleep_for(10ms);
-                screen.Post(Event::Escape);
-            }
-        });
+    // std::jthread refresher(
+    //     [&]
+    //     {
+    //         using namespace std::chrono_literals;
+    //         while (i < loop_amount)
+    //         {
+    //             std::this_thread::sleep_for(1ms);
+    //             screen_lock.lock();
+    //             screen.Post(Event::Escape);
+    //             screen_lock.unlock();
+    //         }
+    //     });
     while (i < loop_amount)
     {
         loop.RunOnce();
+        if(inv_size != initial_size)
+        {
+            std::cout <<"INVENTORY MODIFIED >:(";
+            break;
+        }
     }
     screen.Exit();
     std::cout << std::endl << "\nNO CRASH :3";
