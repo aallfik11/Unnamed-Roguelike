@@ -397,6 +397,8 @@ public:
 
     inline void addEntity(const observer_ptr<Entity> entity)
     {
+        navigation_manager_.assignRandomTarget(
+            entity->getComponent<NavMapComponent>()->nav_map);
         ais_.emplace(entity);
     }
 
