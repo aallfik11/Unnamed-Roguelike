@@ -29,7 +29,7 @@ class PositionSystem : public System, public EntityHolder
     std::list<std::pair<uint16_t, uint16_t>> request_messages_;
     std::list<observer_ptr<Entity>>          addition_messages_;
     std::list<observer_ptr<Entity>>          removal_messages_;
-    std::mutex                               render_mutex;
+    // std::mutex                               render_mutex;
     GameMap                                 &map_;
 
     /**
@@ -164,7 +164,7 @@ public:
     std::list<observer_ptr<Entity>> getEntitiesAtCoordinates(uint16_t x,
                                                              uint16_t y)
     {
-        const std::lock_guard<std::mutex> lock(render_mutex);
+        // const std::lock_guard<std::mutex> lock(render_mutex);
         std::list<observer_ptr<Entity>>   entities_at_coordinates;
 
         if((map_[x][y].type & (TileType::HAS_ITEM | TileType::HAS_CREATURE)) == TileType::NONE)
@@ -223,6 +223,7 @@ public:
         map_[entity_coords->x][entity_coords->y].type &= ~entity_tile_type;
 
         entity_positions_.erase(entity);
+        return;
     }
 
     void updateData() override
