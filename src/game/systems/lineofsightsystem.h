@@ -119,6 +119,10 @@ public:
         auto player_coords = player_->getComponent<Coordinates>();
         for (auto los_entity : lines_of_sight_)
         {
+            if(los_entity->hasComponent<Coordinates>() == false)
+            {
+                continue;
+            }
             auto coord_ptr = los_entity->getComponent<Coordinates>();
             auto los_ptr   = los_entity->getComponent<LOSComponent>();
 
