@@ -30,6 +30,8 @@
 #include <thread>
 #include <unordered_map>
 #include <vector>
+// #include <fstream>
+// #include <filesystem>
 
 class GameScreen
 {
@@ -63,6 +65,7 @@ public: // debug
     PositionSystem                              &pos_system_;
     ftxui::Color                                 floor_color;
 
+public: // temp for debug
     inline ftxui::Color getColorByRarity(Rarity rarity) const
     {
         using namespace ftxui;
@@ -220,23 +223,43 @@ public: // debug
 
     ftxui::Element getMapBox()
     {
-
+        // std::mutex logger_mutex;
+        // std::ofstream
+        // logger(std::filesystem::current_path()/"thread_logger.txt",
+        // std::ios::app);
         using namespace ftxui;
         Elements     columns(G_MAP_WIDTH);
         std::barrier sync(11);
         auto         work = [&](int starting_index, int index_guard)
         {
+            // logger_mutex.lock();
+            // logger << "Thread " << std::to_string(index_guard/10) << "
+            // reporting for duty!" << std::endl; logger_mutex.unlock();
             calculateColumn(starting_index, index_guard, columns);
-            sync.arrive_and_wait();
+            // logger_mutex.lock();
+            // logger << "Thread " << std::to_string(index_guard/10) << " has
+            // finished work and arrived at the barrier" << std::endl;
+            // logger_mutex.unlock();
+            // sync.arrive_and_wait();
+            // logger_mutex.lock();
+            // logger << "Thread " << std::to_string(index_guard/10) << " has
+            // passed the barrier" << std::endl; logger_mutex.unlock();
         };
 
-        std::list<std::jthread> workers;
+        std::list<std::thread> workers;
         for (int i = 0; i < 10; ++i)
         {
             int index = i * 10;
-            workers.emplace_back(std::jthread(work, index, index + 10));
+            workers.emplace_back(std::thread(work, index, index + 10));
         }
-        sync.arrive_and_wait();
+        // sync.arrive_and_wait();
+        for (auto &worker : workers)
+        {
+            worker.join();
+        }
+        // logger_mutex.lock();
+        // logger << "==>All workers have finished their job successfully" <<
+        // std::endl; logger_mutex.unlock();
 
         return hbox(columns);
     }
@@ -264,9 +287,12 @@ public: // debug
         auto player_hp  = player_->getComponent<Health>();
         auto hp_percent = player_hp->current_health_points /
                           static_cast<float>(player_hp->max_health_points);
+        auto player_coords = player_->getComponent<Coordinates>();
 
         return vbox(
-            {text(std::to_string(player_hp->current_health_points) + " / " +
+            {text("x: " + std::to_string(player_coords->x) +
+                  " y: " + std::to_string(player_coords->y)),
+             text(std::to_string(player_hp->current_health_points) + " / " +
                   std::to_string(player_hp->max_health_points)) |
                  hcenter,
              gaugeRight(hp_percent) | color(Color::RGB(255, 0, 0)) |
@@ -276,18 +302,18 @@ public: // debug
     inline ftxui::Element getPlayerXpBar()
     {
         using namespace ftxui;
-        auto player_xp   = player_->getComponent<ExperienceComponent>();
-        auto adjusted_xp = player_xp->current_experience;
-        for (int i = 2; i <= player_xp->level;
-             i++) // i starts at 2 since player starts at lvl 1 and 25
-                  // experience for level 1 should not be deduced
-        {
-            adjusted_xp -= i * 25;
-        }
-        auto xp_percentage =
-            adjusted_xp / static_cast<float>((player_xp->level + 1) * 25);
+        auto player_xp     = player_->getComponent<ExperienceComponent>();
+        // auto adjusted_xp = player_xp->current_experience;
+        // for (int i = 2; i <= player_xp->level;
+        //      i++) // i starts at 2 since player starts at lvl 1 and 25
+        //           // experience for level 1 should not be deduced
+        // {
+        //     adjusted_xp -= i * 25;
+        // }
+        auto xp_percentage = player_xp->current_experience /
+                             static_cast<float>((player_xp->level + 1) * 25);
         return vbox(
-            {text(std::to_string(adjusted_xp) + " / " +
+            {text(std::to_string(player_xp->current_experience) + " / " +
                   std::to_string((player_xp->level + 1) * 25)),
              hbox({text(std::to_string(player_xp->level)) | borderRounded,
                    gaugeRight(xp_percentage) | color(Color::YellowLight) |
