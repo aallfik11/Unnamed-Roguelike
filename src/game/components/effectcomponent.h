@@ -54,8 +54,8 @@ public:
 
     EffectComponent(const EffectComponent &effect_component)
         : EffectComponent(effect_component.effect,
-                          effect_component.effect_duration,
-                          effect_component.effect_strength)
+                          effect_component.effect_strength,
+                          effect_component.effect_duration)
     {
     }
     ComponentType getType() const override { return ComponentType::EFFECT; }
