@@ -119,19 +119,19 @@ public:
         auto player_coords = player_->getComponent<Coordinates>();
         for (auto los_entity : lines_of_sight_)
         {
-            if(los_entity->hasComponent<Coordinates>() == false)
+            if (los_entity->hasComponent<Coordinates>() == false)
             {
                 continue;
             }
             auto coord_ptr = los_entity->getComponent<Coordinates>();
             auto los_ptr   = los_entity->getComponent<LOSComponent>();
 
-            los_ptr->has_LOS_to_player = lineOfSightAlg(
-                coord_ptr->x,
-                coord_ptr->y,
-                /*placeholder, here goes playerx*/ player_coords->x,
-                /*placeholder, here goes playery*/ player_coords->y,
-                los_ptr->seeing_distance);
+            los_ptr->has_LOS_to_player =
+                lineOfSightAlg(coord_ptr->x,
+                               coord_ptr->y,
+                               player_coords->x,
+                               player_coords->y,
+                               los_ptr->seeing_distance);
 
             // simpler, if I'll want to have variable seeing distances I'll use
             // the commented version
