@@ -271,6 +271,10 @@ class ItemFactory
             effect          = potion_effect_map_[roll];
             name            = effect_potion_names_[effect];
             description     = effect_potion_descriptions_[effect];
+            if(effect == (Effect::HEAL | Effect::APPLY_ONCE))
+            {
+                effect_duration = 1;
+            }
             potions.emplace_back(new Entity(
                 EntityType::ITEM,
                 {new ItemComponent(ItemType::POTION, 1, 4, potion_rarity),
