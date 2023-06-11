@@ -87,27 +87,59 @@ public: // temp for debug
         }
     }
 
-    inline ftxui::Color getColorByEffect(Effect effect) const
+    [[nodiscard]] inline ftxui::Color
+    getColorByEffect(Effect effect, bool is_text_color = false) const
     {
         using namespace ftxui;
         effect &= ~(Effect::APPLIED | Effect::PERMANENT | Effect::APPLY_ONCE);
+        uint8_t red{};
+        uint8_t green{};
+        uint8_t blue{};
         switch (effect)
         {
         case Effect::HEAL:
-            return Color::Pink1;
+            red   = 255;
+            green = 204;
+            blue  = 255;
+            break;
         case Effect::BLEED:
-            return Color::Red;
+            red   = 102;
+            green = 0;
+            blue  = 0;
+            break;
         case Effect::BLIND:
-            return Color::GrayLight;
+            red   = 60;
+            green = 60;
+            blue  = 60;
+            break;
         case Effect::POISON:
-            return Color::Green;
+            red   = 64;
+            green = 253;
+            blue  = 20;
+            break;
         case Effect::IRONSKIN:
-            return Color::Yellow;
+            red   = 160;
+            green = 160;
+            blue  = 160;
+            break;
         case Effect::STRENGTH:
-            return Color::DarkRed;
+            red   = 102;
+            green = 0;
+            blue  = 51;
+            break;
         default:
-            return Color::White;
+            red   = 255;
+            green = 255;
+            blue  = 255;
+            break;
         }
+        if (is_text_color == true)
+        {
+            red   = 255 - red;
+            green = 255 - green;
+            blue  = 255 - blue;
+        }
+        return Color::RGB(red, green, blue);
     }
 
     inline std::string getEffectName(Effect effect) const
@@ -404,8 +436,16 @@ public: // temp for debug
         Elements buffs;
         for (auto &buff : player_->getConstComponent<BuffComponent>()->buffs)
         {
-            buffs.push_back(text(getEffectName(buff.first)) | hcenter |
-                            bgcolor(getColorByEffect(buff.first)));
+            if (buff.second->effect_duration == 0)
+            {
+                continue;
+            }
+            buffs.push_back(
+                text(getEffectName(buff.first) + " " +
+                     std::to_string((buff.second->effect_strength)) + " - " +
+                     std::to_string(buff.second->effect_duration) + "t") |
+                hcenter | color(getColorByEffect(buff.first, true)) |
+                bgcolor(getColorByEffect(buff.first)));
         }
         return vbox(buffs) | borderRounded;
     }
