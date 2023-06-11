@@ -26,11 +26,11 @@ int main()
     std::random_device rd;
     std::mt19937       mt(rd());
     main_menu.renderMainMenu(option);
-    if(option == LaunchOptions::EXIT)
+    if (option == LaunchOptions::EXIT)
     {
         return 0;
     }
-    auto          map = *CaveGenerator::generate(mt, 100, 50);
+    auto          map = *DebugMapGenerator::generate(mt, 100, 50);
     EntityManager entity_manager;
 
     entity_manager.createEntity(EntityType::PLAYER,
@@ -54,12 +54,16 @@ int main()
 
     it_fac.generateItems();
     monster_fac.generateMonsters();
-    std::list<Entity*> food;
-    for(int i = 0; i < 10; ++i)
+    auto monster = monster_fac.generateBaseMonster();
+    monster_fac.generateRat(monster);
+    monster_fac.placeMonster(monster);
+    entity_manager.addEntity(monster);
+    std::list<Entity *> food;
+    for (int i = 0; i < 10; ++i)
     {
         food.emplace_back(it_fac.generateFoodRation());
     }
-    
+
     // auto monster = monster_fac.generateBaseMonster();
     // monster_fac.generateBat(monster);
     // monster_fac.placeMonster(monster);
@@ -108,7 +112,8 @@ int main()
     pos_system.updatePosition(entity_manager.getEntity(1), x, y);
     nav_map_manager.calculatePlayerNavMap();
     AISystem ai_system(map, nav_map_manager, entity_manager.getEntity(1));
-    auto    &player_hp = entity_manager.getEntity(1)
+    ai_system.addEntity(monster);
+    auto &player_hp = entity_manager.getEntity(1)
                           ->getComponent<Health>()
                           ->current_health_points;
 
@@ -136,7 +141,12 @@ int main()
     LOS_System          los_system(map, entity_manager.getEntity(1));
     ExperienceSystem    exp_sys(entity_manager.getEntity(1));
 
+    los_system.addEntity(monster);
+    effect_sys.addEntity(monster);
+    effect_sys.addEntity(entity_manager.getEntity(1));
+
     systems.emplace_back(&entity_manager);
+    systems.emplace_back(&nav_map_manager);
     systems.emplace_back(&player_sys);
     systems.emplace_back(&los_system);
     systems.emplace_back(&ai_system);
