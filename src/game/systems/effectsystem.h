@@ -55,8 +55,6 @@ public:
             //     caller, effect_ptr->effect_strength * 5, HEAL | CURRENT);
 
             auto message = {
-                std::make_any<SystemAction::HEALTH>(
-                    SystemAction::HEALTH::UPDATE),
                 std::make_any<observer_ptr<Entity>>(caller),
                 std::make_any<uint16_t>(effect_ptr->effect_strength * 5),
                 std::make_any<SystemAction::HEALTH>(HEAL | CURRENT)};
