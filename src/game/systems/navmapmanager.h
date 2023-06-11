@@ -83,7 +83,8 @@ class NavMapManager : public System
 
                 if (!(adjx == 0 || adjx == map_.size() - 1 || adjy == 0 ||
                       adjy == map_[0].size() - 1 ||
-                      map_[adjx][adjy].type == TileType::WALL ||
+                      (map_[adjx][adjy].type & (TileType::WALL)) !=
+                          TileType::NONE ||
                       nav_map[adjx][adjy].visited == true))
                 {
                     queue.push({adjx, adjy});
@@ -192,8 +193,12 @@ public:
             {
                 for (size_t y = 0; y < navmap_y_size; y++)
                 {
-                    if (main_navmap[x][y].score == static_cast<uint32_t>(~0))
+                    if ((map_[x][y].type & (
+                                            TileType::WALL)) != TileType::NONE)
+                    {
+                        main_navmap[x][y].score = ~0;
                         continue;
+                    }
 
                     main_navmap[x][y].score = std::min(
                         main_navmap[x][y].score, navmap_secondary[x][y].score);
@@ -243,8 +248,24 @@ public:
         NavTuple right = {
             current_x + 1, current_y, nav_map[current_x + 1][current_y]};
 
-        auto compare_higher = [](const NavTuple &nt1, const NavTuple &nt2)
+        auto compare_higher = [this](const NavTuple &nt1, const NavTuple &nt2)
         {
+            auto x1 = std::get<0>(nt1);
+            auto y1 = std::get<0>(nt1);
+
+            auto x2 = std::get<0>(nt2);
+            auto y2 = std::get<0>(nt2);
+
+            if ((map_[x1][y1].type & TileType::HAS_CREATURE) != TileType::NONE)
+            {
+                return false;
+            }
+
+            if ((map_[x2][y2].type & TileType::HAS_CREATURE) != TileType::NONE)
+            {
+                return true;
+            }
+
             if (std::get<2>(nt1).visited == false)
                 return true;
             if (std::get<2>(nt2).visited == false)
@@ -252,8 +273,24 @@ public:
 
             return (std::get<2>(nt1).score < std::get<2>(nt2).score);
         };
-        auto compare_lower = [](const NavTuple &nt1, const NavTuple &nt2)
+        auto compare_lower = [this](const NavTuple &nt1, const NavTuple &nt2)
         {
+            auto x1 = std::get<0>(nt1);
+            auto y1 = std::get<0>(nt1);
+
+            auto x2 = std::get<0>(nt2);
+            auto y2 = std::get<0>(nt2);
+
+            if ((map_[x1][y1].type & TileType::HAS_CREATURE) != TileType::NONE)
+            {
+                return false;
+            }
+
+            if ((map_[x2][y2].type & TileType::HAS_CREATURE) != TileType::NONE)
+            {
+                return true;
+            }
+
             if (std::get<2>(nt1).visited == false)
                 return false;
 
@@ -263,6 +300,14 @@ public:
         if (destination == Destination::AWAY_FROM)
         {
             result = std::max({up, down, left, right}, compare_higher);
+            auto x = std::get<0>(result);
+            auto y = std::get<1>(result);
+
+            if ((map_[x][y].type & (TileType::HAS_CREATURE | TileType::WALL)) !=
+                TileType::NONE)
+            {
+                return {current_x, current_y};
+            }
 
             if (nav_map[current_x][current_y].score >
                 nav_map[std::get<0>(result)][std::get<1>(result)].score)
@@ -277,6 +322,15 @@ public:
 
             result = std::min({up, down, left, right}, compare_lower);
 
+            auto x = std::get<0>(result);
+            auto y = std::get<1>(result);
+
+            if ((map_[x][y].type & (TileType::HAS_CREATURE | TileType::WALL)) !=
+                TileType::NONE)
+            {
+                return {current_x, current_y};
+            }
+
             if (nav_map[current_x][current_y].score <
                 nav_map[std::get<0>(result)][std::get<1>(result)].score)
                 return std::make_tuple(current_x, current_y);
@@ -285,9 +339,9 @@ public:
         }
     }
 
-    void          updateData() override { calculatePlayerNavMap(); }
-    void          readSystemMessages() override {}
-    void          clearSystemMessages() override {}
+    void updateData() override { calculatePlayerNavMap(); }
+    void readSystemMessages() override {}
+    void clearSystemMessages() override {}
 };
 
 #endif /*NAVMAPMANAGER*/
