@@ -249,6 +249,15 @@ public:
             {
                 auto &inventory = player->getComponent<Inventory>()->inventory;
                 inv_container->DetachAllChildren();
+                auto flexbox_config = FlexboxConfig();
+                flexbox_config.Set(FlexboxConfig::JustifyContent::SpaceEvenly);
+                auto controls =
+                    flexbox(
+                        {text("ESC - Exit Inventory Screen") | borderRounded,
+                         text("D - Item Description") | borderRounded,
+                         text("S - Item Statistics") | borderRounded},
+                        flexbox_config) |
+                    hcenter;
                 // items.clear();
                 if (inventory.empty())
                 {
@@ -267,31 +276,41 @@ public:
                 auto item = *std::next(inventory.begin(), inventory_index);
                 if (is_stats_open_ == true)
                 {
-                    return dbox(
-                        {inv_container->Render(),
-                         window(text(item->getComponent<Name>()->name) |
-                                    color(getColorByRarity(
-                                        item->getComponent<ItemComponent>()
-                                            ->rarity)) |
-                                    center,
-                                getItemStats(item)) |
-                             clear_under | center | flex_shrink});
+                    return vbox(
+                        {dbox(
+                             {inv_container->Render(),
+                              window(text(item->getComponent<Name>()->name) |
+                                         color(getColorByRarity(
+                                             item->getComponent<ItemComponent>()
+                                                 ->rarity)) |
+                                         center,
+                                     getItemStats(item)) |
+                                  clear_under | center | flex_shrink}) |
+                             flex_grow,
+                         separatorLight(),
+                         controls});
                 }
                 if (is_desc_open_ == true)
                 {
-                    return dbox(
-                        {inv_container->Render(),
-                         window(text(item->getComponent<Name>()->name) |
-                                    color(getColorByRarity(
-                                        item->getComponent<ItemComponent>()
-                                            ->rarity)) |
-                                    center,
-                                paragraphAlignJustify(
-                                    item->getComponent<Description>()
-                                        ->description)) |
-                             clear_under | center | flex_shrink});
+                    return vbox(
+                        {dbox(
+                             {inv_container->Render(),
+                              window(text(item->getComponent<Name>()->name) |
+                                         color(getColorByRarity(
+                                             item->getComponent<ItemComponent>()
+                                                 ->rarity)) |
+                                         center,
+                                     paragraphAlignJustify(
+                                         item->getComponent<Description>()
+                                             ->description)) |
+                                  clear_under | center | flex_shrink}) |
+                             flex_grow,
+                         separatorLight(),
+                         controls});
                 }
-                return inv_container->Render();
+                return vbox({inv_container->Render() | flex_grow,
+                             separatorLight(),
+                             controls});
             });
 
         auto key_handler = CatchEvent(
