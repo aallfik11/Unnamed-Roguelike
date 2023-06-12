@@ -193,10 +193,9 @@ public:
             {
                 for (size_t y = 0; y < navmap_y_size; y++)
                 {
-                    if ((map_[x][y].type & (
-                                            TileType::WALL)) != TileType::NONE)
+                    if ((map_[x][y].type & (TileType::WALL)) != TileType::NONE)
                     {
-                        main_navmap[x][y].score = ~0;
+                        main_navmap[x][y].score = (~0);
                         continue;
                     }
 
@@ -226,6 +225,34 @@ public:
         });
     }
 
+    bool
+    compare_navtuple(const std::tuple<uint16_t, uint16_t, NavCell> nt1,
+                     const std::tuple<uint16_t, uint16_t, NavCell> nt2) const
+    {
+        if (std::get<2>(nt1).visited == false)
+            return false;
+        if (std::get<2>(nt2).visited == false)
+            return true;
+
+        auto x1 = std::get<0>(nt1);
+        auto y1 = std::get<0>(nt1);
+
+        auto x2 = std::get<0>(nt2);
+        auto y2 = std::get<0>(nt2);
+
+        if ((map_[x1][y1].type & TileType::HAS_CREATURE) != TileType::NONE)
+        {
+            return false;
+        }
+
+        if ((map_[x2][y2].type & TileType::HAS_CREATURE) != TileType::NONE)
+        {
+            return true;
+        }
+
+        return (std::get<2>(nt1).score < std::get<2>(nt2).score);
+    }
+
     std::tuple<uint16_t, uint16_t>
     nextBestCoordinates(observer_ptr<Entity> const entity,
                         Destination                destination) const
@@ -248,58 +275,12 @@ public:
         NavTuple right = {
             current_x + 1, current_y, nav_map[current_x + 1][current_y]};
 
-        auto compare_higher = [this](const NavTuple &nt1, const NavTuple &nt2)
-        {
-            auto x1 = std::get<0>(nt1);
-            auto y1 = std::get<0>(nt1);
-
-            auto x2 = std::get<0>(nt2);
-            auto y2 = std::get<0>(nt2);
-
-            if ((map_[x1][y1].type & TileType::HAS_CREATURE) != TileType::NONE)
-            {
-                return false;
-            }
-
-            if ((map_[x2][y2].type & TileType::HAS_CREATURE) != TileType::NONE)
-            {
-                return true;
-            }
-
-            if (std::get<2>(nt1).visited == false)
-                return true;
-            if (std::get<2>(nt2).visited == false)
-                return false;
-
-            return (std::get<2>(nt1).score < std::get<2>(nt2).score);
-        };
-        auto compare_lower = [this](const NavTuple &nt1, const NavTuple &nt2)
-        {
-            auto x1 = std::get<0>(nt1);
-            auto y1 = std::get<0>(nt1);
-
-            auto x2 = std::get<0>(nt2);
-            auto y2 = std::get<0>(nt2);
-
-            if ((map_[x1][y1].type & TileType::HAS_CREATURE) != TileType::NONE)
-            {
-                return false;
-            }
-
-            if ((map_[x2][y2].type & TileType::HAS_CREATURE) != TileType::NONE)
-            {
-                return true;
-            }
-
-            if (std::get<2>(nt1).visited == false)
-                return false;
-
-            return (std::get<2>(nt1).score < std::get<2>(nt2).score);
-        };
+        auto compare = [this](const NavTuple &nt1, const NavTuple &nt2)
+        { return compare_navtuple(nt1, nt2); };
 
         if (destination == Destination::AWAY_FROM)
         {
-            result = std::max({up, down, left, right}, compare_higher);
+            result = std::max({up, down, left, right}, compare);
             auto x = std::get<0>(result);
             auto y = std::get<1>(result);
 
@@ -320,7 +301,7 @@ public:
             if (nav_map[current_x][current_y].score == 0)
                 return std::make_tuple(current_x, current_y);
 
-            result = std::min({up, down, left, right}, compare_lower);
+            result = std::min({up, down, left, right}, compare);
 
             auto x = std::get<0>(result);
             auto y = std::get<1>(result);
