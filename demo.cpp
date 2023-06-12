@@ -53,11 +53,12 @@ int main()
     MonsterFactory monster_fac(it_fac, map, depth);
 
     it_fac.generateItems();
-    monster_fac.generateMonsters();
+    // monster_fac.generateMonsters();
     auto monster = monster_fac.generateBaseMonster();
     monster_fac.generateRat(monster);
     monster_fac.placeMonster(monster);
     entity_manager.addEntity(monster);
+    monster->getComponent<ArmorComponent>()->armor_class = 100; //immortal
     std::list<Entity *> food;
     for (int i = 0; i < 10; ++i)
     {
@@ -128,7 +129,7 @@ int main()
 
     auto scr      = ScreenInteractive::Fullscreen();
 
-    auto renderer = Renderer([&] { return game_screen.render(); });
+    auto renderer = Renderer([&] { return game_screen.debugRender(monster); });
 
     bool                            exit           = false;
     bool                            update_systems = false;
