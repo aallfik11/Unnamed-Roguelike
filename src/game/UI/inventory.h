@@ -241,6 +241,15 @@ public:
         using namespace ftxui;
         int              inventory_index = 0;
         ftxui::Component inv_container;
+        auto             flexbox_config = FlexboxConfig();
+        flexbox_config.Set(FlexboxConfig::JustifyContent::SpaceEvenly);
+        auto controls =
+            flexbox({text("ESC - Exit Inventory Screen") | borderRounded,
+                     text("ENTER - Equip/Use Item") | borderRounded,
+                     text("D - Item Description") | borderRounded,
+                     text("S - Item Statistics") | borderRounded},
+                    flexbox_config) |
+            hcenter;
 
         // Components items;
         inv_container = Container::Vertical(Components(), &inventory_index);
@@ -249,15 +258,6 @@ public:
             {
                 auto &inventory = player->getComponent<Inventory>()->inventory;
                 inv_container->DetachAllChildren();
-                auto flexbox_config = FlexboxConfig();
-                flexbox_config.Set(FlexboxConfig::JustifyContent::SpaceEvenly);
-                auto controls =
-                    flexbox(
-                        {text("ESC - Exit Inventory Screen") | borderRounded,
-                         text("D - Item Description") | borderRounded,
-                         text("S - Item Statistics") | borderRounded},
-                        flexbox_config) |
-                    hcenter;
                 // items.clear();
                 if (inventory.empty())
                 {
