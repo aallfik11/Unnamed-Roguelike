@@ -9,6 +9,7 @@
 #include "../components/hungercomponent.h"
 #include "../components/itemcomponent.h"
 #include "../components/name.h"
+#include "../components/navmapcomponent.h"
 #include "../components/tilecomponent.h"
 #include "../components/weaponcomponent.h"
 #include "../components/weaponslot.h"
@@ -427,6 +428,10 @@ public: // temp for debug
             equipment.push_back(text(item_name) | hcenter |
                                 color(getColorByRarity(item_rarity)));
         }
+        if (equipment.empty())
+        {
+            return vbox();
+        }
         return vbox(equipment) | borderRounded;
     }
 
@@ -447,6 +452,10 @@ public: // temp for debug
                 hcenter | color(getColorByEffect(buff.first, true)) |
                 bgcolor(getColorByEffect(buff.first)));
         }
+        if (buffs.empty())
+        {
+            return vbox();
+        }
         return vbox(buffs) | borderRounded;
     }
 
@@ -455,6 +464,101 @@ public: // temp for debug
         using namespace ftxui;
         // to be done :)
         return vbox();
+    }
+
+    ftxui::Element debugGetMapBox(observer_ptr<Entity> entity)
+    {
+        using namespace ftxui;
+
+        auto        nav_map = entity->getComponent<NavMapComponent>()->nav_map;
+        auto        coord_ptr     = entity->getComponent<Coordinates>();
+        auto        x_coord       = coord_ptr->x;
+        auto        y_coord       = coord_ptr->y;
+        auto        player_coords = player_->getComponent<Coordinates>();
+        std::string sprite        = " ";
+        Elements    cols;
+        for (int x = 0; x < 100; x++)
+        {
+            Elements rows;
+            for (int y = 0; y < 50; y++)
+            {
+
+                auto    score = nav_map[x][y].score;
+                uint8_t red   = 0;
+                uint8_t green = 0;
+                uint8_t blue  = 0;
+                if (score != ~0)
+                {
+                    auto score_backup  = score;
+                    score             /= 3;
+                    if (score <= 255)
+                    {
+                        red   = 255;
+                        green = score;
+                    }
+                    else if (score > 255 && score <= 511)
+                    {
+                        red   = 255 - score % 256;
+                        green = 255;
+                        blue  = score % 256;
+                    }
+                    else if (score > 511 && score <= 767)
+                    {
+                        green = 255 - score % 256;
+                        blue  = 255;
+                    }
+                    else
+                        blue = 255;
+
+                    score = score_backup;
+                }
+
+                if (x == player_coords->x && y == player_coords->y)
+                {
+                    rows.push_back(
+                        text("@") |
+                        /* color(entity->getComponent<TileComponent>()
+                                  ->tile.color) | */
+                        color(Color::Grey15) | bgcolor(Color::Black));
+                }
+                else if (x == x_coord && y == y_coord)
+                {
+                    rows.push_back(
+                        text("M") |
+                        /* color(entity->getComponent<TileComponent>()
+                                  ->tile.color) | */
+                        color(Color::Grey15) | bgcolor(Color::Black));
+                }
+                else if (score == 0)
+                {
+                    if (((*game_map_)[x][y].type & TileType::WALL) ==
+                        TileType::NONE)
+                        rows.push_back(text("$") |
+                                       bgcolor(Color::RGB(red, green, blue)));
+                    else
+                        rows.push_back(text("$") | bgcolor(Color::BlueViolet));
+                }
+                else if (score == ~0)
+                {
+                    rows.push_back(text(" ") | bgcolor(Color::GrayDark));
+                }
+                else
+                    rows.push_back(text(std::to_string(score % 9 + 1)) |
+                                   bgcolor(Color::RGB(red, green, blue)));
+            }
+
+
+            cols.push_back(vbox(rows));
+        }
+        return vbox(hbox(cols));
+        // return vbox(text(rg_l1),
+        //             text(rg_l2),
+        //             text(rg_l3),
+        //             text(rg_l4),
+        //             text(rg_l5),
+        //             text(rg_l6),
+        //             text(rg_l7)) |
+        //        hcenter;
     }
 
 public:
@@ -475,6 +579,38 @@ public:
                    getSidebar(),
                    separatorLight(),
                    getMapBox(),
+               }) |
+               borderRounded | center | flex_shrink;
+    }
+
+    ftxui::Element debugRender(observer_ptr<Entity> enemy)
+    {
+
+        using namespace ftxui;
+        auto coords = enemy->getComponent<Coordinates>();
+        auto x_coord = coords->x;
+        auto y_coord = coords->y;
+            auto nav_map = enemy->getComponent<NavMapComponent>()->nav_map;
+            auto monster_score    = nav_map[x_coord][y_coord].score;
+            auto score_up    = nav_map[x_coord][y_coord - 1].score;
+            auto score_down  = nav_map[x_coord][y_coord + 1].score;
+            auto score_left  = nav_map[x_coord - 1][y_coord].score;
+            auto score_right = nav_map[x_coord + 1][y_coord].score;
+            auto scores      = vbox({
+                text("@:" + std::to_string(monster_score)) ,
+                text("^:" + std::to_string(score_up)) ,
+                text("\\/:" + std::to_string(score_up)) ,
+                text("<-:" + std::to_string(score_left)) ,
+                text("->:" + std::to_string(score_right)) ,
+            });
+
+        return hbox({
+
+                   getSidebar(),
+                   separatorLight(),
+                   debugGetMapBox(enemy),
+                   separatorLight(),
+                   scores,
                }) |
                borderRounded | center | flex_shrink;
     }
