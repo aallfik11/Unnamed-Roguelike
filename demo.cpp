@@ -35,7 +35,7 @@ int main()
 
     entity_manager.createEntity(EntityType::PLAYER,
                                 {new WeaponSlot,
-                                 new WeaponComponent(1000),
+                                 new WeaponComponent(2),
                                  new ArmorSlot,
                                  new ArmorComponent(100),
                                  new AmuletSlot,
@@ -53,7 +53,7 @@ int main()
     MonsterFactory monster_fac(it_fac, map, depth);
 
     it_fac.generateItems();
-    // monster_fac.generateMonsters();
+    monster_fac.generateMonsters();
     auto monster = monster_fac.generateBaseMonster();
     monster_fac.generateRat(monster);
     monster_fac.placeMonster(monster);
@@ -129,7 +129,8 @@ int main()
 
     auto scr      = ScreenInteractive::Fullscreen();
 
-    auto renderer = Renderer([&] { return game_screen.debugRender(monster); });
+    auto renderer = Renderer([&] { return game_screen.render(); });
+    // auto renderer = Renderer([&] { return game_screen.debugRender(monster); });
 
     bool                            exit           = false;
     bool                            update_systems = false;

@@ -226,8 +226,8 @@ public:
     }
 
     bool
-    compare_navtuple(const std::tuple<uint16_t, uint16_t, NavCell> nt1,
-                     const std::tuple<uint16_t, uint16_t, NavCell> nt2) const
+    compareNavtuple(const std::tuple<uint16_t, uint16_t, NavCell> nt1,
+                    const std::tuple<uint16_t, uint16_t, NavCell> nt2) const
     {
         if (std::get<2>(nt1).visited == false)
             return false;
@@ -235,10 +235,10 @@ public:
             return true;
 
         auto x1 = std::get<0>(nt1);
-        auto y1 = std::get<0>(nt1);
+        auto y1 = std::get<1>(nt1);
 
         auto x2 = std::get<0>(nt2);
-        auto y2 = std::get<0>(nt2);
+        auto y2 = std::get<1>(nt2);
 
         if ((map_[x1][y1].type & TileType::HAS_CREATURE) != TileType::NONE)
         {
@@ -276,7 +276,7 @@ public:
             current_x + 1, current_y, nav_map[current_x + 1][current_y]};
 
         auto compare = [this](const NavTuple &nt1, const NavTuple &nt2)
-        { return compare_navtuple(nt1, nt2); };
+        { return compareNavtuple(nt1, nt2); };
 
         if (destination == Destination::AWAY_FROM)
         {
