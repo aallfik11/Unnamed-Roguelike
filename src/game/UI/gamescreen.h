@@ -542,11 +542,20 @@ public: // temp for debug
                 {
                     rows.push_back(text(" ") | bgcolor(Color::GrayDark));
                 }
+                else if (((*game_map_)[x][y].type & TileType::HAS_CREATURE) !=
+                         TileType::NONE)
+                {
+
+                    rows.push_back(
+                        text("M") |
+                        /* color(entity->getComponent<TileComponent>()
+                                  ->tile.color) | */
+                        color(Color::Purple) | bgcolor(Color::Black));
+                }
                 else
                     rows.push_back(text(std::to_string(score % 9 + 1)) |
                                    bgcolor(Color::RGB(red, green, blue)));
             }
-
 
             cols.push_back(vbox(rows));
         }
@@ -574,35 +583,48 @@ public:
     ftxui::Element render()
     {
         using namespace ftxui;
-        return hbox({
+        auto flexbox_config = FlexboxConfig();
+        flexbox_config.Set(FlexboxConfig::JustifyContent::SpaceEvenly);
 
-                   getSidebar(),
-                   separatorLight(),
-                   getMapBox(),
-               }) |
-               borderRounded | center | flex_shrink;
+        auto controls = flexbox({text("ESC - Exit To Menu"),
+                                 text("I - Open Inventory"),
+                                 text("S - Save Game"),
+                                 text("L - Open Logs"),
+                                 text("R - Rest")},
+                                flexbox_config);
+
+        return vbox({hbox({
+
+                         getSidebar(),
+                         separatorLight(),
+                         getMapBox(),
+                     }) | flex_shrink |
+                         center,
+                     separatorLight(),
+                     controls | flex_shrink | hcenter}) |
+               flex_shrink | borderRounded | center;
     }
 
     ftxui::Element debugRender(observer_ptr<Entity> enemy)
     {
 
         using namespace ftxui;
-        auto coords = enemy->getComponent<Coordinates>();
-        auto x_coord = coords->x;
-        auto y_coord = coords->y;
-            auto nav_map = enemy->getComponent<NavMapComponent>()->nav_map;
-            auto monster_score    = nav_map[x_coord][y_coord].score;
-            auto score_up    = nav_map[x_coord][y_coord - 1].score;
-            auto score_down  = nav_map[x_coord][y_coord + 1].score;
-            auto score_left  = nav_map[x_coord - 1][y_coord].score;
-            auto score_right = nav_map[x_coord + 1][y_coord].score;
-            auto scores      = vbox({
-                text("@:" + std::to_string(monster_score)) ,
-                text("^:" + std::to_string(score_up)) ,
-                text("\\/:" + std::to_string(score_up)) ,
-                text("<-:" + std::to_string(score_left)) ,
-                text("->:" + std::to_string(score_right)) ,
-            });
+        auto coords        = enemy->getComponent<Coordinates>();
+        auto x_coord       = coords->x;
+        auto y_coord       = coords->y;
+        auto nav_map       = enemy->getComponent<NavMapComponent>()->nav_map;
+        auto monster_score = nav_map[x_coord][y_coord].score;
+        auto score_up      = nav_map[x_coord][y_coord - 1].score;
+        auto score_down    = nav_map[x_coord][y_coord + 1].score;
+        auto score_left    = nav_map[x_coord - 1][y_coord].score;
+        auto score_right   = nav_map[x_coord + 1][y_coord].score;
+        auto scores        = vbox({
+            text("@:" + std::to_string(monster_score)),
+            text("^:" + std::to_string(score_up)),
+            text("\\/:" + std::to_string(score_down)),
+            text("<-:" + std::to_string(score_left)),
+            text("->:" + std::to_string(score_right)),
+        });
 
         return hbox({
 
