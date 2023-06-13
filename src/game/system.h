@@ -148,7 +148,7 @@ public:
     }
 };
 
-std::shared_ptr<System::MessageMap>
+inline std::shared_ptr<System::MessageMap>
     System::system_messages_(new System::MessageMap);
 
 inline std::ostream &operator<<(std::ostream &os, const SystemType &s)
