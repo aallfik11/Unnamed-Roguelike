@@ -156,7 +156,7 @@ public:
     }
 };
 
-std::ostream &operator<<(std::ostream &os, const Entity &entity)
+inline std::ostream &operator<<(std::ostream &os, const Entity &entity)
 {
     os << entity.id_ << ' ' << entity.type << ' ' << entity.components_.size()
        << ' ';
@@ -169,6 +169,6 @@ std::ostream &operator<<(std::ostream &os, const Entity &entity)
     // DEBUG
 }
 
-uint32_t Entity::max_id_ = 1;
+inline uint32_t Entity::max_id_ = 1;
 
 #endif /*ENTITY_H*/
