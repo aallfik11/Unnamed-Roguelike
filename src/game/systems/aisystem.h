@@ -38,7 +38,7 @@ class AISystem : public System, public EntityHolder
     using GameMap = std::vector<std::vector<Tile>>;
 
     AISet                           ais_;
-    GameMap                         map_;
+    GameMap                         &map_;
     NavMapManager                  &navigation_manager_;
     observer_ptr<Entity>            player_;
     std::list<observer_ptr<Entity>> addition_messages_;
@@ -134,10 +134,12 @@ public: // temporary
             return rest(caller, target);
         }
 
+        navigation_manager_.switchToPlayerNavMap(caller->getComponent<NavMapComponent>()->nav_map);
+
         auto [x, y] = navigation_manager_.nextBestCoordinates(
             caller, NavMapManager::Destination::AWAY_FROM);
-        if ((map_[x][y].type & (TileType::HAS_CREATURE |
-                                TileType::TRAVERSIBLE)) != TileType::NONE)
+        if ((map_[x][y].type & (TileType::HAS_CREATURE | TileType::WALL)) !=
+            TileType::NONE)
         {
             auto caller_brain = caller->getComponent<AIComponent>();
             if (caller_brain->ai_type != AIType::AI_MONSTER_COWARDLY)
@@ -146,6 +148,15 @@ public: // temporary
                 caller_brain->ai_state = AIState::ATTACK;
                 return attack(caller, target);
             }
+        }
+        else
+        {
+            auto message = {std::make_any<SystemAction::POSITION>(
+                                SystemAction::POSITION::UPDATE),
+                            std::make_any<observer_ptr<Entity>>(caller),
+                            std::make_any<uint16_t>(x),
+                            std::make_any<uint16_t>(y)};
+            System::sendSystemMessage(SystemType::POSITION, message);
         }
     }
 
@@ -194,7 +205,6 @@ public: // temporary
 
         // caller_health->current_health_points += 1;
         auto message = {
-            std::make_any<SystemAction::HEALTH>(SystemAction::HEALTH::UPDATE),
             std::make_any<observer_ptr<Entity>>(caller),
             std::make_any<uint16_t>(1),
             std::make_any<SystemAction::HEALTH>(SystemAction::HEALTH::HEAL |
