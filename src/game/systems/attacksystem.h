@@ -33,6 +33,11 @@ public:
         roll_chance_ = std::uniform_int_distribution<>(0, 100);
     }
 
+    inline uint8_t truncateArmorClass(uint8_t ac)
+    {
+        return (ac > 100) ? 100 : ac;
+    }
+
     bool attack(const observer_ptr<Entity> attacker,
                 const observer_ptr<Entity> defender)
     {
@@ -80,7 +85,10 @@ public:
         {
             ac_modifier += 30;
         }
-        if (roll_chance_(mt_engine_) < (defender_base_AC + ac_modifier))
+
+        auto combined_ac = truncateArmorClass(defender_base_AC + ac_modifier);
+
+        if (roll_chance_(mt_engine_) < combined_ac)
         {
             return false;
         }
@@ -129,8 +137,7 @@ public:
         if (attacker_effects->buffs.contains(Effect::STRENGTH))
         {
             attacker_base_damage +=
-                attacker_effects->buffs[Effect::STRENGTH | Effect::PERMANENT]
-                    ->effect_strength;
+                attacker_effects->buffs[Effect::STRENGTH]->effect_strength;
         }
         if (attacker_effects->buffs.contains(
                 (Effect::STRENGTH | Effect::PERMANENT)))
@@ -140,7 +147,8 @@ public:
                     ->effect_strength;
         }
 
-        ac_modifier /= 3;
+        ac_modifier /=
+            3; // blind affects mostly hitrate, it won't impact damage as much
 
         if (defender_effects->buffs.contains(Effect::IRONSKIN))
         {
@@ -155,9 +163,9 @@ public:
                     ->effect_strength *
                 5;
         }
+        combined_ac  = truncateArmorClass(defender_base_AC + ac_modifier);
 
-        auto damage =
-            (attacker_base_damage * 10) / (defender_base_AC + ac_modifier);
+        auto damage  = (attacker_base_damage * 10) / (combined_ac);
 
         auto message = {
             std::make_any<observer_ptr<Entity>>(defender),
