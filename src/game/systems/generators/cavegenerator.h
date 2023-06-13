@@ -186,6 +186,7 @@ public:
             if ((map[x][y].type & TileType::WALL) == TileType::NONE)
             {
                 map[x][y].type |= TileType::HAS_STAIRS;
+                map[x][y].appearance = TileAppearance::STAIRS;
                 break;
             }
         }
