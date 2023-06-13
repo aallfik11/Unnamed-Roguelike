@@ -271,7 +271,7 @@ class ItemFactory
             effect          = potion_effect_map_[roll];
             name            = effect_potion_names_[effect];
             description     = effect_potion_descriptions_[effect];
-            if(effect == (Effect::HEAL | Effect::APPLY_ONCE))
+            if (effect == (Effect::HEAL | Effect::APPLY_ONCE))
             {
                 effect_duration = 1;
             }
@@ -536,10 +536,10 @@ public:
             entity->addComponent(new Coordinates(x, y));
             auto entity_message = {
                 std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::ADD),
-                std::make_any<Entity*>(entity)};
+                std::make_any<Entity *>(entity)};
             auto pos_message = {std::make_any<SystemAction::POSITION>(
                                     SystemAction::POSITION::ADD),
-                                std::make_any<Entity*>(entity)};
+                                std::make_any<Entity *>(entity)};
             System::sendSystemMessage(SystemType::ENTITY, entity_message);
             System::sendSystemMessage(SystemType::POSITION, pos_message);
         }
@@ -728,8 +728,8 @@ public:
                       const double                             crit_multiplier,
                       std::initializer_list<EffectComponent *> effects)
     {
-        CritComponent crit_comp(
-            crit_chance, crit_multiplier, new BuffComponent(effects));
+        components.insert(new CritComponent(
+            crit_chance, crit_multiplier, new BuffComponent(effects)));
         return *this;
     }
 
