@@ -4,6 +4,7 @@
 #include "../components/lineofsightcomponent.h"
 #include "../entity.h"
 #include "../entityholder.h"
+#include "../globals.h"
 #include "../system.h"
 #include "../tile.h"
 #include <cmath>
@@ -18,6 +19,7 @@ class LOS_System : public System, public EntityHolder
     using GameMap = std::vector<std::vector<Tile>>;
 
     observer_ptr<Entity>                     player_;
+    std::list<std::pair<uint16_t, uint16_t>> visited_list_;
     std::unordered_set<observer_ptr<Entity>> lines_of_sight_;
     std::list<observer_ptr<Entity>>          addition_messages_;
     std::list<observer_ptr<Entity>>          deletion_messages_;
@@ -144,6 +146,46 @@ public:
         }
     }
 
+    bool isBlocked(short destX, short destY) const
+    {
+
+        if (destX < 0 || destX >= G_MAP_WIDTH)
+        {
+            return true;
+        }
+        if (destY < 0 || destY > G_MAP_HEIGHT)
+        {
+            return true;
+        }
+
+        if ((map_[destX][destY].type & TileType::WALL) != TileType::NONE)
+            return true;
+        return false;
+    }
+
+    void visit(short destX, short destY)
+    {
+        if (destX < 0 || destX >= G_MAP_WIDTH)
+        {
+            return;
+        }
+        if (destY < 0 || destY > G_MAP_HEIGHT)
+        {
+            return;
+        }
+        visited_list_.emplace_back(destX, destY);
+        map_[destX][destY].type |= (TileType::MAPPED | TileType::VISIBLE);
+    }
+
+    void cleanVisited()
+    {
+        for (auto &[x, y] : visited_list_)
+        {
+            map_[x][y].type &= ~TileType::VISIBLE;
+        }
+            visited_list_.clear();
+    }
+
     void updateData() override
     {
         for (auto &entity : deletion_messages_)
@@ -156,6 +198,7 @@ public:
         }
 
         calculateAllLinesOfSight();
+        cleanVisited();
     }
     void readSystemMessages() override
     {
