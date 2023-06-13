@@ -1,7 +1,6 @@
 #ifndef TILE_H
 #define TILE_H
 #include <cstdint>
-#include <ftxui/screen/color.hpp>
 #include <istream>
 #include <ostream>
 
@@ -83,6 +82,10 @@ enum class TileAppearance : uint16_t
     WALL,
     FLOOR,
     STAIRS,
+    MAPPED_WALL,
+    MAPPED_FLOOR,
+    MAPPED_STAIRS,
+    UNMAPPED,
 
     // ITEMS
     WEAPON,
