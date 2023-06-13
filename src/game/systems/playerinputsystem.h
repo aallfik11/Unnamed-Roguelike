@@ -146,6 +146,7 @@ public:
                     {std::make_any<SystemAction::POSITION>(
                          SystemAction::POSITION::DELETE),
                      std::make_any<observer_ptr<Entity>>(item)});
+            [[fallthrough]];
         }
         case EntityType::NONE:
         {
