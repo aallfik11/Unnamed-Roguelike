@@ -3,7 +3,6 @@
 #include "../component.h"
 #include "../observerptr.h"
 #include "../tile.h"
-#include <ftxui/screen/color.hpp>
 #include <istream>
 #include <memory>
 #include <ostream>
