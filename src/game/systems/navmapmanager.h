@@ -226,8 +226,8 @@ public:
     }
 
     bool
-    compareNavtuple(const std::tuple<uint16_t, uint16_t, NavCell> nt1,
-                    const std::tuple<uint16_t, uint16_t, NavCell> nt2) const
+    compareNavtuple(const std::tuple<uint16_t, uint16_t, NavCell>& nt1,
+                    const std::tuple<uint16_t, uint16_t, NavCell>& nt2) const
     {
         if (std::get<2>(nt1).visited == false)
             return false;
