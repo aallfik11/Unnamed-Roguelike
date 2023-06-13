@@ -16,7 +16,9 @@
 #include "src/game/systems/mapmanager.h"
 #include "src/game/systems/playerinputsystem.h"
 #include "src/game/systems/positionsystem.h"
+#include "src/permissive_fov/permissive-fov-cpp.h"
 #include <cstdint>
+#include <filesystem>
 #include <random>
 
 int main()
@@ -30,12 +32,12 @@ int main()
     {
         return 0;
     }
-    auto          map = *DebugMapGenerator::generate(mt, 100, 50);
+    auto          map = *CaveGenerator::generate(mt, 100, 50);
     EntityManager entity_manager;
 
     entity_manager.createEntity(EntityType::PLAYER,
                                 {new WeaponSlot,
-                                 new WeaponComponent(2),
+                                 new WeaponComponent(200),
                                  new ArmorSlot,
                                  new ArmorComponent(100),
                                  new AmuletSlot,
@@ -48,17 +50,18 @@ int main()
                                  new Health(10),
                                  new Inventory});
 
-    int            depth = 0;
+    int            depth = 25;
     ItemFactory    it_fac(map, depth);
     MonsterFactory monster_fac(it_fac, map, depth);
 
     it_fac.generateItems();
     monster_fac.generateMonsters();
     auto monster = monster_fac.generateBaseMonster();
-    monster_fac.generateRat(monster);
+    monster_fac.generateOrc(monster);
     monster_fac.placeMonster(monster);
     entity_manager.addEntity(monster);
-    monster->getComponent<ArmorComponent>()->armor_class = 100; //immortal
+    // monster->getComponent<ArmorComponent>()->armor_class = 100; //immortal
+    monster->getComponent<Health>()->current_health_points = 2;
     std::list<Entity *> food;
     for (int i = 0; i < 10; ++i)
     {
@@ -130,7 +133,8 @@ int main()
     auto scr      = ScreenInteractive::Fullscreen();
 
     auto renderer = Renderer([&] { return game_screen.render(); });
-    // auto renderer = Renderer([&] { return game_screen.debugRender(monster); });
+    // auto renderer = Renderer([&] { return game_screen.debugRender(monster);
+    // });
 
     bool                            exit           = false;
     bool                            update_systems = false;
@@ -159,6 +163,21 @@ int main()
     systems.emplace_back(&inv_sys);
     systems.emplace_back(&pos_system);
 
+    auto mask_folder = std::filesystem::current_path() / "masks";
+    if (std::filesystem::exists(mask_folder) == false)
+    {
+        std::filesystem::create_directory(mask_folder);
+    }
+    auto mask =
+        permissive::maskT((mask_folder / "circlemask.mask").string().c_str());
+
+    auto player_coords =
+        entity_manager.getEntity(1)->getComponent<Coordinates>();
+    permissive::fov(player_coords->x,
+                    player_coords->y,
+                    mask,
+                    los_system); // so that the map isn't immediately blank
+
     auto input_handler = CatchEvent(
         renderer,
         [&](Event event)
@@ -181,6 +200,10 @@ int main()
                 inv_ui.render(entity_manager.getEntity(1), scr);
                 update_systems = false;
                 return false;
+            }
+            if (event == Event::Return)
+            {
+                update_systems = true;
             }
             if (event == Event::ArrowUp)
             {
@@ -220,13 +243,14 @@ int main()
             }
             if (update_systems)
             {
-
                 for (auto &system : systems)
                 {
                     system->readSystemMessages();
                     system->updateData();
                     system->clearSystemMessages();
                 }
+                permissive::fov(
+                    player_coords->x, player_coords->y, mask, los_system);
                 update_systems = false;
             }
             return false;
