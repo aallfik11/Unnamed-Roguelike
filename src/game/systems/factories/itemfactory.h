@@ -22,7 +22,7 @@ class MonsterFactory;
 class ItemFactory
 {
     using GameMap = std::vector<std::vector<Tile>>;
-    GameMap                                        &map_;
+    observer_ptr<GameMap>                                        map_;
     int                                            &current_depth_;
     std::random_device                              rd_;
     std::mt19937                                    mt_engine_;
@@ -324,7 +324,7 @@ class ItemFactory
     }
 
 public:
-    ItemFactory(GameMap &map, int &depth) : map_{map}, current_depth_{depth}
+    ItemFactory(int &depth) : current_depth_{depth}
     {
         mt_engine_            = std::mt19937(rd_());
         rarity_distro_        = std::uniform_int_distribution<>(1, 100);
@@ -334,8 +334,8 @@ public:
         ring_amount_distro_   = std::uniform_int_distribution<>(0, 1);
         potion_amount_distro_ = std::uniform_int_distribution<>(0, 4);
         food_amount_distro_   = std::uniform_int_distribution<>(2, 6);
-        x_pos_distro_ = std::uniform_int_distribution<>(1, map_.size() - 1);
-        y_pos_distro_ = std::uniform_int_distribution<>(1, map_[0].size() - 1);
+        x_pos_distro_ = std::uniform_int_distribution<>(1, G_MAP_WIDTH - 2);
+        y_pos_distro_ = std::uniform_int_distribution<>(1, G_MAP_WIDTH - 2);
 
         rarity_chances_[Rarity::COMMON]                   = 45;
         rarity_chances_[Rarity::UNCOMMON]                 = 25;
@@ -503,8 +503,11 @@ public:
             "a king, and it's more than capable of filling you completely";
     }
 
-    std::list<Entity *> generateItems()
+    std::list<Entity *> generateItems() noexcept(false)
     {
+        if (map_ == nullptr)
+            throw std::runtime_error(
+                "Item Factory: ERROR -> Map unassigned");
         std::list<Entity *> generatedItems;
         auto                weapon_amount = weapon_amount_distro_(mt_engine_);
         auto                armor_amount  = armor_amount_distro_(mt_engine_);
@@ -526,7 +529,7 @@ public:
         {
             auto x = x_pos_distro_(mt_engine_);
             auto y = y_pos_distro_(mt_engine_);
-            while ((map_[x][y].type &
+            while (((*map_)[x][y].type &
                     (TileType::HAS_CREATURE | TileType::HAS_ITEM |
                      TileType::HAS_STAIRS | TileType::WALL)) != TileType::NONE)
             {
@@ -613,8 +616,11 @@ public:
         return food;
     }
 
-    std::list<Entity *> debugGenerateItems(int amount)
+    std::list<Entity *> debugGenerateItems(int amount) noexcept(false)
     {
+        if (map_ == nullptr)
+            throw std::runtime_error(
+                "Item Factory: ERROR -> Map unassigned");
         std::list<Entity *> generatedItems;
         auto                weapons = generateWeapons(amount);
         auto                armors  = generateArmors(amount);
@@ -630,7 +636,7 @@ public:
         {
             auto x = x_pos_distro_(mt_engine_);
             auto y = y_pos_distro_(mt_engine_);
-            while ((map_[x][y].type &
+            while (((*map_)[x][y].type &
                     (TileType::HAS_CREATURE | TileType::HAS_ITEM |
                      TileType::HAS_STAIRS | TileType::WALL)) != TileType::NONE)
             {
@@ -648,6 +654,10 @@ public:
             System::sendSystemMessage(SystemType::POSITION, pos_message);
         }
         return generatedItems;
+    }
+    void assignMap(observer_ptr<GameMap> map)
+    {
+        this->map_ = map;
     }
 };
 

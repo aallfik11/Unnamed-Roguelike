@@ -33,14 +33,14 @@ class MonsterFactory
     using Monsters::VIPER;
     using Monsters::ZOMBIE;
 
-    ItemFactory                    &item_factory_;
-    std::vector<std::vector<Tile>> &map_;
-    int                            &current_depth_;
-    std::vector<Monsters>           low_level_monsters_;
-    std::vector<Monsters>           med_level_monsters;
-    std::vector<Monsters>           high_level_monsters_;
-    std::random_device              rd_;
-    std::mt19937                    mt_engine_;
+    ItemFactory                                 &item_factory_;
+    observer_ptr<std::vector<std::vector<Tile>>> map_;
+    int                                         &current_depth_;
+    std::vector<Monsters>                        low_level_monsters_;
+    std::vector<Monsters>                        med_level_monsters;
+    std::vector<Monsters>                        high_level_monsters_;
+    std::random_device                           rd_;
+    std::mt19937                                 mt_engine_;
 
     std::uniform_int_distribution<> monster_amount_distro_;
     std::uniform_int_distribution<> low_level_monster_amount_distro_;
@@ -650,23 +650,24 @@ public: // temp for debug
 
     void placeMonster(Entity *const monster)
     {
-        int                                     size_x = map_.size();
+        int                                     size_x = (*map_).size();
         int                                     size_y = map_[0].size();
         std::uniform_int_distribution<uint16_t> rand_x(1, size_x - 2);
         std::uniform_int_distribution<uint16_t> rand_y(1, size_y - 2);
 
         auto x = rand_x(mt_engine_);
         auto y = rand_y(mt_engine_);
-        while ((map_[x][y].type & (TileType::WALL | TileType::HAS_STAIRS |
-                                   TileType::HAS_CREATURE)) != TileType::NONE)
+        while (((*map_)[x][y].type & (TileType::WALL | TileType::HAS_STAIRS |
+                                      TileType::HAS_CREATURE)) !=
+               TileType::NONE)
         {
             x = rand_x(mt_engine_);
             y = rand_y(mt_engine_);
         }
-        auto coordinates  = monster->getComponent<Coordinates>();
-        coordinates->x    = x;
-        coordinates->y    = y;
-        map_[x][y].type  |= TileType::HAS_CREATURE;
+        auto coordinates    = monster->getComponent<Coordinates>();
+        coordinates->x      = x;
+        coordinates->y      = y;
+        (*map_)[x][y].type |= TileType::HAS_CREATURE;
         System::sendSystemMessage(SystemType::POSITION,
                                   {std::make_any<SystemAction::POSITION>(
                                        SystemAction::POSITION::UPDATE),
@@ -676,10 +677,8 @@ public: // temp for debug
     }
 
 public:
-    MonsterFactory(ItemFactory                    &item_factory,
-                   std::vector<std::vector<Tile>> &map,
-                   int                            &depth)
-        : item_factory_{item_factory}, map_{map}, current_depth_{depth}
+    MonsterFactory(ItemFactory &item_factory, int &depth)
+        : item_factory_{item_factory}, current_depth_{depth}
     {
         mt_engine_               = std::mt19937(rd_());
         monster_generators_[RAT] = &MonsterFactory::generateRat;
@@ -722,8 +721,11 @@ public:
             std::uniform_int_distribution<>(0, high_level_monsters_.size() - 1);
     }
 
-    std::list<Entity *> generateMonsters()
+    std::list<Entity *> generateMonsters() noexcept(false)
     {
+        if (map_ == nullptr)
+            throw std::runtime_error(
+                "Monster Factory: ERROR -> Map unassigned");
         monster_amount_distro_ =
             std::uniform_int_distribution<>(5, 5 + ((current_depth_ * 2) / 3));
         std::list<Entity *> monsters;
@@ -810,6 +812,11 @@ public:
         }
 
         return monsters;
+    }
+
+    void assignMap(observer_ptr<std::vector<std::vector<Tile>>> map)
+    {
+        this->map_ = map;
     }
 };
 
