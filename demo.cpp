@@ -27,12 +27,13 @@ int main()
     LaunchOptions      option{};
     std::random_device rd;
     std::mt19937       mt(rd());
-    main_menu.renderMainMenu(option);
+    std::string        path{};
+    main_menu.renderMainMenu(option, path);
     if (option == LaunchOptions::EXIT)
     {
         return 0;
     }
-    auto          map = *CaveGenerator::generate(mt, 100, 50);
+    auto          map = *DebugMapGenerator::generate(mt, 100, 50);
     EntityManager entity_manager;
 
     entity_manager.createEntity(EntityType::PLAYER,
@@ -51,8 +52,10 @@ int main()
                                  new Inventory});
 
     int            depth = 25;
-    ItemFactory    it_fac(map, depth);
-    MonsterFactory monster_fac(it_fac, map, depth);
+    ItemFactory    it_fac(depth);
+    MonsterFactory monster_fac(it_fac, depth);
+    it_fac.assignMap(&map);
+    monster_fac.assignMap(&map);
 
     it_fac.generateItems();
     monster_fac.generateMonsters();
@@ -89,16 +92,15 @@ int main()
     //     {std::make_any<SystemAction::EFFECT>(SystemAction::EFFECT::ADD_ENTITY),
     //      std::make_any<Entity *>(monster)});
 
-    NavMapManager nav_map_manager(
-        map, entity_manager.getEntity(1)->getComponent<Coordinates>());
-    uint16_t x{}, y{};
+    NavMapManager nav_map_manager(&map, entity_manager.getEntity(1));
+    uint16_t      x{}, y{};
 
     std::uniform_int_distribution<uint16_t> rand_x(1, 98);
     std::uniform_int_distribution<uint16_t> rand_y(1, 48);
     x = rand_x(mt);
     y = rand_y(mt);
 
-    PositionSystem pos_system(map);
+    PositionSystem pos_system(&map);
     entity_manager.readSystemMessages();
     entity_manager.updateData();
     entity_manager.clearSystemMessages();
@@ -115,7 +117,7 @@ int main()
     }
     pos_system.updatePosition(entity_manager.getEntity(1), x, y);
     nav_map_manager.calculatePlayerNavMap();
-    AISystem ai_system(map, nav_map_manager, entity_manager.getEntity(1));
+    AISystem ai_system(&map, &nav_map_manager, entity_manager.getEntity(1));
     ai_system.addEntity(monster);
     auto &player_hp = entity_manager.getEntity(1)
                           ->getComponent<Health>()
@@ -140,11 +142,12 @@ int main()
     bool                            update_systems = false;
     std::list<observer_ptr<System>> systems;
 
-    PlayerControlSystem player_sys(entity_manager.getEntity(1), pos_system);
+    bool next_level = false;
+    PlayerControlSystem player_sys(entity_manager.getEntity(1), &pos_system, next_level);
     EffectSystem        effect_sys;
     AttackSystem        attack_sys;
     HealthSystem        health_sys;
-    LOS_System          los_system(map, entity_manager.getEntity(1));
+    LOS_System          los_system(&map, entity_manager.getEntity(1));
     ExperienceSystem    exp_sys(entity_manager.getEntity(1));
 
     los_system.addEntity(monster);
