@@ -142,13 +142,13 @@ struct Tile
     //  ftxui::Color background_color;
     inline friend std::ostream &operator<<(std::ostream &os, const Tile &tile)
     {
-        os << tile.type;
+        os << tile.type << ' ' << tile.appearance;
         return os;
     }
 
     inline friend std::istream &operator>>(std::istream &is, Tile &tile)
     {
-        is >> tile.type;
+        is >> tile.type >> tile.appearance;
         return is;
     }
 };
