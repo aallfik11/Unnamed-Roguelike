@@ -137,7 +137,7 @@ class CaveGenerator
     }
 
 public:
-    static std::shared_ptr<GameMap>
+    static GameMap
     generate(std::mt19937 &twister_engine, uint32_t size_x, uint32_t size_y)
     {
         std::uniform_int_distribution<uint32_t> random_x(1, size_x - 1);
@@ -190,7 +190,7 @@ public:
                 break;
             }
         }
-        return std::shared_ptr<GameMap>(new GameMap(map));
+        return map;
     }
 };
 
