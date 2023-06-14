@@ -44,8 +44,10 @@ class ExperienceSystem : public System, public EntityHolder
     }
 
 public:
-    ExperienceSystem() = delete;
+    ExperienceSystem() { player_ = nullptr; }
     ExperienceSystem(observer_ptr<Entity> player) : player_{player} {}
+
+    void assignPlayer(observer_ptr<Entity> player) { this->player_ = player; }
 
     void updateData() override
     {
@@ -58,8 +60,12 @@ public:
             levelUp(entity);
         }
     }
+
     void readSystemMessages() override
     {
+        if (player_ == nullptr)
+            throw std::runtime_error(
+                "Experience System: ERROR -> Player unassigned");
         for (auto &message : (*system_messages_)[SystemType::EXPERIENCE])
         {
             auto message_it = message.begin();
@@ -95,6 +101,12 @@ public:
         (*system_messages_)[SystemType::EXPERIENCE].clear();
         update_messages_.clear();
         force_lvl_ups.clear();
+    }
+
+    void resetSystem() override
+    {
+        clearSystemMessages();
+        player_ = nullptr;
     }
 
     std::istream &deserialize(std::istream &is) override

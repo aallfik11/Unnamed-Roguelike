@@ -24,13 +24,13 @@ class LOS_System : public System, public EntityHolder
     std::list<observer_ptr<Entity>>          addition_messages_;
     std::list<observer_ptr<Entity>>          deletion_messages_;
 
-    GameMap &map_;
+    observer_ptr<GameMap> map_;
 
     bool lineOfSightAlg(uint16_t init_x,
                         uint16_t init_y,
                         uint16_t target_x,
                         uint16_t target_y,
-                        uint16_t seeing_distance)
+                        uint16_t seeing_distance) const
     {
         uint16_t distance_x = std::abs(init_x - target_x);
         uint16_t distance_y = std::abs(init_y - target_y);
@@ -50,7 +50,8 @@ class LOS_System : public System, public EntityHolder
 
             do
             {
-                if ((map_[x][y].type & TileType::TRAVERSIBLE) == TileType::NONE)
+                if (((*map_)[x][y].type & TileType::TRAVERSIBLE) ==
+                    TileType::NONE)
                     return false;
 
                 if (t >= 0)
@@ -68,7 +69,8 @@ class LOS_System : public System, public EntityHolder
 
             do
             {
-                if ((map_[x][y].type & TileType::TRAVERSIBLE) == TileType::NONE)
+                if (((*map_)[x][y].type & TileType::TRAVERSIBLE) ==
+                    TileType::NONE)
                     return false;
 
                 if (t >= 0)
@@ -85,9 +87,15 @@ class LOS_System : public System, public EntityHolder
     }
 
 public:
-    LOS_System(GameMap &gamemap, observer_ptr<Entity> player)
-        : player_{player}, map_{gamemap}
+    LOS_System()
     {
+        map_    = nullptr;
+        player_ = nullptr;
+    }
+    LOS_System(observer_ptr<GameMap> gamemap, observer_ptr<Entity> player)
+    {
+        map_    = gamemap;
+        player_ = player;
     }
 
     void addEntity(observer_ptr<Entity> const entity)
@@ -101,10 +109,17 @@ public:
     }
 
     void assignPlayer(observer_ptr<Entity> const player) { player_ = player; }
+    void assignMap(const observer_ptr<GameMap> map) { map_ = map; }
 
     void calculateLOS(observer_ptr<Entity> const entity,
-                      observer_ptr<Entity> const target)
+                      observer_ptr<Entity> const target) noexcept(false)
     {
+        if (map_ == nullptr)
+            throw std::runtime_error("LOS_System: ERROR -> Map unassigned");
+        if (entity == nullptr)
+            throw std::runtime_error("LOS_System: ERROR -> Caller unassigned");
+        if (target == nullptr)
+            throw std::runtime_error("LOS_System: ERROR -> Target unassigned");
         auto target_coord_ptr      = target->getComponent<Coordinates>();
         auto coord_ptr             = entity->getComponent<Coordinates>();
         auto los_ptr               = entity->getComponent<LOSComponent>();
@@ -116,8 +131,10 @@ public:
                                                     los_ptr->seeing_distance);
     }
 
-    void calculateAllLinesOfSight()
+    void calculateAllLinesOfSight() noexcept(false)
     {
+        if (player_ == nullptr)
+            throw std::runtime_error("LOS_System: ERROR -> Player unassigned");
         auto player_coords = player_->getComponent<Coordinates>();
         for (auto los_entity : lines_of_sight_)
         {
@@ -134,21 +151,14 @@ public:
                                player_coords->x,
                                player_coords->y,
                                los_ptr->seeing_distance);
-
-            // simpler, if I'll want to have variable seeing distances I'll use
-            // the commented version
-            // los_ptr->has_LOS_to_player =
-            //     ((map_[coord_ptr->x][coord_ptr->y].type & TileType::VISIBLE)
-            //     !=
-            //      TileType::NONE)
-            //         ? true
-            //         : false;
         }
     }
 
-    bool isBlocked(short destX, short destY) const
+    bool isBlocked(short destX, short destY) const noexcept(false)
     {
 
+        if (map_ == nullptr)
+            throw std::runtime_error("LOS_System: ERROR -> Map unassigned");
         if (destX < 0 || destX >= G_MAP_WIDTH)
         {
             return true;
@@ -158,13 +168,15 @@ public:
             return true;
         }
 
-        if ((map_[destX][destY].type & TileType::WALL) != TileType::NONE)
+        if (((*map_)[destX][destY].type & TileType::WALL) != TileType::NONE)
             return true;
         return false;
     }
 
     void visit(short destX, short destY)
     {
+        if (map_ == nullptr)
+            throw std::runtime_error("LOS_System: ERROR -> Map unassigned");
         if (destX < 0 || destX >= G_MAP_WIDTH)
         {
             return;
@@ -174,19 +186,21 @@ public:
             return;
         }
         visited_list_.emplace_back(destX, destY);
-        map_[destX][destY].type |= (TileType::MAPPED | TileType::VISIBLE);
+        (*map_)[destX][destY].type |= (TileType::MAPPED | TileType::VISIBLE);
     }
 
-    void cleanVisited()
+    void cleanVisited() noexcept(false)
     {
+        if (map_ == nullptr)
+            throw std::runtime_error("LOS_System: ERROR -> Map unassigned");
         for (auto &[x, y] : visited_list_)
         {
-            map_[x][y].type &= ~TileType::VISIBLE;
+            (*map_)[x][y].type &= ~TileType::VISIBLE;
         }
-            visited_list_.clear();
+        visited_list_.clear();
     }
 
-    void updateData() override
+    void updateData() noexcept(false) override
     {
         for (auto &entity : deletion_messages_)
         {

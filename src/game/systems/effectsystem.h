@@ -291,6 +291,12 @@ public:
         (*system_messages_)[SystemType::EFFECT].clear();
     }
 
+    void resetSystem() override
+    {
+        clearSystemMessages();
+        buffable_entities_.clear();
+    }
+
     std::ostream &serialize(std::ostream &os) const override
     {
         os << SystemType::EFFECT << ' ' << buffable_entities_.size() << ' ';

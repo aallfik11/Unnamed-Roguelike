@@ -115,10 +115,9 @@ enum class LOG
 };
 }; // namespace SystemAction
 
-
 class System
 {
-    protected:
+protected:
     using MessageMap =
         std::unordered_map<SystemType, std::list<std::vector<std::any>>>;
 
@@ -129,6 +128,7 @@ public:
     virtual void          updateData()          = 0;
     virtual void          readSystemMessages()  = 0;
     virtual void          clearSystemMessages() = 0;
+    virtual void          resetSystem() { this->clearSystemMessages(); }
     virtual std::ostream &serialize(std::ostream &os) const { return os; };
     virtual std::istream &deserialize(std::istream &is) { return is; };
 

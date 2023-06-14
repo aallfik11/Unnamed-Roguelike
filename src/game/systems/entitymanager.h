@@ -1,6 +1,7 @@
 #ifndef ENTITYMANAGER_H
 #define ENTITYMANAGER_H
 #include "../component.h"
+#include "../components/inventory.h"
 #include "../entity.h"
 #include "../entitydeserializer.h"
 #include "../entityholder.h"
@@ -12,6 +13,7 @@
 #include <istream>
 #include <memory>
 #include <ostream>
+#include <ranges>
 #include <unordered_map>
 #include <vector>
 
@@ -25,7 +27,7 @@ class EntityManager : public System
     std::list<Request>              request_list_;
 
 public:
-    uint32_t createEntity(const EntityType          type,
+    uint32_t createEntity(const EntityType         type,
                           std::vector<Component *> components)
     {
         auto id       = Entity::getMaxId();
@@ -46,6 +48,12 @@ public:
     EntityHashmap &getAllEntities() { return entities_; }
 
     void markForDeletion(const uint32_t id) { purge_list_.emplace_back(id); }
+    void unmarkForDeletion(const uint32_t id)
+    {
+        auto iterator = std::find(purge_list_.begin(), purge_list_.end(), id);
+        if (iterator != purge_list_.end())
+            purge_list_.erase(iterator);
+    }
 
     void purge()
     {
@@ -116,6 +124,32 @@ public:
         request_list_.clear();
     }
 
+    void resetSystem() override
+    {
+        readSystemMessages();
+        updateData();
+        clearSystemMessages();
+        if (entities_.empty())
+            return;
+        std::list<std::unique_ptr<Entity>> player_and_items;
+        player_and_items.emplace_back(entities_[1].release());
+        auto player_inventory =
+            entities_[1]->getComponent<Inventory>()->inventory;
+        std::list<uint32_t> item_ids;
+        for (auto &item : player_inventory)
+        {
+            player_and_items.emplace_back(entities_[item->getId()].release());
+        }
+
+        entities_.clear();
+        Entity::resetMaxId();
+        for (auto &entity : player_and_items)
+        {
+            auto ent                = std::make_unique<Entity>(*entity);
+            entities_[ent->getId()] = std::move(entity);
+        }
+    }
+
     std::ostream &serialize(std::ostream &os) const override
     {
         os << SystemType::ENTITY << ' ' << entities_.size() << std::endl;
@@ -138,7 +172,8 @@ public:
             is >> *entity;
             entities_[entity->getId()] = std::move(entity);
         }
-        // is >> entity_amount; // to get rid of an additional newline and move the
+        // is >> entity_amount; // to get rid of an additional newline and move
+        // the
         //                      // stream to the correct read position
         return is;
     }

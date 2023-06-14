@@ -1,7 +1,12 @@
 #ifndef MAPMANAGER_H
 #define MAPMANAGER_H
+#include "../globals.h"
+#include "../observerptr.h"
 #include "../tile.h"
+#include <array>
 #include <cstdint>
+#include <filesystem>
+#include <fstream>
 #include <functional>
 #include <memory>
 #include <random>
@@ -9,27 +14,31 @@
 
 class MapManager
 {
-    using MapPointer = std::shared_ptr<std::vector<std::vector<Tile>>>;
-    using GeneratorFunction =
-        std::function<MapPointer(std::mt19937 &, uint32_t, uint32_t)>;
+    using GeneratorFunction = std::function<std::vector<std::vector<Tile>>(
+        std::mt19937 &, uint32_t, uint32_t)>;
 
-    GeneratorFunction  generator_;
-    std::random_device rng_;
-    std::mt19937       twister_engine_;
-    MapPointer         map_;
+    GeneratorFunction                      generator_;
+    std::random_device                     rng_;
+    std::mt19937                           twister_engine_;
+    std::vector<std::vector<Tile>>         current_map_;
+    std::array<decltype(current_map_), 26> maps_;
+    observer_ptr<int>                      current_depth_;
 
 public:
     MapManager() = delete;
 
-    MapManager(GeneratorFunction initial_generator)
-        : generator_{initial_generator}
+    MapManager(GeneratorFunction initial_generator, observer_ptr<int> depth)
+        : generator_{initial_generator}, current_depth_{depth}
     {
         twister_engine_ = std::mt19937(rng_());
     }
 
-    void generate(uint32_t size_x, uint32_t size_y)
+    void generate()
     {
-        map_ = generator_(twister_engine_, size_x, size_y);
+        for (auto &map : maps_)
+        {
+            map = generator_(twister_engine_, G_MAP_WIDTH, G_MAP_HEIGHT);
+        }
     }
 
     void setGenerator(GeneratorFunction new_generator)
@@ -37,7 +46,60 @@ public:
         generator_ = new_generator;
     }
 
-    MapPointer getMap() { return map_; }
+    std::vector<std::vector<Tile>> &getMap()
+    {
+        return maps_.at(*current_depth_);
+    }
+
+    void saveMaps(const std::filesystem::path &save_path)
+    {
+        using namespace std::filesystem;
+        std::string   savefile_name = "map_";
+        int           i             = 0;
+        std::ofstream saver(save_path / path("depth"));
+        saver << *current_depth_;
+        saver.close();
+        for (auto &map : maps_)
+        {
+            saver.open(save_path / path(savefile_name + std::to_string(i)));
+            for (auto &col : map)
+            {
+                for (auto &cell : col)
+                {
+                    saver << cell << ' ';
+                }
+                saver << std::endl;
+            }
+            saver.close();
+            ++i;
+        }
+    }
+    void loadMaps(const std::filesystem::path &load_path)
+    {
+
+        using namespace std::filesystem;
+        std::string   savefile_name = "map_";
+        int           i             = 0;
+        std::ifstream loader(load_path / path("depth"));
+        loader >> *current_depth_;
+        loader.close();
+        for (auto &map : maps_)
+        {
+            loader.open(load_path / path(savefile_name + std::to_string(i)));
+            std::vector<std::vector<Tile>> temp_map(
+                G_MAP_HEIGHT, std::vector<Tile>(G_MAP_WIDTH));
+            for (auto &col : temp_map)
+            {
+                for (auto &cell : col)
+                {
+                    loader >> cell;
+                }
+            }
+            loader.close();
+            map = std::move(temp_map);
+            ++i;
+        }
+    }
 };
 
 #endif /*MAPMANAGER_H*/

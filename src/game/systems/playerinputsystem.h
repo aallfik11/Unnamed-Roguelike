@@ -1,8 +1,6 @@
 #ifndef PLAYERCONTROLSYSTEM_H
 #define PLAYERCONTROLSYSTEM_H
 
-#include "../components/armorcomponent.h"
-#include "../components/armorslot.h"
 #include "../components/coordinates.h"
 #include "../components/description.h"
 #include "../components/health.h"
@@ -20,37 +18,50 @@
 #include "positionsystem.h"
 #include <cmath>
 #include <cstdint>
-#include <ftxui/component/component.hpp>
-#include <ftxui/component/component_base.hpp>
-#include <ftxui/component/event.hpp>
-#include <ftxui/dom/elements.hpp>
-#include <ftxui/screen/color.hpp>
+#include <exception>
 #include <istream>
 #include <list>
 #include <memory>
 
 class PlayerControlSystem : public System, public EntityHolder
 {
-    observer_ptr<Entity> player_;
-    PositionSystem      &pos_sys_;
-    Direction            next_movement_;
-    observer_ptr<Entity> last_hit_enemy_;
-    int                  last_hit_entity_timer_;
+    observer_ptr<Entity>         player_;
+    observer_ptr<PositionSystem> pos_sys_;
+    Direction                    next_movement_;
+    observer_ptr<Entity>         last_hit_enemy_;
+    int                          last_hit_entity_timer_;
+    bool                        &next_level_;
 
 public:
-    PlayerControlSystem(observer_ptr<Entity> const player,
-                        PositionSystem            &pos_sys)
-        : pos_sys_{pos_sys}
+    PlayerControlSystem(bool &next_level) : next_level_{next_level}
+    {
+        player_                = nullptr;
+        pos_sys_               = nullptr;
+        next_movement_         = Direction::NONE;
+        last_hit_enemy_        = nullptr;
+        last_hit_entity_timer_ = 0;
+    }
+
+    PlayerControlSystem(const observer_ptr<Entity>         player,
+                        const observer_ptr<PositionSystem> pos_sys,
+                        bool                              &next_level)
+        : PlayerControlSystem(next_level)
     {
         player_                = player;
+        pos_sys_               = pos_sys;
         next_movement_         = Direction::NONE;
         last_hit_entity_timer_ = 0;
+    }
 
-        using namespace ftxui;
+    void assignPlayer(const observer_ptr<Entity> player) { player_ = player; }
+
+    void assignPositionSystem(const observer_ptr<PositionSystem> pos_sys)
+    {
+        pos_sys_ = pos_sys;
     }
 
     EntityType checkMovementDestination(
-        const std::list<observer_ptr<Entity>> &entities_at_direction)
+        const std::list<observer_ptr<Entity>> &entities_at_direction) noexcept
     {
         if (entities_at_direction.empty())
             return EntityType::NONE;
@@ -68,8 +79,14 @@ public:
         return EntityType::ITEM;
     }
 
-    void updateData() override
+    void updateData() noexcept(false) override
     {
+        if (player_ == nullptr)
+            throw std::runtime_error(
+                "PlayerControlSystem: ERROR -> Player unassigned");
+        if (pos_sys_ == nullptr)
+            throw std::runtime_error(
+                "PlayerControlSystem: ERROR -> Position System unassigned");
         EntityType entity_type_at_destination = EntityType::NONE;
         std::list<observer_ptr<Entity>> entities_at_destination;
         auto coordinates = player_->getComponent<Coordinates>();
@@ -83,7 +100,7 @@ public:
         {
             next_y = current_y - 1;
             entities_at_destination =
-                pos_sys_.getEntitiesAtCoordinates(current_x, next_y);
+                pos_sys_->getEntitiesAtCoordinates(current_x, next_y);
             entity_type_at_destination =
                 checkMovementDestination(entities_at_destination);
             break;
@@ -92,7 +109,7 @@ public:
         {
             next_y = current_y + 1;
             entities_at_destination =
-                pos_sys_.getEntitiesAtCoordinates(current_x, next_y);
+                pos_sys_->getEntitiesAtCoordinates(current_x, next_y);
             entity_type_at_destination =
                 checkMovementDestination(entities_at_destination);
             break;
@@ -101,7 +118,7 @@ public:
         {
             next_x = current_x - 1;
             entities_at_destination =
-                pos_sys_.getEntitiesAtCoordinates(next_x, current_y);
+                pos_sys_->getEntitiesAtCoordinates(next_x, current_y);
             entity_type_at_destination =
                 checkMovementDestination(entities_at_destination);
             break;
@@ -110,7 +127,7 @@ public:
         {
             next_x = current_x + 1;
             entities_at_destination =
-                pos_sys_.getEntitiesAtCoordinates(next_x, current_y);
+                pos_sys_->getEntitiesAtCoordinates(next_x, current_y);
             entity_type_at_destination =
                 checkMovementDestination(entities_at_destination);
             break;
@@ -150,6 +167,11 @@ public:
         }
         case EntityType::NONE:
         {
+            if ((pos_sys_->getTileAtCoordinates(next_x, next_y).type &
+                 TileType::HAS_STAIRS) != TileType::NONE)
+            {
+                next_level_ = true;
+            }
             System::sendSystemMessage(
                 SystemType::POSITION,
                 {std::make_any<SystemAction::POSITION>(
@@ -159,6 +181,8 @@ public:
                  std::make_any<uint16_t>(next_y)});
             break;
         }
+        default:
+            break;
         }
     }
     void readSystemMessages() override
@@ -197,6 +221,16 @@ public:
                 --last_hit_entity_timer_;
         }
     }
+
+    void resetSystem() override
+    {
+        next_movement_         = Direction::NONE;
+        last_hit_enemy_        = nullptr;
+        last_hit_entity_timer_ = 0;
+        player_                = nullptr;
+        pos_sys_               = nullptr;
+    }
+
     std::istream &deserialize(std::istream &is) override
     {
         sendSystemMessage(

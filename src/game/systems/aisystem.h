@@ -38,13 +38,12 @@ class AISystem : public System, public EntityHolder
     using GameMap = std::vector<std::vector<Tile>>;
 
     AISet                           ais_;
-    GameMap                         &map_;
-    NavMapManager                  &navigation_manager_;
+    observer_ptr<const GameMap>     map_;
+    observer_ptr<NavMapManager>     navigation_manager_;
     observer_ptr<Entity>            player_;
     std::list<observer_ptr<Entity>> addition_messages_;
     std::list<observer_ptr<Entity>> removal_messages_;
 
-public: // temporary
     double getRunThreshold(AIType &ai_type)
     {
         switch (ai_type)
@@ -95,13 +94,13 @@ public: // temporary
                 caller_brain->ai_state = AIState::ATTACK;
                 return attack(caller, target);
             }
-            navigation_manager_.switchToPlayerNavMap(
+            navigation_manager_->switchToPlayerNavMap(
                 caller->getComponent<NavMapComponent>()->nav_map);
             auto caller_brain           = caller->getComponent<AIComponent>();
             caller_brain->last_target_x = target_coordinates->x;
             caller_brain->last_target_y = target_coordinates->y;
         }
-        auto [x, y] = navigation_manager_.nextBestCoordinates(
+        auto [x, y] = navigation_manager_->nextBestCoordinates(
             caller, NavMapManager::Destination::TOWARDS);
 
         if (caller_coordinates->x == caller_brain->last_target_x &&
@@ -109,7 +108,7 @@ public: // temporary
         {
             auto caller_navmap     = caller->getComponent<NavMapComponent>();
             caller_brain->ai_state = AIState::WANDER_AROUND;
-            navigation_manager_.assignRandomTarget(caller_navmap->nav_map);
+            navigation_manager_->assignRandomTarget(caller_navmap->nav_map);
             return wanderAround(caller, target);
         }
         // positon_system_.updatePosition(caller, x, y);
@@ -134,11 +133,12 @@ public: // temporary
             return rest(caller, target);
         }
 
-        navigation_manager_.switchToPlayerNavMap(caller->getComponent<NavMapComponent>()->nav_map);
+        navigation_manager_->switchToPlayerNavMap(
+            caller->getComponent<NavMapComponent>()->nav_map);
 
-        auto [x, y] = navigation_manager_.nextBestCoordinates(
+        auto [x, y] = navigation_manager_->nextBestCoordinates(
             caller, NavMapManager::Destination::AWAY_FROM);
-        if ((map_[x][y].type & (TileType::HAS_CREATURE | TileType::WALL)) !=
+        if (((*map_)[x][y].type & (TileType::HAS_CREATURE | TileType::WALL)) !=
             TileType::NONE)
         {
             auto caller_brain = caller->getComponent<AIComponent>();
@@ -180,7 +180,7 @@ public: // temporary
         {
             auto caller_navmap      = caller->getComponent<NavMapComponent>();
             auto target_coordinates = target->getComponent<Coordinates>();
-            navigation_manager_.switchToPlayerNavMap(caller_navmap->nav_map);
+            navigation_manager_->switchToPlayerNavMap(caller_navmap->nav_map);
 
             caller_brain->last_target_x = target_coordinates->x;
             caller_brain->last_target_y = target_coordinates->y;
@@ -197,7 +197,7 @@ public: // temporary
 
         if (current_hp_percentage >= 0.99)
         {
-            navigation_manager_.assignRandomTarget(
+            navigation_manager_->assignRandomTarget(
                 caller->getComponent<NavMapComponent>()->nav_map);
             caller_brain->ai_state = AIState::WANDER_AROUND;
             return wanderAround(caller, target);
@@ -243,7 +243,7 @@ public: // temporary
         {
             caller_brain->ai_state = AIState::APPROACH_TARGET;
 
-            navigation_manager_.switchToPlayerNavMap(
+            navigation_manager_->switchToPlayerNavMap(
                 caller->getComponent<NavMapComponent>()->nav_map);
             caller_brain->last_target_x = target_coordinates->x;
             caller_brain->last_target_y = target_coordinates->y;
@@ -276,7 +276,7 @@ public: // temporary
                 (static_cast<double>(caller_health->current_health_points) /
                  static_cast<double>(caller_health->max_health_points));
 
-            navigation_manager_.switchToPlayerNavMap(caller_navmap->nav_map);
+            navigation_manager_->switchToPlayerNavMap(caller_navmap->nav_map);
 
             caller_brain->last_target_x = target_coordinates->x;
             caller_brain->last_target_y = target_coordinates->y;
@@ -293,13 +293,13 @@ public: // temporary
 
         // entities will have a roaming navigation map assigned by default
         auto caller_coords = caller->getComponent<Coordinates>();
-        auto [x, y]        = navigation_manager_.nextBestCoordinates(
+        auto [x, y]        = navigation_manager_->nextBestCoordinates(
             caller, NavMapManager::Destination::TOWARDS);
         if (caller_coords->x == x && caller_coords->y == y)
         {
             auto caller_navmap = caller->getComponent<NavMapComponent>();
-            navigation_manager_.assignRandomTarget(caller_navmap->nav_map);
-            auto [x2, y2] = navigation_manager_.nextBestCoordinates(
+            navigation_manager_->assignRandomTarget(caller_navmap->nav_map);
+            auto [x2, y2] = navigation_manager_->nextBestCoordinates(
                 caller, NavMapManager::Destination::TOWARDS);
             x = x2;
             y = y2;
@@ -329,85 +329,36 @@ public: // temporary
     // }
 
 public:
-    AISystem(GameMap                   &map,
-             NavMapManager             &nav_manager,
-             observer_ptr<Entity> const player)
-        : map_{map}, navigation_manager_{nav_manager}, player_{player}
+    AISystem()
     {
-        // states_[APPROACH_TARGET] = std::function<Action(EntityPtr&,
-        // EntityPtr&)>(approachTarget); states_[RUN_AWAY]        =
-        // std::function<Action(EntityPtr&, EntityPtr&)>(runAway);
-        // states_[WANDER_AROUND]   = std::function<Action(EntityPtr&,
-        // EntityPtr&)>(wanderAround); states_[REST]            =
-        // std::function<Action(EntityPtr&, EntityPtr&)>(rest);
-        // states_[ATTACK] = std::function<Action(EntityPtr&,
-        // EntityPtr&)>(attack); This isn't necessary;
-        // /*APPROACH TARGET*/
-        // states_[APPROACH_TARGET].emplace(ATTACK, attack); // if player
-        // close enough
-        // states_[APPROACH_TARGET].emplace(INTERACT_WITH_OBJECT,
-        // interactWithObject);
-        // states_[APPROACH_TARGET].emplace(WANDER_AROUND, wanderAround);
-        // /*APPROACH TARGET*/
-
-        // /*RUN_AWAY*/
-        // states_[RUN_AWAY].emplace(REST, rest); // if far enough from the
-        // player
-        // /*RUN_AWAY*/
-
-        // /*REST*/
-        // states_[REST].emplace(APPROACH_TARGET, approachTarget); // if
-        // healthy enough or target has high priority
-        // states_[REST].emplace(RUN_AWAY, runAway);               // if not
-        // healthy enough to fight and/or afraid/cowardly
-        // states_[REST].emplace(WANDER_AROUND, wanderAround);
-        // // if healthy and nothing else to do
-        // /*REST*/
-
-        // /*ATTACK*/
-        // states_[ATTACK].emplace(RUN_AWAY, runAway);               // if
-        // not healthy enough states_[ATTACK].emplace(APPROACH_TARGET,
-        // approachTarget); // if target runs away and healthy enough
-        // states_[ATTACK].emplace(SPECIAL, special);                // if
-        // special conditions apply
-        // /*ATTACK*/
-
-        // /*INTERACT*/
-        // states_[INTERACT_WITH_OBJECT].emplace(WANDER_AROUND,
-        // wanderAround);
-        // // if done interacting and nothing else to do
-        // states_[INTERACT_WITH_OBJECT].emplace(APPROACH_TARGET,
-        // approachTarget); // if a valid target in range
-        // states_[INTERACT_WITH_OBJECT].emplace(ATTACK, attack); // if a
-        // valid target directly near
-        // states_[INTERACT_WITH_OBJECT].emplace(RUN_AWAY, runAway); // if
-        // not healthy enough to fight and/or afraid/cowardly
-        // /*INTERACT*/
-
-        // /*WANDER AROUND*/
-        // states_[WANDER_AROUND].emplace(INTERACT_WITH_OBJECT,
-        // interactWithObject); // if stumbled upon something interactable
-        // (might not use that)
-        // states_[WANDER_AROUND].emplace(APPROACH_TARGET, approachTarget);
-        // // if a valid target in range
-        // states_[WANDER_AROUND].emplace(RUN_AWAY, runAway); // if not
-        // healthy enough to fight and/or afraid/cowardly
-        // /*WANDER AROUND*/
-
-        // /*SPECIAL*/
-        // states_[SPECIAL].emplace(APPROACH_TARGET, approachTarget); // if
-        // target not withing special range
-        // states_[SPECIAL].emplace(RUN_AWAY, runAway);               //
-        // depending on the special action states_[SPECIAL].emplace(ATTACK,
-        // attack);                  // depending on the special action
-        // states_[SPECIAL].emplace(REST, rest);
-        // // depending on the special action
-        // /*SPECIAL*/
+        map_                = nullptr;
+        navigation_manager_ = nullptr;
+        player_             = nullptr;
     }
+    AISystem(const observer_ptr<const GameMap> map,
+             observer_ptr<NavMapManager>       nav_manager,
+             observer_ptr<Entity> const        player)
+    {
+        map_                = map;
+        navigation_manager_ = nav_manager;
+        player_             = player;
+    }
+
+    void assignPlayer(const observer_ptr<Entity> player)
+    {
+        this->player_ = player;
+    }
+
+    void assignNavMapManager(const observer_ptr<NavMapManager> nav_manager)
+    {
+        this->navigation_manager_ = nav_manager;
+    }
+
+    void assignMap(const observer_ptr<const GameMap> map) { this->map_ = map; }
 
     inline void addEntity(const observer_ptr<Entity> entity)
     {
-        navigation_manager_.assignRandomTarget(
+        navigation_manager_->assignRandomTarget(
             entity->getComponent<NavMapComponent>()->nav_map);
         ais_.emplace(entity);
     }
@@ -451,8 +402,16 @@ public:
             break;
         }
     }
-    void updateData() override
+    void updateData() noexcept(false) override
     {
+        if (map_ == nullptr)
+            throw std::runtime_error("AI System: ERROR -> Map unassigned");
+        if (navigation_manager_ == nullptr)
+            throw std::runtime_error(
+                "AI System: ERROR -> NavMapManager unassigned");
+        if (player_ == nullptr)
+            throw std::runtime_error("AI System: ERROR -> Player unassigned");
+
         for (auto &entity : removal_messages_)
         {
             deleteEntity(entity);
@@ -498,6 +457,15 @@ public:
         (*system_messages_)[SystemType::AI].clear();
         addition_messages_.clear();
         removal_messages_.clear();
+    }
+
+    void resetSystem() override
+    {
+        clearSystemMessages();
+        ais_.clear();
+        map_                = nullptr;
+        navigation_manager_ = nullptr;
+        player_             = nullptr;
     }
 
     std::ostream &serialize(std::ostream &os) const override

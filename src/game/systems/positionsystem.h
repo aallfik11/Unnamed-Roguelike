@@ -8,6 +8,7 @@
 #include "../entityhash.h"
 #include "../entityholder.h"
 #include "../entitytypes.h"
+#include "../globals.h"
 #include "../system.h"
 #include "../tile.h"
 #include <any>
@@ -30,7 +31,7 @@ class PositionSystem : public System, public EntityHolder
     std::list<observer_ptr<Entity>>          addition_messages_;
     std::list<observer_ptr<Entity>>          removal_messages_;
     // std::mutex                               render_mutex;
-    GameMap                                 &map_;
+    observer_ptr<GameMap>                    map_;
 
     /**
      * @brief Checks if the coordinates are within the map's bounds
@@ -42,11 +43,11 @@ class PositionSystem : public System, public EntityHolder
      */
     bool checkCoordinateValidity(uint16_t x, uint16_t y) const
     {
-        if (map_.empty())
+        if (map_->empty())
             return false;
-        if (x >= map_.size())
+        if (x >= map_->size())
             return false;
-        if (y >= map_[x].size())
+        if (y >= (*map_)[x].size())
             return false;
         return true;
     }
@@ -64,18 +65,20 @@ class PositionSystem : public System, public EntityHolder
         if (checkCoordinateValidity(x, y) == false)
             return true;
 
-        if ((map_[x][y].type & TileType::TRAVERSIBLE) == TileType::NONE)
+        if (((*map_)[x][y].type & TileType::TRAVERSIBLE) == TileType::NONE)
             return true;
 
-        if ((map_[x][y].type & TileType::HAS_CREATURE) != TileType::NONE)
+        if (((*map_)[x][y].type & TileType::HAS_CREATURE) != TileType::NONE)
             return true;
 
         return false;
     }
 
 public:
-    PositionSystem() = delete;
-    PositionSystem(GameMap &given_map) : map_{given_map} {}
+    PositionSystem() { map_ = nullptr; }
+    PositionSystem(observer_ptr<GameMap> given_map) : map_{given_map} {}
+
+    void assignMap(observer_ptr<GameMap> map) { this->map_ = map; }
 
     /**
      * @brief Updates given entities' position in the system
@@ -106,14 +109,14 @@ public:
         if ((type & (EntityType::CREATURE | EntityType::PLAYER)) !=
             EntityType::NONE)
         {
-            map_[position->x][position->y].type &= ~TileType::HAS_CREATURE;
-            map_[x][y].type                     |= TileType::HAS_CREATURE;
+            (*map_)[position->x][position->y].type &= ~TileType::HAS_CREATURE;
+            (*map_)[x][y].type                     |= TileType::HAS_CREATURE;
         }
         else if ((type & (EntityType::CONTAINER | EntityType::ITEM)) !=
                  EntityType::NONE)
         {
-            map_[position->x][position->y].type &= ~TileType::HAS_ITEM;
-            map_[x][y].type                     |= TileType::HAS_ITEM;
+            (*map_)[position->x][position->y].type &= ~TileType::HAS_ITEM;
+            (*map_)[x][y].type                     |= TileType::HAS_ITEM;
         }
 
         position->x = x;
@@ -165,11 +168,11 @@ public:
                                                              uint16_t y)
     {
         // const std::lock_guard<std::mutex> lock(render_mutex);
-        std::list<observer_ptr<Entity>>   entities_at_coordinates;
+        std::list<observer_ptr<Entity>> entities_at_coordinates;
 
-        if((map_[x][y].type & (TileType::HAS_ITEM | TileType::HAS_CREATURE)) == TileType::NONE)
+        if (((*map_)[x][y].type &
+             (TileType::HAS_ITEM | TileType::HAS_CREATURE)) == TileType::NONE)
             return entities_at_coordinates;
-
 
         for (auto &entity : entity_positions_)
         {
@@ -186,7 +189,7 @@ public:
 
     /**
      * @brief Adds an entity to the system
-     *
+     *:lua vim.lsp.buf.range_code_action()<cr>
      * @param entity
      */
     void addEntity(const observer_ptr<Entity> entity)
@@ -200,7 +203,8 @@ public:
                 entity_tile_type = TileType::HAS_CREATURE;
             else
                 entity_tile_type = TileType::HAS_ITEM;
-            map_[entity_coords->x][entity_coords->y].type |= entity_tile_type;
+            (*map_)[entity_coords->x][entity_coords->y].type |=
+                entity_tile_type;
         }
     }
 
@@ -220,7 +224,7 @@ public:
             entity_tile_type = TileType::HAS_CREATURE;
         else
             entity_tile_type = TileType::HAS_ITEM;
-        map_[entity_coords->x][entity_coords->y].type &= ~entity_tile_type;
+        (*map_)[entity_coords->x][entity_coords->y].type &= ~entity_tile_type;
 
         entity->removeComponent<Coordinates>();
 
@@ -228,8 +232,22 @@ public:
         return;
     }
 
-    void updateData() override
+    Tile getTileAtCoordinates(uint16_t x, uint16_t y)
     {
+        Tile tile;
+        if (x >= G_MAP_WIDTH)
+            return tile;
+        if (y >= G_MAP_HEIGHT)
+            return tile;
+
+        return (*map_)[x][y];
+    }
+
+    void updateData() noexcept(false) override
+    {
+        if (map_ == nullptr)
+            throw std::runtime_error(
+                "Position System: ERROR -> Player unassigned");
         for (auto &entity : removal_messages_)
         {
             deleteEntity(entity);
@@ -246,9 +264,11 @@ public:
         }
     }
 
-    void readSystemMessages()
-        override // todo: change to make this a parallel listener;
+    void readSystemMessages() noexcept(false) override
     {
+        if (map_ == nullptr)
+            throw std::runtime_error(
+                "Position System: ERROR -> Player unassigned");
         for (auto &message : (*system_messages_)[SystemType::POSITION])
         {
             auto message_iterator = message.begin();
@@ -300,6 +320,13 @@ public:
         removal_messages_.clear();
         pos_change_messages_.clear();
         request_messages_.clear();
+    }
+
+    void resetSystem() override
+    {
+        clearSystemMessages();
+        entity_positions_.clear();
+        map_ = nullptr;
     }
 
     virtual std::ostream &serialize(std::ostream &os) const override

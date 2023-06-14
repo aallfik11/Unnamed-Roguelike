@@ -7,6 +7,8 @@
 #include "../system.h"
 #include "../tile.h"
 #include <cmath>
+#include <exception>
+#include <functional>
 #include <istream>
 #include <list>
 #include <memory>
@@ -29,14 +31,14 @@ class NavMapManager : public System
                                /*target's initial score value*/ uint16_t,
                                /*target's score multiplier */ double>>;
 
-    GameMap                                &map_;
+    observer_ptr<const GameMap>             map_;
     RandomTargets                           random_targets_;
     std::random_device                      rd_;
     std::mt19937                            mt_engine_;
     std::uniform_int_distribution<uint16_t> distro_x_;
     std::uniform_int_distribution<uint16_t> distro_y_;
     NavMap                                  nav_to_player_;
-    const observer_ptr<const Coordinates>   player_coordinates_;
+    observer_ptr<const Coordinates>         player_coordinates_;
 
     // std::unordered_map<EntityPtr, NavMap> nav_maps_;
 
@@ -81,9 +83,9 @@ class NavMapManager : public System
                 uint16_t adjx = x + vector_x[i];
                 uint16_t adjy = y + vector_y[i];
 
-                if (!(adjx == 0 || adjx == map_.size() - 1 || adjy == 0 ||
-                      adjy == map_[0].size() - 1 ||
-                      (map_[adjx][adjy].type & (TileType::WALL)) !=
+                if (!(adjx == 0 || adjx == (*map_).size() - 1 || adjy == 0 ||
+                      adjy == (*map_)[0].size() - 1 ||
+                      ((*map_)[adjx][adjy].type & (TileType::WALL)) !=
                           TileType::NONE ||
                       nav_map[adjx][adjy].visited == true))
                 {
@@ -112,7 +114,7 @@ class NavMapManager : public System
         {
             auto random_target_x = distro_x_(mt_engine_);
             auto random_target_y = distro_y_(mt_engine_);
-            while ((map_[random_target_x][random_target_y].type &
+            while (((*map_)[random_target_x][random_target_y].type &
                     TileType::TRAVERSIBLE) == TileType::NONE)
             {
                 random_target_x = distro_x_(mt_engine_);
@@ -129,26 +131,47 @@ public:
         TOWARDS
     };
 
-    NavMapManager(GameMap                              &map,
-                  const observer_ptr<const Coordinates> player_coordinates)
-        : map_{map}, player_coordinates_{player_coordinates}
+    NavMapManager(observer_ptr<const GameMap>      map,
+                  const observer_ptr<const Entity> player)
+        : NavMapManager()
+    {
+        map_                = map;
+        player_coordinates_ = player->getConstComponent<Coordinates>();
+        // precomputing random targets for creatures to pick when wandering
+        // around
+        fillRandomTargets();
+    }
+
+    NavMapManager()
     {
         mt_engine_ = std::mt19937(rd_());
         distro_x_ = std::uniform_int_distribution<uint16_t>(1, G_MAP_WIDTH - 2);
         distro_y_ =
             std::uniform_int_distribution<uint16_t>(1, G_MAP_HEIGHT - 2);
-
-        // precomputing random targets for creatures to pick when wandering
-        // around
-        fillRandomTargets();
-
+        map_                = nullptr;
+        player_coordinates_ = nullptr;
         NavCell initial;
         nav_to_player_ =
             NavMap(G_MAP_WIDTH, std::vector<NavCell>(G_MAP_HEIGHT, initial));
     }
 
-    void calculatePlayerNavMap()
+    void assignMap(observer_ptr<const GameMap> map) { map_ = map; }
+    void assignPlayer(observer_ptr<const Entity> player)
     {
+        player_coordinates_ = player->getConstComponent<Coordinates>();
+    }
+    void initializeRandomTargets() noexcept(false)
+    {
+        if (map_ == nullptr)
+            throw std::runtime_error("NavMapManager: ERROR -> Map unassigned");
+        fillRandomTargets();
+    }
+
+    void calculatePlayerNavMap() noexcept(false)
+    {
+        if (player_coordinates_ == nullptr)
+            throw std::runtime_error(
+                "NavMapManager: ERROR -> Player unassigned");
         resetNavMap(nav_to_player_);
         calculateNavMap(
             nav_to_player_,
@@ -157,14 +180,19 @@ public:
         });
     }
 
-    void switchToPlayerNavMap(NavMap &nav_map) const
+    void switchToPlayerNavMap(NavMap &nav_map) const noexcept(false)
     {
+        if (player_coordinates_ == nullptr)
+            throw std::runtime_error(
+                "NavMapManager: ERROR -> Player unassigned");
         nav_map = nav_to_player_;
     }
 
-    void calculateNavMap(NavMap &nav_map, TargetTuple targets)
+    void calculateNavMap(NavMap &nav_map, TargetTuple targets) noexcept(false)
     {
 
+        if (map_ == nullptr)
+            throw std::runtime_error("NavMapManager: ERROR -> Map unassigned");
         // NavMap &nav_map = entity->getComponent<NavMapComponent>()->nav_map;
 
         resetNavMap(nav_map);
@@ -193,7 +221,8 @@ public:
             {
                 for (size_t y = 0; y < navmap_y_size; y++)
                 {
-                    if ((map_[x][y].type & (TileType::WALL)) != TileType::NONE)
+                    if (((*map_)[x][y].type & (TileType::WALL)) !=
+                        TileType::NONE)
                     {
                         main_navmap[x][y].score = (~0);
                         continue;
@@ -212,8 +241,10 @@ public:
         // }
     }
 
-    void assignRandomTarget(NavMap &nav_map)
+    void assignRandomTarget(NavMap &nav_map) noexcept(false)
     {
+        if (map_ == nullptr)
+            throw std::runtime_error("NavMapManager: ERROR -> Map unassigned");
         auto random_target = random_targets_.front();
         random_targets_.pop_front();
         random_targets_.push_back(random_target);
@@ -225,9 +256,9 @@ public:
         });
     }
 
-    bool
-    compareNavtuple(const std::tuple<uint16_t, uint16_t, NavCell>& nt1,
-                    const std::tuple<uint16_t, uint16_t, NavCell>& nt2) const
+    bool compareNavtuple(
+        const std::tuple<uint16_t, uint16_t, NavCell> &nt1,
+        const std::tuple<uint16_t, uint16_t, NavCell> &nt2) const noexcept
     {
         if (std::get<2>(nt1).visited == false)
             return false;
@@ -240,12 +271,12 @@ public:
         auto x2 = std::get<0>(nt2);
         auto y2 = std::get<1>(nt2);
 
-        if ((map_[x1][y1].type & TileType::HAS_CREATURE) != TileType::NONE)
+        if (((*map_)[x1][y1].type & TileType::HAS_CREATURE) != TileType::NONE)
         {
             return false;
         }
 
-        if ((map_[x2][y2].type & TileType::HAS_CREATURE) != TileType::NONE)
+        if (((*map_)[x2][y2].type & TileType::HAS_CREATURE) != TileType::NONE)
         {
             return true;
         }
@@ -255,8 +286,14 @@ public:
 
     std::tuple<uint16_t, uint16_t>
     nextBestCoordinates(observer_ptr<Entity> const entity,
-                        Destination                destination) const
+                        Destination destination) const noexcept(false)
     {
+        if (map_ == nullptr)
+            throw std::runtime_error("NavMapManager: ERROR -> Map unassigned");
+        if (entity == nullptr)
+            throw std::runtime_error(
+                "NavMapManager: ERROR -> entity is nullptr");
+
         using NavTuple = std::tuple<uint16_t, uint16_t, NavCell>;
         auto nav_map   = entity->getComponent<NavMapComponent>()->nav_map;
 
@@ -284,8 +321,8 @@ public:
             auto x = std::get<0>(result);
             auto y = std::get<1>(result);
 
-            if ((map_[x][y].type & (TileType::HAS_CREATURE | TileType::WALL)) !=
-                TileType::NONE)
+            if (((*map_)[x][y].type &
+                 (TileType::HAS_CREATURE | TileType::WALL)) != TileType::NONE)
             {
                 return {current_x, current_y};
             }
@@ -306,8 +343,8 @@ public:
             auto x = std::get<0>(result);
             auto y = std::get<1>(result);
 
-            if ((map_[x][y].type & (TileType::HAS_CREATURE | TileType::WALL)) !=
-                TileType::NONE)
+            if (((*map_)[x][y].type &
+                 (TileType::HAS_CREATURE | TileType::WALL)) != TileType::NONE)
             {
                 return {current_x, current_y};
             }
@@ -323,6 +360,13 @@ public:
     void updateData() override { calculatePlayerNavMap(); }
     void readSystemMessages() override {}
     void clearSystemMessages() override {}
+    void resetSystem() override
+    {
+        clearSystemMessages();
+        map_ = nullptr;
+        random_targets_.clear();
+        player_coordinates_ = nullptr;
+    }
 };
 
 #endif /*NAVMAPMANAGER*/
