@@ -95,13 +95,20 @@ class NavMapComponent : public Component
 
     std::istream &deserialize(std::istream &is) override
     {
-        std::ranges::for_each(std::ranges::views::all(this->nav_map),
-                              [&](std::vector<NavCell> &n)
-                              {
-                                  std::ranges::for_each(
-                                      std::ranges::views::all(n),
-                                      [&](NavCell &nav) { is >> nav; });
-                              });
+        for(auto&col : this->nav_map)
+        {
+            for(auto &cell : col)
+            {
+                is >> cell;
+            }
+        }
+        // std::ranges::for_each(std::ranges::views::all(this->nav_map),
+        //                       [&](std::vector<NavCell> &n)
+        //                       {
+        //                           std::ranges::for_each(
+        //                               std::ranges::views::all(n),
+        //                               [&](NavCell &nav) { is >> nav; });
+        //                       });
         return is;
     }
 
@@ -122,9 +129,10 @@ public:
             if (nav_map.size() == G_MAP_WIDTH &&
                 nav_map.at(0).size() == G_MAP_HEIGHT)
             {
-                std::ranges::for_each(std::ranges::views::all(nav_map),
-                                      [&](const std::vector<NavCell> &n)
-                                      { this->nav_map.emplace_back(n); });
+                // std::ranges::for_each(std::ranges::views::all(nav_map),
+                //                       [&](const std::vector<NavCell> &n)
+                //                       { this->nav_map.emplace_back(n); });
+                this->nav_map = nav_map;
             }
         }
     }
