@@ -335,7 +335,7 @@ public:
         potion_amount_distro_ = std::uniform_int_distribution<>(0, 4);
         food_amount_distro_   = std::uniform_int_distribution<>(2, 6);
         x_pos_distro_ = std::uniform_int_distribution<>(1, G_MAP_WIDTH - 2);
-        y_pos_distro_ = std::uniform_int_distribution<>(1, G_MAP_WIDTH - 2);
+        y_pos_distro_ = std::uniform_int_distribution<>(1, G_MAP_HEIGHT- 2);
 
         rarity_chances_[Rarity::COMMON]                   = 45;
         rarity_chances_[Rarity::UNCOMMON]                 = 25;
