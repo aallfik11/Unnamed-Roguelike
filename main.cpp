@@ -49,6 +49,8 @@ int main()
         case LaunchOptions::LOAD:
             [[fallthrough]];
         case LaunchOptions::LAUNCH:
+            quit       = false;
+            next_level = false;
             break;
         case LaunchOptions::EXIT:
             return 0;
@@ -58,10 +60,9 @@ int main()
         }
 
         using namespace ftxui;
-        int        depth{};
-        auto       scr = ScreenInteractive::Fullscreen();
-        MapManager map_manager(CaveGenerator::generate, &depth);
-
+        auto                scr = ScreenInteractive::Fullscreen();
+        int                 depth{};
+        MapManager          map_manager(CaveGenerator::generate, &depth);
         EntityManager       entity_manager;
         NavMapManager       nav_map_manager;
         PlayerControlSystem player_control_system(next_level);
@@ -104,7 +105,7 @@ int main()
             std::ofstream saver(systems_path);
             for (auto &system : systems)
             {
-                saver << system;
+                saver << system << '\n';
             }
             saver.close();
             map_manager.saveMaps(map_path);
@@ -120,15 +121,20 @@ int main()
             }
         };
 
-        auto resetSystems = [&]
+        auto resetSystems = [&](bool hard = false)
         {
+            if (hard)
+            {
+                entity_manager.hardReset();
+            }
             for (auto &system : systems)
             {
                 system.get().resetSystem();
             }
         };
 
-        if (option == LaunchOptions::LOAD)
+        resetSystems(true);
+        if (option == LaunchOptions::LOAD && savefile_path.empty() == false)
         {
             using namespace std::filesystem;
             auto save_path    = path(std::filesystem::current_path() /
@@ -215,6 +221,9 @@ int main()
             if (option != LaunchOptions::LOAD)
             {
 
+                it_fac.assignMap(&map);
+                monster_fac.assignMap(&map);
+
                 uint16_t x{}, y{};
                 auto     player = entity_manager.getEntity(1);
 
@@ -232,15 +241,9 @@ int main()
                 }
                 position_system.assignMap(&map);
                 position_system.updatePosition(player, x, y);
+                it_fac.generateItems();
+                monster_fac.generateMonsters();
             }
-
-            option = LaunchOptions::NONE;
-
-            it_fac.assignMap(&map);
-            monster_fac.assignMap(&map);
-
-            it_fac.generateItems();
-            monster_fac.generateMonsters();
 
             position_system.assignMap(&map);
             nav_map_manager.assignPlayer(player);
@@ -272,9 +275,18 @@ int main()
                                   ->getComponent<Health>()
                                   ->current_health_points;
 
-            updateSystems();
+            if (option == LaunchOptions::LOAD)
+            {
+                entity_manager.readSystemMessages();
+                entity_manager.updateData();
+                entity_manager.clearSystemMessages();
+            }
+            else
+                updateSystems();
+
             autosave();
 
+            option = LaunchOptions::NONE;
             GameScreen game_screen(&map, player, position_system);
 
             InventoryUI inv_ui(inventory_system);
@@ -359,11 +371,10 @@ int main()
                     {
                         updateSystems();
 
-                        if (next_level)
+                        if (next_level || player_hp <= 0)
                         {
                             scr.Exit();
                         }
-
                         permissive::fov(player_coords->x,
                                         player_coords->y,
                                         mask,
@@ -378,6 +389,11 @@ int main()
             while (player_hp > 0 && quit == false && next_level == false)
             {
                 loop.RunOnce();
+            }
+            if (player_hp <= 0)
+            {
+                quit = true;
+                // inputHighscore(scr, player);
             }
             if (next_level)
             {
