@@ -87,7 +87,7 @@ public:
         {
             loader.open(load_path / path(savefile_name + std::to_string(i)));
             std::vector<std::vector<Tile>> temp_map(
-                G_MAP_HEIGHT, std::vector<Tile>(G_MAP_WIDTH));
+                G_MAP_WIDTH, std::vector<Tile>(G_MAP_HEIGHT));
             for (auto &col : temp_map)
             {
                 for (auto &cell : col)
