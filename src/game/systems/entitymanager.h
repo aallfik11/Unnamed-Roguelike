@@ -132,22 +132,29 @@ public:
         if (entities_.empty())
             return;
         std::list<std::unique_ptr<Entity>> player_and_items;
-        player_and_items.emplace_back(entities_[1].release());
-        auto player_inventory =
+        auto                               player_inventory =
             entities_[1]->getComponent<Inventory>()->inventory;
-        std::list<uint32_t> item_ids;
+        player_and_items.emplace_back(std::move(entities_[1]));
         for (auto &item : player_inventory)
         {
-            player_and_items.emplace_back(entities_[item->getId()].release());
+            player_and_items.emplace_back(std::move(entities_[item->getId()]));
         }
 
         entities_.clear();
         Entity::resetMaxId();
         for (auto &entity : player_and_items)
         {
-            auto ent                = std::make_unique<Entity>(*entity);
-            entities_[ent->getId()] = std::move(entity);
+            auto& enn = *entity;
+            auto ent                = std::make_unique<Entity>(enn);
+            entities_[ent->getId()] = std::move(ent);
         }
+    }
+
+    void hardReset() // use carefully
+    {
+        clearSystemMessages();
+        entities_.clear();
+        Entity::resetMaxId();
     }
 
     std::ostream &serialize(std::ostream &os) const override
@@ -172,9 +179,6 @@ public:
             is >> *entity;
             entities_[entity->getId()] = std::move(entity);
         }
-        // is >> entity_amount; // to get rid of an additional newline and move
-        // the
-        //                      // stream to the correct read position
         return is;
     }
 
