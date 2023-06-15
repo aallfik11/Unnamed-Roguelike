@@ -129,7 +129,11 @@ public:
     virtual void          readSystemMessages()  = 0;
     virtual void          clearSystemMessages() = 0;
     virtual void          resetSystem() { this->clearSystemMessages(); }
-    virtual std::ostream &serialize(std::ostream &os) const { return os; };
+    virtual std::ostream &serialize(std::ostream &os) const
+    {
+        os << 0/*as a placeholder*/;
+        return os;
+    };
     virtual std::istream &deserialize(std::istream &is) { return is; };
 
     static void sendSystemMessage(SystemType                      receiver,
