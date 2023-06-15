@@ -332,7 +332,6 @@ class MonsterFactory
         }
     }
 
-public: // temp for debug
     [[nodiscard]] Entity *generateBaseMonster()
     {
         return new Entity(EntityType::CREATURE,
