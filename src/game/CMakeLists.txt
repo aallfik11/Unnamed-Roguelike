@@ -1,7 +1,7 @@
 
 add_subdirectory(systems)
 add_subdirectory(components)
-add_subdirectory(ui)
+add_subdirectory(UI)
 
 add_library(game
     action.h
