@@ -179,9 +179,10 @@ int main()
             }
 
             std::ifstream savefile(systems_path);
+            SystemType    placeholder{};
             for (auto &system : systems)
             {
-                savefile >> system.get();
+                savefile >> placeholder >> system.get();
             }
             savefile.close();
             map_manager.loadMaps(map_path);
@@ -210,7 +211,7 @@ int main()
         {
             auto map    = map_manager.getMap();
 
-            auto player            = entity_manager.getEntity(1);
+            auto player = entity_manager.getEntity(1);
             if (option != LaunchOptions::LOAD)
             {
 
@@ -235,11 +236,11 @@ int main()
 
             option = LaunchOptions::NONE;
 
-            // it_fac.assignMap(&map);
-            // monster_fac.assignMap(&map);
-            //
-            // it_fac.generateItems();
-            // monster_fac.generateMonsters();
+            it_fac.assignMap(&map);
+            monster_fac.assignMap(&map);
+
+            it_fac.generateItems();
+            monster_fac.generateMonsters();
 
             position_system.assignMap(&map);
             nav_map_manager.assignPlayer(player);
