@@ -650,7 +650,7 @@ class MonsterFactory
     void placeMonster(Entity *const monster)
     {
         int                                     size_x = (*map_).size();
-        int                                     size_y = map_[0].size();
+        int                                     size_y = (*map_)[0].size();
         std::uniform_int_distribution<uint16_t> rand_x(1, size_x - 2);
         std::uniform_int_distribution<uint16_t> rand_y(1, size_y - 2);
 
