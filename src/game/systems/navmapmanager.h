@@ -359,10 +359,13 @@ public:
 
     void updateData() override { calculatePlayerNavMap(); }
     void readSystemMessages() override {}
-    void clearSystemMessages() override {}
+    void clearSystemMessages() override {
+        (*System::system_messages_)[SystemType::NAVMAP_MANAGER].clear();
+    }
     void resetSystem() override
     {
         clearSystemMessages();
+        nav_to_player_.clear();
         map_ = nullptr;
         random_targets_.clear();
         player_coordinates_ = nullptr;
