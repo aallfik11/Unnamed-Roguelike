@@ -39,6 +39,77 @@ int main()
     }
     auto mask =
         permissive::maskT((mask_folder / "circlemask.mask").string().c_str());
+    int                 depth{};
+    MapManager          map_manager(CaveGenerator::generate, &depth);
+    EntityManager       entity_manager;
+    NavMapManager       nav_map_manager;
+    PlayerControlSystem player_control_system(next_level);
+    LOS_System          los_system;
+    AISystem            ai_system;
+    AttackSystem        attack_system;
+    EffectSystem        effect_system;
+    HealthSystem        health_system;
+    ExperienceSystem    experience_system;
+    InventorySystem     inventory_system;
+    // hunger system goes here
+    PositionSystem      position_system;
+    ItemFactory         it_fac(depth);
+    MonsterFactory      monster_fac(it_fac, depth);
+
+    std::list<std::reference_wrapper<System>> systems;
+    systems.emplace_back(entity_manager);
+    systems.emplace_back(nav_map_manager);
+    systems.emplace_back(player_control_system);
+    systems.emplace_back(los_system);
+    systems.emplace_back(ai_system);
+    systems.emplace_back(attack_system);
+    systems.emplace_back(effect_system);
+    systems.emplace_back(health_system);
+    systems.emplace_back(experience_system);
+    systems.emplace_back(inventory_system);
+    // systems.emplace_back(hunger_system);
+    systems.emplace_back(position_system);
+
+    auto autosave = [&]
+    {
+        using namespace std::filesystem;
+
+        auto save_path = path(std::filesystem::current_path() / path("saves") /
+                              path("autosave"));
+        auto systems_path = save_path / "systems.txt";
+        auto map_path     = save_path / "maps";
+        create_directories(save_path);
+        create_directories(map_path);
+        std::ofstream saver(systems_path);
+        for (auto &system : systems)
+        {
+            saver << system << '\n';
+        }
+        saver.close();
+        map_manager.saveMaps(map_path);
+    };
+
+    auto updateSystems = [&]
+    {
+        for (auto &system : systems)
+        {
+            system.get().readSystemMessages();
+            system.get().updateData();
+            system.get().clearSystemMessages();
+        }
+    };
+
+    auto resetSystems = [&](bool hard = false)
+    {
+        if (hard)
+        {
+            entity_manager.hardReset();
+        }
+        for (auto &system : systems)
+        {
+            system.get().resetSystem();
+        }
+    };
 
     while (true)
     {
@@ -49,6 +120,8 @@ int main()
         case LaunchOptions::LOAD:
             [[fallthrough]];
         case LaunchOptions::LAUNCH:
+            resetSystems(true);
+            depth      = 0;
             quit       = false;
             next_level = false;
             break;
@@ -60,80 +133,7 @@ int main()
         }
 
         using namespace ftxui;
-        auto                scr = ScreenInteractive::Fullscreen();
-        int                 depth{};
-        MapManager          map_manager(CaveGenerator::generate, &depth);
-        EntityManager       entity_manager;
-        NavMapManager       nav_map_manager;
-        PlayerControlSystem player_control_system(next_level);
-        LOS_System          los_system;
-        AISystem            ai_system;
-        AttackSystem        attack_system;
-        EffectSystem        effect_system;
-        HealthSystem        health_system;
-        ExperienceSystem    experience_system;
-        InventorySystem     inventory_system;
-        // hunger system goes here
-        PositionSystem      position_system;
-        ItemFactory         it_fac(depth);
-        MonsterFactory      monster_fac(it_fac, depth);
-
-        std::list<std::reference_wrapper<System>> systems;
-        systems.emplace_back(entity_manager);
-        systems.emplace_back(nav_map_manager);
-        systems.emplace_back(player_control_system);
-        systems.emplace_back(los_system);
-        systems.emplace_back(ai_system);
-        systems.emplace_back(attack_system);
-        systems.emplace_back(effect_system);
-        systems.emplace_back(health_system);
-        systems.emplace_back(experience_system);
-        systems.emplace_back(inventory_system);
-        // systems.emplace_back(hunger_system);
-        systems.emplace_back(position_system);
-
-        auto autosave = [&]
-        {
-            using namespace std::filesystem;
-
-            auto save_path    = path(std::filesystem::current_path() /
-                                  path("saves") / path("autosave"));
-            auto systems_path = save_path / "systems.txt";
-            auto map_path     = save_path / "maps";
-            create_directories(save_path);
-            create_directories(map_path);
-            std::ofstream saver(systems_path);
-            for (auto &system : systems)
-            {
-                saver << system << '\n';
-            }
-            saver.close();
-            map_manager.saveMaps(map_path);
-        };
-
-        auto updateSystems = [&]
-        {
-            for (auto &system : systems)
-            {
-                system.get().readSystemMessages();
-                system.get().updateData();
-                system.get().clearSystemMessages();
-            }
-        };
-
-        auto resetSystems = [&](bool hard = false)
-        {
-            if (hard)
-            {
-                entity_manager.hardReset();
-            }
-            for (auto &system : systems)
-            {
-                system.get().resetSystem();
-            }
-        };
-
-        resetSystems(true);
+        auto scr = ScreenInteractive::Fullscreen();
         if (option == LaunchOptions::LOAD && savefile_path.empty() == false)
         {
             using namespace std::filesystem;
