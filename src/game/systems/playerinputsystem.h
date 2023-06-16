@@ -224,6 +224,7 @@ public:
 
     void resetSystem() override
     {
+        clearSystemMessages();
         next_movement_         = Direction::NONE;
         last_hit_enemy_        = nullptr;
         last_hit_entity_timer_ = 0;
