@@ -289,6 +289,8 @@ public:
     void clearSystemMessages() override
     {
         (*system_messages_)[SystemType::EFFECT].clear();
+        addition_messages_.clear();
+        removal_messages_.clear();
     }
 
     void resetSystem() override
