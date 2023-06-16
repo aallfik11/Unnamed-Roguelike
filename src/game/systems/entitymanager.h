@@ -144,8 +144,7 @@ public:
         Entity::resetMaxId();
         for (auto &entity : player_and_items)
         {
-            auto& enn = *entity;
-            auto ent                = std::make_unique<Entity>(enn);
+            auto ent                = std::make_unique<Entity>(*entity);
             entities_[ent->getId()] = std::move(ent);
         }
     }
