@@ -258,6 +258,15 @@ public:
         deletion_messages_.clear();
     }
 
+    void resetSystem() override
+    {
+        clearSystemMessages();
+        visited_list_.clear();
+        player_ = nullptr;
+        map_    = nullptr;
+        lines_of_sight_.clear();
+    }
+
     std::ostream &serialize(std::ostream &os) const override
     {
         os << SystemType::LINE_OF_SIGHT << ' ' << lines_of_sight_.size() << ' ';
