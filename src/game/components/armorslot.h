@@ -58,6 +58,12 @@ public:
 
     ArmorSlot(const ArmorSlot &armor_slot)
     {
+        if(armor_slot.armor_item == nullptr)
+        {
+            this->armor_item = nullptr;
+            return;
+        }
+
         auto entity  = new Entity(*(armor_slot.armor_item));
         auto message = {
             std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::ADD),

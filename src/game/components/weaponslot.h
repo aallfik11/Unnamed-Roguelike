@@ -22,10 +22,7 @@ class WeaponSlot : public Component, public EntityHolder
         }
         return (*(this->weapon_item) == *(w->weapon_item));
     }
-    WeaponSlot *cloneImpl() const override
-    {
-        return new WeaponSlot(this->weapon_item);
-    }
+    WeaponSlot *cloneImpl() const override { return new WeaponSlot(*this); }
 
     std::ostream &serialize(std::ostream &os) const override
     {
@@ -69,6 +66,12 @@ public:
 
     WeaponSlot(const WeaponSlot &weapon_slot)
     {
+        if (weapon_slot.weapon_item == nullptr)
+        {
+            this->weapon_item = nullptr;
+            return;
+        }
+
         auto entity  = new Entity(*(weapon_slot.weapon_item));
         auto message = {
             std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::ADD),

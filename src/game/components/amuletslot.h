@@ -92,6 +92,8 @@ public:
         this->max_slots       = amulet_slot.max_slots;
         for (auto &amulet : amulet_slot.amulet_slots)
         {
+            if (amulet == nullptr)
+                continue;
             auto new_amulet = new Entity(*amulet);
             auto message    = {
                 std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::ADD),
