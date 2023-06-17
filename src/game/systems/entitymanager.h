@@ -42,7 +42,11 @@ public:
 
     observer_ptr<Entity> getEntity(const uint32_t entity_id) const
     {
-        return entities_.at(entity_id).get();
+        if (entities_.contains(entity_id))
+        {
+            return entities_.at(entity_id).get();
+        }
+        return nullptr;
     }
 
     EntityHashmap &getAllEntities() { return entities_; }
@@ -131,21 +135,52 @@ public:
         clearSystemMessages();
         if (entities_.empty())
             return;
-        std::list<std::unique_ptr<Entity>> player_and_items;
-        auto                               player_inventory =
-            entities_[1]->getComponent<Inventory>()->inventory;
-        player_and_items.emplace_back(std::move(entities_[1]));
+        std::list<std::unique_ptr<Entity>> player_items;
+        auto                               player = std::move(entities_[1]);
+        auto player_inventory = player->getComponent<Inventory>()->inventory;
         for (auto &item : player_inventory)
         {
-            player_and_items.emplace_back(std::move(entities_[item->getId()]));
+            player_items.emplace_back(std::move(entities_[item->getId()]));
         }
 
         entities_.clear();
         Entity::resetMaxId();
-        for (auto &entity : player_and_items)
+
+        auto player_weaponslot         = player->getComponent<WeaponSlot>();
+        auto player_armorslot          = player->getComponent<ArmorSlot>();
+        auto player_amuletslot         = player->getComponent<AmuletSlot>();
+
+        player_weaponslot->weapon_item = nullptr;
+        player_armorslot->armor_item   = nullptr;
+        player_amuletslot->amulet_slots.clear();
+
+        player->id_  = Entity::max_id_;
+        entities_[1] = std::move(player);
+        Entity::max_id_++;
+
+        for (auto &item : player_items)
         {
-            auto ent                = std::make_unique<Entity>(*entity);
-            entities_[ent->getId()] = std::move(ent);
+            auto item_component = item->getComponent<ItemComponent>();
+            if (item_component->equipped)
+            {
+                switch (item_component->type)
+                {
+                case ItemType::ARMOR:
+                    player_armorslot->armor_item = item.get();
+                    break;
+                case ItemType::WEAPON:
+                    player_weaponslot->weapon_item = item.get();
+                    break;
+                case ItemType::RING:
+                    player_amuletslot->amulet_slots.insert(item.get());
+                    break;
+                default:
+                    break;
+                }
+            }
+            item->id_                  = Entity::max_id_;
+            entities_[Entity::max_id_] = std::move(item);
+            ++Entity::max_id_;
         }
     }
 
