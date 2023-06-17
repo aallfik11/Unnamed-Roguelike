@@ -177,6 +177,15 @@ inline void GameScreen::calculateColumn(int              starting_index,
             return true;
         return false;
     };
+    auto find_yendor = [](const observer_ptr<Entity> item)
+    {
+        if (item->getComponent<TileComponent>()->sprite ==
+            TileAppearance::GOAL_ITEM)
+        {
+            return true;
+        }
+        return false;
+    };
     using namespace ftxui;
     for (int x = starting_index; x < index_guard; ++x)
     {
@@ -248,6 +257,19 @@ inline void GameScreen::calculateColumn(int              starting_index,
                     item != entities_at_coordinates.end())
                 {
                     auto item_ptr = *item;
+                    if (*depth_ == 25)
+                    {
+                        if (auto yendor = std::ranges::find_if(
+                                entities_at_coordinates.begin(),
+                                entities_at_coordinates.end(),
+                                find_yendor);
+                            yendor != entities_at_coordinates.end())
+                            [[unlikely]]
+                        {
+                            item_ptr = *yendor;
+                        }
+                    }
+
                     cells[y] =
                         appearances_[item_ptr->getComponent<TileComponent>()
                                          ->sprite]
@@ -304,7 +326,8 @@ ftxui::Element GameScreen::getMapBox()
 ftxui::Element GameScreen::getSidebar()
 {
     using namespace ftxui;
-    return vbox({getPlayerHpBar(),
+    return vbox({text("Depth: " + std::to_string(*depth_ + 1)) | hcenter,
+                 getEntityHpBar(player_),
                  separatorEmpty(),
                  getPlayerHungerBar(),
                  separatorEmpty(),
@@ -314,23 +337,21 @@ ftxui::Element GameScreen::getSidebar()
                  separatorEmpty(),
                  getPlayerArmorRating(),
                  separatorEmpty(),
-                 getPlayerEquipment(),
+                 getEntityEquipment(player_),
                  separatorEmpty(),
-                 getPlayerEffects()});
+                 getEntityEffects(player_)});
 }
 
-inline ftxui::Element GameScreen::getPlayerHpBar()
+inline ftxui::Element GameScreen::getEntityHpBar(observer_ptr<Entity> entity)
 {
     using namespace ftxui;
-    auto player_hp  = player_->getComponent<Health>();
-    auto hp_percent = player_hp->current_health_points /
-                      static_cast<float>(player_hp->max_health_points);
+    auto entity_hp  = entity->getComponent<Health>();
+    auto hp_percent = entity_hp->current_health_points /
+                      static_cast<float>(entity_hp->max_health_points);
     auto player_coords = player_->getComponent<Coordinates>();
 
-    return vbox({text("x: " + std::to_string(player_coords->x) +
-                      " y: " + std::to_string(player_coords->y)),
-                 text(std::to_string(player_hp->current_health_points) + " / " +
-                      std::to_string(player_hp->max_health_points)) |
+    return vbox({text(std::to_string(entity_hp->current_health_points) + " / " +
+                      std::to_string(entity_hp->max_health_points)) |
                      hcenter,
                  gaugeRight(hp_percent) | color(Color::RGB(255, 0, 0)) |
                      borderRounded});
@@ -402,32 +423,44 @@ inline ftxui::Element GameScreen::getPlayerArmorRating()
     return vbox(text("Armor Class"), text(armor_rating)) | borderRounded;
 }
 
-inline ftxui::Element GameScreen::getPlayerEquipment()
+inline ftxui::Element
+GameScreen::getEntityEquipment(observer_ptr<Entity> entity)
 {
     using namespace ftxui;
     Elements    equipment;
     std::string item_name{};
     Rarity      item_rarity{};
-    if (auto weapon = player_->getComponent<WeaponSlot>()->weapon_item)
+    if (auto weapon = entity->getComponent<WeaponSlot>())
     {
-        item_name   = weapon->getConstComponent<Name>()->name;
-        item_rarity = weapon->getConstComponent<ItemComponent>()->rarity;
-        equipment.push_back(text(item_name) | hcenter |
-                            color(getColorByRarity(item_rarity)));
+        if (weapon->weapon_item != nullptr)
+        {
+            item_name = weapon->weapon_item->getConstComponent<Name>()->name;
+            item_rarity =
+                weapon->weapon_item->getConstComponent<ItemComponent>()->rarity;
+            equipment.push_back(text(item_name) | hcenter |
+                                color(getColorByRarity(item_rarity)));
+        }
     }
-    if (auto armor = player_->getComponent<ArmorSlot>()->armor_item)
+    if (auto armor = entity->getComponent<ArmorSlot>())
     {
-        item_name   = armor->getConstComponent<Name>()->name;
-        item_rarity = armor->getConstComponent<ItemComponent>()->rarity;
-        equipment.push_back(text(item_name) | hcenter |
-                            color(getColorByRarity(item_rarity)));
+        if (armor->armor_item != nullptr)
+        {
+            item_name = armor->armor_item->getConstComponent<Name>()->name;
+            item_rarity =
+                armor->armor_item->getConstComponent<ItemComponent>()->rarity;
+            equipment.push_back(text(item_name) | hcenter |
+                                color(getColorByRarity(item_rarity)));
+        }
     }
-    for (auto &ring : player_->getComponent<AmuletSlot>()->amulet_slots)
+    if (entity->hasComponent<AmuletSlot>())
     {
-        item_name   = ring->getConstComponent<Name>()->name;
-        item_rarity = ring->getConstComponent<ItemComponent>()->rarity;
-        equipment.push_back(text(item_name) | hcenter |
-                            color(getColorByRarity(item_rarity)));
+        for (auto &ring : entity->getComponent<AmuletSlot>()->amulet_slots)
+        {
+            item_name   = ring->getConstComponent<Name>()->name;
+            item_rarity = ring->getConstComponent<ItemComponent>()->rarity;
+            equipment.push_back(text(item_name) | hcenter |
+                                color(getColorByRarity(item_rarity)));
+        }
     }
     if (equipment.empty())
     {
@@ -436,11 +469,11 @@ inline ftxui::Element GameScreen::getPlayerEquipment()
     return vbox(equipment) | borderRounded;
 }
 
-inline ftxui::Element GameScreen::getPlayerEffects()
+inline ftxui::Element GameScreen::getEntityEffects(observer_ptr<Entity> entity)
 {
     using namespace ftxui;
     Elements buffs;
-    for (auto &buff : player_->getConstComponent<BuffComponent>()->buffs)
+    for (auto &buff : entity->getConstComponent<BuffComponent>()->buffs)
     {
         if (buff.second->effect_duration == 0)
         {
@@ -460,11 +493,19 @@ inline ftxui::Element GameScreen::getPlayerEffects()
     return vbox(buffs) | borderRounded;
 }
 
-inline ftxui::Element GameScreen::getLastDamagedEnemy()
+inline ftxui::Element
+GameScreen::getLastDamagedEnemy(observer_ptr<Entity> last_hit_enemy)
 {
     using namespace ftxui;
-    // to be done :)
-    return vbox();
+    if (last_hit_enemy == nullptr)
+        return vbox() | size(ftxui::Direction::WIDTH, EQUAL, 22);
+
+    return vbox({text("Last Damaged Enemy:") | hcenter,
+                 text(last_hit_enemy->getComponent<Name>()->name) | hcenter,
+                 getEntityHpBar(last_hit_enemy),
+                 getEntityEquipment(last_hit_enemy),
+                 getEntityEffects(last_hit_enemy)}) |
+           size(ftxui::Direction::WIDTH, EQUAL, 22);
 }
 
 ftxui::Element GameScreen::debugGetMapBox(observer_ptr<Entity> entity)
@@ -577,7 +618,7 @@ void GameScreen::assignNewPlayer(observer_ptr<Entity> player)
 {
     this->player_ = player;
 }
-ftxui::Element GameScreen::render()
+ftxui::Element GameScreen::render(observer_ptr<Entity> last_hit_enemy)
 {
     using namespace ftxui;
     auto flexbox_config = FlexboxConfig();
@@ -592,11 +633,12 @@ ftxui::Element GameScreen::render()
 
     return vbox({hbox({
 
-                     getSidebar(),
+                     getSidebar() | size(ftxui::Direction::WIDTH, EQUAL, 22),
                      separatorLight(),
                      getMapBox(),
-                 }) | flex_shrink |
-                     center,
+                     separatorLight(),
+                     getLastDamagedEnemy(last_hit_enemy)}) |
+                     flex_shrink | center,
                  separatorLight(),
                  controls | flex_shrink | hcenter}) |
            flex_shrink | borderRounded | center;
@@ -636,8 +678,9 @@ ftxui::Element GameScreen::debugRender(observer_ptr<Entity> enemy)
 
 GameScreen::GameScreen(observer_ptr<std::vector<std::vector<Tile>>> map,
                        observer_ptr<Entity>                         player,
-                       PositionSystem                              &pos_sys)
-    : game_map_{map}, player_{player}, pos_system_{pos_sys}
+                       PositionSystem                              &pos_sys,
+                       const observer_ptr<const int>                depth)
+    : game_map_{map}, player_{player}, pos_system_{pos_sys}, depth_{depth}
 {
     using namespace ftxui;
     // colors
