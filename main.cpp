@@ -1,6 +1,8 @@
 #include "src/game/UI/gamescreen.h"
+#include "src/game/UI/highscoresaver.h"
 #include "src/game/UI/inventory.h"
 #include "src/game/UI/mainmenu.h"
+#include "src/game/UI/savescreen.h"
 #include "src/game/systems/aisystem.h"
 #include "src/game/systems/attacksystem.h"
 #include "src/game/systems/effectsystem.h"
@@ -14,16 +16,32 @@
 #include "src/game/systems/inventorysystem.h"
 #include "src/game/systems/lineofsightsystem.h"
 #include "src/game/systems/mapmanager.h"
-#include "src/game/systems/playerinputsystem.h"
+#include "src/game/systems/playersystem.h"
 #include "src/game/systems/positionsystem.h"
 #include "src/permissive_fov/permissive-fov-cpp.h"
 #include <cstdint>
 #include <filesystem>
 #include <random>
 
+uint64_t calculateScore(uint16_t level, uint32_t experience = 0)
+{
+    if (level == 1)
+    {
+        return experience;
+    }
+    if (level == 2)
+    {
+        return level * 25;
+    }
+    return calculateScore(level - 1) + level * 25 + experience;
+}
+
 int main()
 {
-    MainMenu           main_menu;
+    auto               scr = ftxui::ScreenInteractive::Fullscreen();
+    MainMenu           main_menu(scr);
+    SaveScreen         save_screen(scr);
+    HighScoreSaver     highscore_saver(scr);
     LaunchOptions      option{};
     bool               next_level = false;
     bool               quit       = false;
@@ -39,22 +57,21 @@ int main()
     }
     auto mask =
         permissive::maskT((mask_folder / "circlemask.mask").string().c_str());
-    int                 depth{};
-    MapManager          map_manager(CaveGenerator::generate, &depth);
-    EntityManager       entity_manager;
-    NavMapManager       nav_map_manager;
-    PlayerControlSystem player_control_system(next_level);
-    LOS_System          los_system;
-    AISystem            ai_system;
-    AttackSystem        attack_system;
-    EffectSystem        effect_system;
-    HealthSystem        health_system;
-    ExperienceSystem    experience_system;
-    InventorySystem     inventory_system;
-    // hunger system goes here
-    PositionSystem      position_system;
-    ItemFactory         it_fac(depth);
-    MonsterFactory      monster_fac(it_fac, depth);
+    int              depth{};
+    MapManager       map_manager(CaveGenerator::generate, &depth);
+    EntityManager    entity_manager;
+    NavMapManager    nav_map_manager;
+    PlayerSystem     player_control_system(next_level);
+    LOS_System       los_system;
+    AISystem         ai_system;
+    AttackSystem     attack_system;
+    EffectSystem     effect_system;
+    HealthSystem     health_system;
+    ExperienceSystem experience_system;
+    InventorySystem  inventory_system;
+    PositionSystem   position_system;
+    ItemFactory      it_fac(depth);
+    MonsterFactory   monster_fac(it_fac, depth);
 
     std::list<std::reference_wrapper<System>> systems;
     systems.emplace_back(entity_manager);
@@ -67,15 +84,14 @@ int main()
     systems.emplace_back(health_system);
     systems.emplace_back(experience_system);
     systems.emplace_back(inventory_system);
-    // systems.emplace_back(hunger_system);
     systems.emplace_back(position_system);
 
-    auto autosave = [&]
+    auto save = [&](const std::string &save_name = "autosave")
     {
         using namespace std::filesystem;
 
         auto save_path = path(std::filesystem::current_path() / path("saves") /
-                              path("autosave"));
+                              path(save_name));
         auto systems_path = save_path / "systems.txt";
         auto map_path     = save_path / "maps";
         create_directories(save_path);
@@ -111,6 +127,15 @@ int main()
         }
     };
 
+    auto inputHighscore = [&]
+    {
+        auto player_xp =
+            entity_manager.getEntity(1)->getComponent<ExperienceComponent>();
+        auto highscore =
+            calculateScore(player_xp->level, player_xp->current_experience);
+        highscore_saver.render(highscore);
+    };
+
     while (true)
     {
 
@@ -133,7 +158,6 @@ int main()
         }
 
         using namespace ftxui;
-        auto scr = ScreenInteractive::Fullscreen();
         if (option == LaunchOptions::LOAD && savefile_path.empty() == false)
         {
             using namespace std::filesystem;
@@ -207,7 +231,7 @@ int main()
                  new BuffComponent,
                  new TileComponent(TileAppearance::PLAYER),
                  new Coordinates,
-                 new HungerComponent,
+                 new HungerComponent(101),
                  new Health(10),
                  new Inventory});
             map_manager.generate();
@@ -282,16 +306,21 @@ int main()
                 entity_manager.clearSystemMessages();
             }
             else
+            {
                 updateSystems();
-
-            autosave();
+                save();
+            }
 
             option = LaunchOptions::NONE;
-            GameScreen game_screen(&map, player, position_system);
+            GameScreen game_screen(&map, player, position_system, &depth);
 
             InventoryUI inv_ui(inventory_system);
 
-            auto renderer = Renderer([&] { return game_screen.render(); });
+            auto renderer = Renderer(
+                [&] {
+                    return game_screen.render(
+                        player_control_system.getLastDamagedEnemy());
+                });
             // auto renderer = Renderer([&] { return
             // game_screen.debugRender(monster);
             // });
@@ -367,6 +396,15 @@ int main()
                              std::make_any<::Direction>(::Direction::RIGHT)});
                         update_systems = true;
                     }
+                    else if (event == Event::Character("S") ||
+                             event == Event::Character("s"))
+                    {
+                        std::string save_name = save_screen.render();
+                        if (save_name.empty() == false)
+                        {
+                            save(save_name);
+                        }
+                    }
                     if (update_systems)
                     {
                         updateSystems();
@@ -393,12 +431,20 @@ int main()
             if (player_hp <= 0)
             {
                 quit = true;
-                // inputHighscore(scr, player);
+                inputHighscore();
             }
             if (next_level)
             {
-                resetSystems();
-                ++depth;
+                if (depth == 25)
+                {
+                    quit = true;
+                    inputHighscore();
+                }
+                else
+                {
+                    resetSystems();
+                    ++depth;
+                }
             }
         }
     }
