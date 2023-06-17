@@ -198,7 +198,10 @@ public:
         resetNavMap(nav_map);
 
         std::vector<NavMap> nav_maps(
-            targets.size(), nav_map); // for each target there's a navmap
+            targets.size(),
+            NavMap(
+                100,
+                std::vector<NavCell>(50))); // for each target there's a navmap
 
         for (size_t i = 0; i < targets.size(); i++)
         {
@@ -359,7 +362,8 @@ public:
 
     void updateData() override { calculatePlayerNavMap(); }
     void readSystemMessages() override {}
-    void clearSystemMessages() override {
+    void clearSystemMessages() override
+    {
         (*System::system_messages_)[SystemType::NAVMAP_MANAGER].clear();
     }
     void resetSystem() override
