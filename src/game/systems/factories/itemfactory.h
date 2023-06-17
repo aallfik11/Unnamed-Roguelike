@@ -19,10 +19,113 @@
 
 class MonsterFactory;
 
+class ItemBuilder
+{
+    std::unordered_set<Component *> components;
+
+public:
+    [[nodiscard]] Entity *build()
+    {
+        Entity *item = new Entity(EntityType::ITEM);
+
+        for (auto &component : components)
+        {
+            item->addComponent(component);
+        }
+
+        TileAppearance item_appearance{};
+        switch (item->getComponent<ItemComponent>()->type)
+        {
+        case ItemType::WEAPON:
+            item_appearance = TileAppearance::WEAPON;
+            break;
+        case ItemType::ARMOR:
+            item_appearance = TileAppearance::ARMOR;
+            break;
+        case ItemType::RING:
+            item_appearance = TileAppearance::RING;
+            break;
+        case ItemType::POTION:
+            item_appearance = TileAppearance::POTION;
+            break;
+        case ItemType::FOOD:
+            item_appearance = TileAppearance::FOOD;
+            break;
+        default:
+            break;
+        }
+        item->addComponent(new TileComponent(item_appearance));
+
+        auto sys_message = {
+            std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::ADD),
+            std::make_any<observer_ptr<Entity>>(item)};
+        System::sendSystemMessage(SystemType::ENTITY, sys_message);
+
+        components.clear();
+
+        return item;
+    }
+
+    ItemBuilder &itemComponent(const ItemType type      = ItemType::NONE,
+                               const uint16_t stack     = 1,
+                               const uint16_t max_stack = 1,
+                               const Rarity   rarity    = Rarity::COMMON,
+                               const bool     equipped  = false)
+    {
+        components.insert(
+            new ItemComponent(type, stack, max_stack, rarity, equipped));
+        return *this;
+    }
+
+    ItemBuilder &name(const std::string &name = "")
+    {
+        components.insert(new Name(name));
+        return *this;
+    }
+
+    ItemBuilder &description(const std::string &description = "")
+    {
+        components.insert(new Description(description));
+        return *this;
+    }
+
+    ItemBuilder &damage(const uint16_t damage = 1)
+    {
+        components.insert(new WeaponComponent(damage));
+        return *this;
+    }
+
+    ItemBuilder &crit(const uint8_t                            crit_chance,
+                      const double                             crit_multiplier,
+                      std::initializer_list<EffectComponent *> effects)
+    {
+        components.insert(new CritComponent(
+            crit_chance, crit_multiplier, new BuffComponent(effects)));
+        return *this;
+    }
+
+    ItemBuilder &armor(const uint8_t armor_class = 10)
+    {
+        components.insert(new ArmorComponent(armor_class));
+        return *this;
+    }
+
+    ItemBuilder &buffs(std::initializer_list<EffectComponent *> buffs)
+    {
+        components.insert(new BuffComponent(buffs));
+        return *this;
+    }
+
+    ItemBuilder &hungerValue(const uint8_t saturation = 100)
+    {
+        components.insert(new HungerComponent(saturation));
+        return *this;
+    }
+};
 class ItemFactory
 {
     using GameMap = std::vector<std::vector<Tile>>;
-    observer_ptr<GameMap>                                        map_;
+    observer_ptr<GameMap>                           map_;
     int                                            &current_depth_;
     std::random_device                              rd_;
     std::mt19937                                    mt_engine_;
@@ -335,7 +438,7 @@ public:
         potion_amount_distro_ = std::uniform_int_distribution<>(0, 4);
         food_amount_distro_   = std::uniform_int_distribution<>(2, 6);
         x_pos_distro_ = std::uniform_int_distribution<>(1, G_MAP_WIDTH - 2);
-        y_pos_distro_ = std::uniform_int_distribution<>(1, G_MAP_HEIGHT- 2);
+        y_pos_distro_ = std::uniform_int_distribution<>(1, G_MAP_HEIGHT - 2);
 
         rarity_chances_[Rarity::COMMON]                   = 45;
         rarity_chances_[Rarity::UNCOMMON]                 = 25;
@@ -503,11 +606,36 @@ public:
             "a king, and it's more than capable of filling you completely";
     }
 
+    inline void placeItem(observer_ptr<Entity> item)
+    {
+
+        auto x = x_pos_distro_(mt_engine_);
+        auto y = y_pos_distro_(mt_engine_);
+        while (((*map_)[x][y].type &
+                (TileType::HAS_CREATURE | TileType::HAS_ITEM |
+                 TileType::HAS_STAIRS | TileType::WALL)) != TileType::NONE)
+        {
+            x = x_pos_distro_(mt_engine_);
+            y = y_pos_distro_(mt_engine_);
+        }
+        if (item->hasComponent<Coordinates>() == false)
+            item->addComponent(new Coordinates(x, y));
+        else
+        {
+            auto coords = item->getComponent<Coordinates>();
+            coords->x   = x;
+            coords->y   = y;
+        }
+        auto pos_message = {
+            std::make_any<SystemAction::POSITION>(SystemAction::POSITION::ADD),
+            std::make_any<Entity *>(item)};
+        System::sendSystemMessage(SystemType::POSITION, pos_message);
+    }
+
     std::list<Entity *> generateItems() noexcept(false)
     {
         if (map_ == nullptr)
-            throw std::runtime_error(
-                "Item Factory: ERROR -> Map unassigned");
+            throw std::runtime_error("Item Factory: ERROR -> Map unassigned");
         std::list<Entity *> generatedItems;
         auto                weapon_amount = weapon_amount_distro_(mt_engine_);
         auto                armor_amount  = armor_amount_distro_(mt_engine_);
@@ -525,26 +653,27 @@ public:
         generatedItems.splice(generatedItems.end(), rings);
         generatedItems.splice(generatedItems.end(), potions);
         generatedItems.splice(generatedItems.end(), food);
+
+        if (current_depth_ == 25)
+        {
+            ItemBuilder builder;
+            auto        yendor =
+                builder.name("Amulet of Yendor")
+                    .description(
+                        "If you're reading this in-game, something isn't "
+                        "working :)")
+                    .itemComponent(ItemType::RING, 1, 1, Rarity::LEGENDARY)
+                    .build();
+            placeItem(yendor);
+        }
+
         for (auto &entity : generatedItems)
         {
-            auto x = x_pos_distro_(mt_engine_);
-            auto y = y_pos_distro_(mt_engine_);
-            while (((*map_)[x][y].type &
-                    (TileType::HAS_CREATURE | TileType::HAS_ITEM |
-                     TileType::HAS_STAIRS | TileType::WALL)) != TileType::NONE)
-            {
-                x = x_pos_distro_(mt_engine_);
-                y = y_pos_distro_(mt_engine_);
-            }
-            entity->addComponent(new Coordinates(x, y));
             auto entity_message = {
                 std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::ADD),
                 std::make_any<Entity *>(entity)};
-            auto pos_message = {std::make_any<SystemAction::POSITION>(
-                                    SystemAction::POSITION::ADD),
-                                std::make_any<Entity *>(entity)};
             System::sendSystemMessage(SystemType::ENTITY, entity_message);
-            System::sendSystemMessage(SystemType::POSITION, pos_message);
+            placeItem(entity);
         }
         return generatedItems;
     }
@@ -619,8 +748,7 @@ public:
     std::list<Entity *> debugGenerateItems(int amount) noexcept(false)
     {
         if (map_ == nullptr)
-            throw std::runtime_error(
-                "Item Factory: ERROR -> Map unassigned");
+            throw std::runtime_error("Item Factory: ERROR -> Map unassigned");
         std::list<Entity *> generatedItems;
         auto                weapons = generateWeapons(amount);
         auto                armors  = generateArmors(amount);
@@ -655,110 +783,7 @@ public:
         }
         return generatedItems;
     }
-    void assignMap(observer_ptr<GameMap> map)
-    {
-        this->map_ = map;
-    }
+    void assignMap(observer_ptr<GameMap> map) { this->map_ = map; }
 };
 
-class ItemBuilder
-{
-    std::unordered_set<Component *> components;
-
-public:
-    Entity *build()
-    {
-        Entity *item = new Entity(EntityType::ITEM);
-
-        for (auto &component : components)
-        {
-            item->addComponent(component);
-        }
-
-        TileAppearance item_appearance{};
-        switch (item->getComponent<ItemComponent>()->type)
-        {
-        case ItemType::WEAPON:
-            item_appearance = TileAppearance::WEAPON;
-            break;
-        case ItemType::ARMOR:
-            item_appearance = TileAppearance::ARMOR;
-            break;
-        case ItemType::RING:
-            item_appearance = TileAppearance::RING;
-            break;
-        case ItemType::POTION:
-            item_appearance = TileAppearance::POTION;
-            break;
-        case ItemType::FOOD:
-            item_appearance = TileAppearance::FOOD;
-        }
-        item->addComponent(new TileComponent(item_appearance));
-
-        auto sys_message = {
-            std::make_any<SystemAction::ENTITY>(SystemAction::ENTITY::ADD),
-            std::make_any<observer_ptr<Entity>>(item)};
-        System::sendSystemMessage(SystemType::ENTITY, sys_message);
-
-        components.clear();
-
-        return item;
-    }
-
-    ItemBuilder &itemComponent(const ItemType type      = ItemType::NONE,
-                               const uint16_t stack     = 1,
-                               const uint16_t max_stack = 1,
-                               const Rarity   rarity    = Rarity::COMMON,
-                               const bool     equipped  = false)
-    {
-        components.insert(
-            new ItemComponent(type, stack, max_stack, rarity, equipped));
-        return *this;
-    }
-
-    ItemBuilder &name(const std::string &name = "")
-    {
-        components.insert(new Name(name));
-        return *this;
-    }
-
-    ItemBuilder &description(const std::string &description = "")
-    {
-        components.insert(new Description(description));
-        return *this;
-    }
-
-    ItemBuilder &damage(const uint16_t damage = 1)
-    {
-        components.insert(new WeaponComponent(damage));
-        return *this;
-    }
-
-    ItemBuilder &crit(const uint8_t                            crit_chance,
-                      const double                             crit_multiplier,
-                      std::initializer_list<EffectComponent *> effects)
-    {
-        components.insert(new CritComponent(
-            crit_chance, crit_multiplier, new BuffComponent(effects)));
-        return *this;
-    }
-
-    ItemBuilder &armor(const uint8_t armor_class = 10)
-    {
-        components.insert(new ArmorComponent(armor_class));
-        return *this;
-    }
-
-    ItemBuilder &buffs(std::initializer_list<EffectComponent *> buffs)
-    {
-        components.insert(new BuffComponent(buffs));
-        return *this;
-    }
-
-    ItemBuilder &hungerValue(const uint8_t saturation = 100)
-    {
-        components.insert(new HungerComponent(saturation));
-        return *this;
-    }
-};
 #endif /*ITEMFACTORY_H*/
