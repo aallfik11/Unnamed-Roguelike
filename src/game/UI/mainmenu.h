@@ -19,10 +19,11 @@ enum LaunchOptions
 class MainMenu
 {
 
-    std::string rg_l1, rg_l2, rg_l3, rg_l4, rg_l5, rg_l6, rg_l7;
+    std::string               rg_l1, rg_l2, rg_l3, rg_l4, rg_l5, rg_l6, rg_l7;
+    ftxui::ScreenInteractive &scr_;
 
 public:
-    MainMenu()
+    MainMenu(ftxui::ScreenInteractive &scr) : scr_{scr}
     {
         rg_l1 = R"(
   ▄      ▄      ▄   ██   █▀▄▀█ ▄███▄   ██▄       █▄▄▄▄ ████▄   ▄▀    ▄   ▄███▄   █    ▄█ █  █▀ ▄███▄   )";
@@ -44,7 +45,6 @@ public:
     {
         launch_options = LaunchOptions::NONE;
         using namespace ftxui;
-        auto screen  = ScreenInteractive::Fullscreen();
         auto rg_text = Renderer(
             [&]()
             {
@@ -87,11 +87,11 @@ public:
                            else if (menu_index == 0)
                            {
                                launch_options = LaunchOptions::LAUNCH;
-                               screen.Exit();
+                               scr_.Exit();
                            }
                            else if (menu_index == 1)
                            {
-                               renderSaves(screen, savefile_path);
+                               renderSaves(savefile_path);
                                if (savefile_path.empty())
                                {
                                    launch_options = LaunchOptions::NONE;
@@ -99,7 +99,7 @@ public:
                                else
                                {
                                    launch_options = LaunchOptions::LOAD;
-                                   screen.Exit();
+                                   scr_.Exit();
                                }
                            }
                            else if (menu_index == 2)
@@ -109,12 +109,12 @@ public:
                            else if (menu_index == 3)
                            {
                                launch_options = EXIT;
-                               screen.Exit();
+                               scr_.Exit();
                            }
                            return true;
                        });
         // screen.Loop(inputHandler);
-        auto menu_loop = Loop(&screen, inputHandler);
+        auto menu_loop = Loop(&scr_, inputHandler);
         while (launch_options == LaunchOptions::NONE)
         {
             menu_loop.RunOnceBlocking();
@@ -124,7 +124,6 @@ public:
     void renderHighScores()
     {
         using namespace ftxui;
-        auto             hs_screen = ScreenInteractive::Fullscreen();
         ftxui::Component hs_renderer;
 
         std::ifstream highscore_file("highscores.txt");
@@ -150,6 +149,13 @@ public:
                 score_map.insert({score, nick});
             }
             highscore_file.close();
+            Color top1          = Color::Red;
+            Color top2          = Color::Yellow;
+            Color top3          = Color::LightGreen;
+            Color other         = Color::White;
+
+            auto flexbox_config = FlexboxConfig();
+            flexbox_config.Set(FlexboxConfig::JustifyContent::SpaceAround);
 
             hs_renderer = Renderer(
                 [&]
@@ -160,9 +166,18 @@ public:
                          i < 10 && score_it != score_map.end();
                          ++score_it, ++i)
                     {
+                        Color text_color = other;
+                        if (i == 0)
+                            text_color = top1;
+                        if (i == 1)
+                            text_color = top2;
+                        if (i == 2)
+                            text_color = top3;
                         top10.push_back(
-                            hbox({text(score_it->second),
-                                  text(std::to_string(score_it->first))}));
+                            flexbox({text(score_it->second + " "),
+                                     text(std::to_string(score_it->first)) |
+                                         color(text_color)},
+                                    flexbox_config) | hcenter);
                     }
                     return vbox({text("Top 10 Highscores"), vbox({top10})}) |
                            center;
@@ -174,15 +189,15 @@ public:
             {
                 if (event == Event::Escape || event == Event::Character('q'))
                 {
-                    hs_screen.Exit();
+                    scr_.Exit();
                     return true;
                 }
                 return false;
             });
-        hs_screen.Loop(hs_input_handler);
+        scr_.Loop(hs_input_handler);
     }
 
-    void renderSaves(ftxui::ScreenInteractive &scr, std::string &savefile_path)
+    void renderSaves(std::string &savefile_path)
     {
         using namespace ftxui;
         using namespace std::filesystem;
@@ -241,12 +256,12 @@ public:
                 if (event == Event::Return)
                 {
                     savefile_path = save_iterator->path().filename().string();
-                    scr.Exit();
+                    scr_.Exit();
                 }
                 else if (event == Event::Escape)
                 {
                     savefile_path.clear();
-                    scr.Exit();
+                    scr_.Exit();
                 }
                 else if (event.character() == "d" || event.character() == "D")
                 {
@@ -254,7 +269,7 @@ public:
                 }
                 return save_container->OnEvent(event);
             });
-        scr.Loop(key_handler);
+        scr_.Loop(key_handler);
     }
 };
 #endif /*MAINMENU_H*/
