@@ -41,7 +41,6 @@ public:
                         health_ptr->current_health_points = 0;
                         health_ptr->alive                 = false;
                         entity->type &= ~EntityType::LIVING;
-                        entity->type |= EntityType::KILLED;
                     }
                     else
                         health_ptr->current_health_points -= amount;
@@ -64,7 +63,6 @@ public:
                         health_ptr->current_health_points = 0;
                         health_ptr->alive                 = false;
                         entity->type &= ~EntityType::LIVING;
-                        entity->type |= EntityType::KILLED;
                     }
                     else
                     {
@@ -78,8 +76,10 @@ public:
                     health_ptr->max_health_points = max_health + amount;
             }
             if (health_ptr->alive == false &&
-                (entity->type & EntityType::PLAYER) == EntityType::NONE)
+                (entity->type & (EntityType::PLAYER | EntityType::KILLED)) ==
+                    EntityType::NONE)
             {
+                entity->type |= EntityType::KILLED;
                 sendSystemMessage(
                     SystemType::AI,
                     {std::make_any<SystemAction::AI>(SystemAction::AI::REMOVE),
