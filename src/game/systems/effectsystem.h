@@ -74,8 +74,6 @@ public:
             //     caller, effect_ptr->effect_strength, DAMAGE | CURRENT);
 
             auto message = {
-                std::make_any<SystemAction::HEALTH>(
-                    SystemAction::HEALTH::UPDATE),
                 std::make_any<observer_ptr<Entity>>(caller),
                 std::make_any<uint16_t>(effect_ptr->effect_strength),
                 std::make_any<SystemAction::HEALTH>(DAMAGE | CURRENT)};
@@ -88,8 +86,7 @@ public:
         if ((effect_ptr->effect & Effect::BLEED) != Effect::NONE)
         {
             auto message = {
-                std::make_any<SystemAction::HEALTH>(
-                    SystemAction::HEALTH::UPDATE),
+                std::make_any<observer_ptr<Entity>>(caller),
                 std::make_any<uint16_t>(effect_ptr->effect_strength * 2),
                 std::make_any<SystemAction::HEALTH>(DAMAGE | CURRENT)};
 
