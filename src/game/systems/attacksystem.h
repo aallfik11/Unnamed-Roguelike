@@ -52,6 +52,8 @@ public:
         auto defender_base_armor  = defender->getComponent<ArmorComponent>();
         auto defender_effects     = defender->getComponent<BuffComponent>();
 
+        auto crit_roll            = roll_chance_(mt_engine_);
+
         auto attacker_base_damage = attacker_base_weapon->damage;
         if (attacker_weapon != nullptr)
         {
@@ -86,12 +88,7 @@ public:
             ac_modifier += 30;
         }
 
-        auto combined_ac = truncateArmorClass(defender_base_AC + ac_modifier);
-
-        if (roll_chance_(mt_engine_) < combined_ac)
-        {
-            return false;
-        }
+        auto combined_ac   = truncateArmorClass(defender_base_AC + ac_modifier);
 
         auto attacker_crit = attacker->getComponent<CritComponent>();
         if (attacker_weapon != nullptr)
@@ -102,24 +99,24 @@ public:
                     attacker_weapon->weapon_item->getComponent<CritComponent>();
             }
         }
-
-        if (attacker_crit->crit_chance >= roll_chance_(mt_engine_))
+        if (attacker_crit->crit_chance >= crit_roll)
         {
             attacker_base_damage =
                 attacker_base_damage * attacker_crit->crit_multiplier;
+            combined_ac = 1;
 
             if (attacker_crit->crit_effects != nullptr)
             {
                 for (auto &effect : attacker_crit->crit_effects->buffs)
                 {
-                    if (defender_effects->buffs.contains(effect.first) == false)
+                    if (defender_effects->buffs.contains(effect.first))
                     {
-                        continue;
-                    }
-                    if (defender_effects->buffs[effect.first]->effect_strength >
-                        effect.second->effect_strength)
-                    {
-                        continue;
+                        if (defender_effects->buffs[effect.first]
+                                ->effect_strength >
+                            effect.second->effect_strength)
+                        {
+                            continue;
+                        }
                     }
                     // defender_effects->buffs[effect.first] =
                     //     effect.second->clone();
@@ -127,11 +124,16 @@ public:
                         std::make_any<SystemAction::EFFECT>(
                             SystemAction::EFFECT::ADD),
                         std::make_any<observer_ptr<Entity>>(defender),
-                        std::make_any<observer_ptr<BuffComponent>>(
-                            defender_effects)};
+                        std::make_any<observer_ptr<const BuffComponent>>(
+                            attacker_crit->crit_effects.get())};
                     sendSystemMessage(SystemType::EFFECT, message);
                 }
             }
+        }
+
+        if (roll_chance_(mt_engine_) < combined_ac)
+        {
+            return false;
         }
 
         if (attacker_effects->buffs.contains(Effect::STRENGTH))
