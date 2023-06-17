@@ -10,6 +10,7 @@
 #include <functional>
 #include <memory>
 #include <random>
+#include <ranges>
 #include <vector>
 
 class MapManager
@@ -38,6 +39,23 @@ public:
         for (auto &map : maps_)
         {
             map = generator_(twister_engine_, G_MAP_WIDTH, G_MAP_HEIGHT);
+        }
+        for (auto &row : maps_[25])
+        {
+            for (auto &cell :
+                 row | std::views::filter(
+                           [](Tile &t)
+                           {
+                               if (t.appearance == TileAppearance::STAIRS)
+                               {
+                                   return true;
+                               }
+                               return false;
+                           }))
+            {
+                cell.type       &= ~(TileType::HAS_STAIRS);
+                cell.appearance  = TileAppearance::FLOOR;
+            }
         }
     }
 
