@@ -1,15 +1,14 @@
 #ifndef PLAYERCONTROLSYSTEM_H
 #define PLAYERCONTROLSYSTEM_H
 
+#include "../components/buffcomponent.h"
 #include "../components/coordinates.h"
-#include "../components/description.h"
+#include "../components/effectcomponent.h"
 #include "../components/health.h"
-#include "../components/inventory.h"
-#include "../components/itemcomponent.h"
-#include "../components/name.h"
-#include "../components/weaponcomponent.h"
-#include "../components/weaponslot.h"
+#include "../components/hungercomponent.h"
+#include "../components/lineofsightcomponent.h"
 #include "../directions.h"
+#include "../effect.h"
 #include "../entity.h"
 #include "../entityholder.h"
 #include "../itemtypes.h"
@@ -23,7 +22,7 @@
 #include <list>
 #include <memory>
 
-class PlayerControlSystem : public System, public EntityHolder
+class PlayerSystem : public System, public EntityHolder
 {
     observer_ptr<Entity>         player_;
     observer_ptr<PositionSystem> pos_sys_;
@@ -33,7 +32,7 @@ class PlayerControlSystem : public System, public EntityHolder
     bool                        &next_level_;
 
 public:
-    PlayerControlSystem(bool &next_level) : next_level_{next_level}
+    PlayerSystem(bool &next_level) : next_level_{next_level}
     {
         player_                = nullptr;
         pos_sys_               = nullptr;
@@ -42,15 +41,13 @@ public:
         last_hit_entity_timer_ = 0;
     }
 
-    PlayerControlSystem(const observer_ptr<Entity>         player,
-                        const observer_ptr<PositionSystem> pos_sys,
-                        bool                              &next_level)
-        : PlayerControlSystem(next_level)
+    PlayerSystem(const observer_ptr<Entity>         player,
+                 const observer_ptr<PositionSystem> pos_sys,
+                 bool                              &next_level)
+        : PlayerSystem(next_level)
     {
-        player_                = player;
-        pos_sys_               = pos_sys;
-        next_movement_         = Direction::NONE;
-        last_hit_entity_timer_ = 0;
+        player_  = player;
+        pos_sys_ = pos_sys;
     }
 
     void assignPlayer(const observer_ptr<Entity> player) { player_ = player; }
@@ -60,8 +57,53 @@ public:
         pos_sys_ = pos_sys;
     }
 
+    void deduceHunger() noexcept(false)
+    {
+        // auto hunger_buff = std::make_unique<BuffComponent>();
+        // if (player_ == nullptr)
+        //     throw std::runtime_error(
+        //         "PlayerSystem: ERROR -> Player unassigned");
+        auto hunger_component = player_->getComponent<HungerComponent>();
+        // auto player_buffs     = player_->getComponent<BuffComponent>();
+        // if (hunger_component->hunger /
+        //         (static_cast<double>(hunger_component->max_hunger)) >=
+        //     0.75)
+        // {
+        //     if (player_buffs->buffs.contains(Effect::STRENGTH |
+        //                                      Effect::PERMANENT))
+        //     {
+        //         player_buffs->buffs[Effect::STRENGTH | Effect::PERMANENT]
+        //             ->effect_strength += 3;
+        //     }
+        //     else
+        //         player_buffs->buffs[Effect::STRENGTH | Effect::PERMANENT] =
+        //
+        //             std::make_unique<EffectComponent>(
+        //                 Effect::STRENGTH | Effect::PERMANENT, 3, 1);
+        // }
+        // if (hunger_component->hunger /
+        //         (static_cast<double>(hunger_component->max_hunger)) <=
+        //     0.25)
+        // {
+        // }
+        if (hunger_component->hunger == 0)
+        {
+            System::sendSystemMessage(
+                SystemType::HEALTH,
+                {std::make_any<observer_ptr<Entity>>(player_),
+                 std::make_any<uint16_t>(1),
+                 std::make_any<SystemAction::HEALTH>(
+                     SystemAction::HEALTH::DAMAGE |
+                     SystemAction::HEALTH::CURRENT)});
+        }
+        if (hunger_component->hunger > 0)
+        {
+            hunger_component->hunger -= 1;
+        }
+    }
+
     EntityType checkMovementDestination(
-        const std::list<observer_ptr<Entity>> &entities_at_direction) noexcept
+        const std::list<observer_ptr<Entity>> &entities_at_direction)
     {
         if (entities_at_direction.empty())
             return EntityType::NONE;
@@ -79,14 +121,20 @@ public:
         return EntityType::ITEM;
     }
 
+    inline observer_ptr<Entity> getLastDamagedEnemy()
+    {
+        return last_hit_enemy_;
+    }
+
     void updateData() noexcept(false) override
     {
         if (player_ == nullptr)
             throw std::runtime_error(
-                "PlayerControlSystem: ERROR -> Player unassigned");
+                "PlayerSystem: ERROR -> Player unassigned");
         if (pos_sys_ == nullptr)
             throw std::runtime_error(
-                "PlayerControlSystem: ERROR -> Position System unassigned");
+                "PlayerSystem: ERROR -> Position System unassigned");
+        deduceHunger();
         EntityType entity_type_at_destination = EntityType::NONE;
         std::list<observer_ptr<Entity>> entities_at_destination;
         auto coordinates = player_->getComponent<Coordinates>();
@@ -157,12 +205,18 @@ public:
                  std::make_any<std::list<observer_ptr<Entity>>>(
                      entities_at_destination)});
             for (auto &item : entities_at_destination)
-
+            {
+                if (item->getComponent<TileComponent>()->sprite ==
+                    TileAppearance::GOAL_ITEM) [[unlikely]]
+                {
+                    next_level_ = true;
+                }
                 System::sendSystemMessage(
                     SystemType::POSITION,
                     {std::make_any<SystemAction::POSITION>(
                          SystemAction::POSITION::DELETE),
                      std::make_any<observer_ptr<Entity>>(item)});
+            }
             [[fallthrough]];
         }
         case EntityType::NONE:
@@ -209,6 +263,13 @@ public:
         next_movement_ = Direction::NONE;
         if (last_hit_enemy_ != nullptr)
         {
+            if (last_hit_enemy_->getComponent<LOSComponent>()
+                    ->has_LOS_to_player == false)
+            {
+                last_hit_enemy_        = nullptr;
+                last_hit_entity_timer_ = 0;
+                return;
+            }
             if (last_hit_enemy_->getComponent<Health>()->alive == false)
             {
                 last_hit_enemy_ = nullptr;
