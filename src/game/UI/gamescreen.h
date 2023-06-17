@@ -38,6 +38,7 @@ public: // debug
     observer_ptr<Entity>                         player_;
     std::unordered_map<TileAppearance, Sprite>   appearances_;
     PositionSystem                              &pos_system_;
+    observer_ptr<const int>                      depth_;
 
 public: // temp for debug
     ftxui::Color getColorByRarity(Rarity rarity) const;
@@ -52,27 +53,28 @@ public: // temp for debug
 
     ftxui::Element getMapBox();
     ftxui::Element getSidebar();
-    ftxui::Element getPlayerHpBar();
+    ftxui::Element getEntityHpBar(observer_ptr<Entity>);
     ftxui::Element getPlayerXpBar();
     ftxui::Element getPlayerHungerBar();
     ftxui::Element getPlayerAttackRating();
     ftxui::Element getPlayerArmorRating();
-    ftxui::Element getPlayerEquipment();
-    ftxui::Element getPlayerEffects();
-    ftxui::Element getLastDamagedEnemy();
-    ftxui::Element debugGetMapBox(observer_ptr<Entity> entity);
+    ftxui::Element getEntityEquipment(observer_ptr<Entity>);
+    ftxui::Element getEntityEffects(observer_ptr<Entity>);
+    ftxui::Element getLastDamagedEnemy(observer_ptr<Entity>);
+    ftxui::Element debugGetMapBox(observer_ptr<Entity>);
 
 public:
     void assignNewMap(observer_ptr<std::vector<std::vector<Tile>>> map);
 
     void           assignNewPlayer(observer_ptr<Entity> player);
-    ftxui::Element render();
+    ftxui::Element render(observer_ptr<Entity>);
 
     ftxui::Element debugRender(observer_ptr<Entity> enemy);
 
     GameScreen(observer_ptr<std::vector<std::vector<Tile>>> map,
                observer_ptr<Entity>                         player,
-               PositionSystem                              &pos_sys);
+               PositionSystem                              &pos_sys,
+               const observer_ptr<const int>                depth);
 };
 
 #endif /*GAMESCREEN_H*/
