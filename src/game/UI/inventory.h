@@ -278,7 +278,8 @@ public:
                 {
                     return vbox(
                         {dbox(
-                             {inv_container->Render(),
+                             {inv_container->Render() | vscroll_indicator |
+                                  frame,
                               window(text(item->getComponent<Name>()->name) |
                                          color(getColorByRarity(
                                              item->getComponent<ItemComponent>()
@@ -294,7 +295,8 @@ public:
                 {
                     return vbox(
                         {dbox(
-                             {inv_container->Render(),
+                             {inv_container->Render() | vscroll_indicator |
+                                  frame,
                               window(text(item->getComponent<Name>()->name) |
                                          color(getColorByRarity(
                                              item->getComponent<ItemComponent>()
@@ -308,7 +310,8 @@ public:
                          separatorLight(),
                          controls});
                 }
-                return vbox({inv_container->Render() | flex_grow,
+                return vbox({inv_container->Render() | vscroll_indicator |
+                                 frame | flex_grow,
                              separatorLight(),
                              controls});
             });
