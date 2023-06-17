@@ -14,7 +14,7 @@ add_library(systems
     inventorysystem.h
     attacksystem.h
     effectsystem.h
-    playerinputsystem.h
+    playersystem.h
 )
 target_link_libraries(systems
     PUBLIC factories
