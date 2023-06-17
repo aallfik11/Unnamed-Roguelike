@@ -188,8 +188,6 @@ class InventorySystem : public System
         else if ((type & ItemType::RING) != ItemType::NONE)
         {
             auto caller_amulets = caller->getComponent<AmuletSlot>();
-            if (caller_amulets->amount_equipped == caller_amulets->max_slots)
-                return false;
 
             if (caller_amulets->amulet_slots.contains(item))
             {
@@ -199,8 +197,11 @@ class InventorySystem : public System
                     removeEquipmentBuff(caller_buffs, item_buffs);
                 }
                 caller_amulets->amulet_slots.erase(item);
+                caller_amulets->amount_equipped -= 1;
                 return true;
             }
+            if (caller_amulets->amount_equipped == caller_amulets->max_slots)
+                return false;
 
             caller_amulets->amulet_slots.emplace(item);
             item_component->equipped = true;
@@ -208,6 +209,7 @@ class InventorySystem : public System
             {
                 addEquipmentBuff(caller_buffs, item_buffs);
             }
+            caller_amulets->amount_equipped += 1;
             return true;
         }
         return false;
