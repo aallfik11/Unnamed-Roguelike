@@ -224,12 +224,12 @@ public:
 
     void resetSystem() override
     {
-        clearSystemMessages();
         next_movement_         = Direction::NONE;
         last_hit_enemy_        = nullptr;
         last_hit_entity_timer_ = 0;
         player_                = nullptr;
         pos_sys_               = nullptr;
+        clearSystemMessages();
     }
 
     std::istream &deserialize(std::istream &is) override
