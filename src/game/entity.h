@@ -17,8 +17,10 @@
 #include <unordered_map>
 #include <vector>
 
+class EntityManager; //for friend declaration;
 class Entity
 {
+    friend class EntityManager;
     using Components =
         std::unordered_map<std::type_index, std::unique_ptr<Component>>;
     static uint32_t max_id_;
