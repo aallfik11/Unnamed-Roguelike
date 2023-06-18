@@ -436,7 +436,7 @@ public:
         armor_amount_distro_  = std::uniform_int_distribution<>(0, 5);
         ring_amount_distro_   = std::uniform_int_distribution<>(0, 1);
         potion_amount_distro_ = std::uniform_int_distribution<>(0, 4);
-        food_amount_distro_   = std::uniform_int_distribution<>(2, 6);
+        food_amount_distro_   = std::uniform_int_distribution<>(8, 16);
         x_pos_distro_ = std::uniform_int_distribution<>(1, G_MAP_WIDTH - 2);
         y_pos_distro_ = std::uniform_int_distribution<>(1, G_MAP_HEIGHT - 2);
 
@@ -573,10 +573,10 @@ public:
             "A dark, crimson concotion, its color reminiscent dried blood. It "
             "smells of alcohol. The potion increases the drinker's strenght";
 
-        rarity_food_values_[Rarity::COMMON]    = 10;
-        rarity_food_values_[Rarity::UNCOMMON]  = 15;
-        rarity_food_values_[Rarity::RARE]      = 30;
-        rarity_food_values_[Rarity::EPIC]      = 60;
+        rarity_food_values_[Rarity::COMMON]    = 15;
+        rarity_food_values_[Rarity::UNCOMMON]  = 25;
+        rarity_food_values_[Rarity::RARE]      = 50;
+        rarity_food_values_[Rarity::EPIC]      = 75;
         rarity_food_values_[Rarity::LEGENDARY] = 100;
 
         rarity_food_names_[Rarity::COMMON]     = "Tiny Food Ration";
