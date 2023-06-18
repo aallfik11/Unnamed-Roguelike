@@ -31,7 +31,7 @@ uint64_t calculateScore(uint16_t level, uint32_t experience = 0)
     }
     if (level == 2)
     {
-        return level * 25;
+        return level * 25 + experience;
     }
     return calculateScore(level - 1) + level * 25 + experience;
 }
@@ -404,6 +404,18 @@ int main()
                         {
                             save(save_name);
                         }
+                    }
+                    else if (event == Event::Character("R") ||
+                             event == Event::Character("r"))
+                    {
+                        System::sendSystemMessage(
+                            SystemType::HEALTH,
+                            {std::make_any<observer_ptr<Entity>>(player),
+                             std::make_any<uint16_t>(1),
+                             std::make_any<SystemAction::HEALTH>(
+                                 SystemAction::HEALTH::UPDATE |
+                                 SystemAction::HEALTH::CURRENT)});
+                        update_systems = true;
                     }
                     if (update_systems)
                     {
