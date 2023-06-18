@@ -272,7 +272,6 @@ public:
                                   getItemMenuEntry(item)));
                 }
 
-                // auto scr           = ScreenInteractive::Fullscreen();
                 auto item = *std::next(inventory.begin(), inventory_index);
                 if (is_stats_open_ == true)
                 {
@@ -345,14 +344,12 @@ public:
                 if (event == Event::Character('r') ||
                     event == Event::Character('R'))
                 {
-                    // auto inv_size = inventory.size();
                     inv_sys_.dropFromInventory(player, inventory_index);
                 }
 
                 fixIndex(inventory_index,
                          player->getComponent<Inventory>()->inventory.size());
-                inv_container->OnEvent(event);
-                return true;
+                return inv_container->OnEvent(event);
             });
         scr.Loop(key_handler);
     }
