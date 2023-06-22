@@ -121,7 +121,7 @@ public:
                     if (std::regex_match(nickname, pattern))
                     {
                         std::fstream hs_file("highscores.txt", std::ios::app);
-                        hs_file << nickname << ' ' << score;
+                        hs_file << nickname << ' ' << score << std::endl;
                         quit = true;
                         scr_.Exit();
                     }
