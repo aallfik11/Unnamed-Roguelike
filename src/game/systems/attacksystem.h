@@ -7,6 +7,7 @@
 #include "../components/critcomponent.h"
 #include "../components/effectcomponent.h"
 #include "../components/health.h"
+#include "../components/name.h"
 #include "../components/weaponcomponent.h"
 #include "../components/weaponslot.h"
 #include "../system.h"
@@ -52,7 +53,21 @@ public:
         auto defender_base_armor  = defender->getComponent<ArmorComponent>();
         auto defender_effects     = defender->getComponent<BuffComponent>();
 
+        bool critical_strike      = false;
+
         auto crit_roll            = roll_chance_(mt_engine_);
+
+        const std::string miss_message =
+            attacker->getComponent<Name>()->name + " missed " +
+            defender->getComponent<Name>()->name;
+
+        const std::string hit_message =
+            attacker->getComponent<Name>()->name + " hit " +
+            defender->getComponent<Name>()->name;
+
+        const std::string crit_message =
+            attacker->getComponent<Name>()->name + " critically strikes " +
+            defender->getComponent<Name>()->name;
 
         auto attacker_base_damage = attacker_base_weapon->damage;
         if (attacker_weapon != nullptr)
@@ -101,6 +116,7 @@ public:
         }
         if (attacker_crit->crit_chance >= crit_roll)
         {
+            critical_strike = true;
             attacker_base_damage =
                 attacker_base_damage * attacker_crit->crit_multiplier;
             combined_ac = 1;
@@ -118,7 +134,7 @@ public:
                             continue;
                         }
                     }
-                    // defender_effects->buffs[effect.first] =
+                    // defender_effects->buffs[effect.first] =I'm asking
                     //     effect.second->clone();
                     auto message = {
                         std::make_any<SystemAction::EFFECT>(
@@ -133,6 +149,9 @@ public:
 
         if (roll_chance_(mt_engine_) < combined_ac)
         {
+            auto message = miss_message;
+            System::sendSystemMessage(SystemType::LOG,
+                                      {std::make_any<std::string>(message)});
             return false;
         }
 
@@ -175,7 +194,9 @@ public:
             std::make_any<SystemAction::HEALTH>(SystemAction::HEALTH::DAMAGE |
                                                 SystemAction::HEALTH::CURRENT)};
 
-        // (*system_messages_)[SystemType::HEALTH].emplace_back(message);
+        auto log = (critical_strike) ? crit_message : hit_message;
+        sendSystemMessage(SystemType::LOG, {std::make_any<std::string>(log)});
+
         sendSystemMessage(SystemType::HEALTH, message);
 
         return true;
