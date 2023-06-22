@@ -1,6 +1,7 @@
 #include "src/game/UI/gamescreen.h"
 #include "src/game/UI/highscoresaver.h"
 #include "src/game/UI/inventory.h"
+#include "src/game/UI/logs.h"
 #include "src/game/UI/mainmenu.h"
 #include "src/game/UI/savescreen.h"
 #include "src/game/systems/aisystem.h"
@@ -38,11 +39,6 @@ uint64_t calculateScore(uint16_t level, uint32_t experience = 0)
 
 int main()
 {
-    auto               scr = ftxui::ScreenInteractive::Fullscreen();
-    MainMenu           main_menu(scr);
-    SaveScreen         save_screen(scr);
-    HighScoreSaver     highscore_saver(scr);
-    LaunchOptions      option{};
     bool               next_level = false;
     bool               quit       = false;
     std::string        savefile_path{};
@@ -70,8 +66,16 @@ int main()
     ExperienceSystem experience_system;
     InventorySystem  inventory_system;
     PositionSystem   position_system;
+    LogSystem        log_system;
     ItemFactory      it_fac(depth);
     MonsterFactory   monster_fac(it_fac, depth);
+
+    auto           scr = ftxui::ScreenInteractive::Fullscreen();
+    MainMenu       main_menu(scr);
+    SaveScreen     save_screen(scr);
+    HighScoreSaver highscore_saver(scr);
+    LaunchOptions  option{};
+    Logs           logs(log_system, scr);
 
     std::list<std::reference_wrapper<System>> systems;
     systems.emplace_back(entity_manager);
@@ -80,6 +84,7 @@ int main()
     systems.emplace_back(los_system);
     systems.emplace_back(ai_system);
     systems.emplace_back(attack_system);
+    systems.emplace_back(log_system);
     systems.emplace_back(effect_system);
     systems.emplace_back(health_system);
     systems.emplace_back(experience_system);
@@ -120,6 +125,7 @@ int main()
         if (hard)
         {
             entity_manager.hardReset();
+            log_system.hardReset();
         }
         for (auto &system : systems)
         {
@@ -127,13 +133,13 @@ int main()
         }
     };
 
-    auto inputHighscore = [&]
+    auto inputHighscore = [&](bool win = false)
     {
         auto player_xp =
             entity_manager.getEntity(1)->getComponent<ExperienceComponent>();
         auto highscore =
             calculateScore(player_xp->level, player_xp->current_experience);
-        highscore_saver.render(highscore);
+        highscore_saver.render(highscore, win);
     };
 
     while (true)
@@ -231,8 +237,9 @@ int main()
                  new BuffComponent,
                  new TileComponent(TileAppearance::PLAYER),
                  new Coordinates,
-                 new HungerComponent(101),
+                 new HungerComponent(201, 200),
                  new Health(10),
+                 new Name("You"),
                  new Inventory});
             map_manager.generate();
         }
@@ -417,6 +424,11 @@ int main()
                                  SystemAction::HEALTH::CURRENT)});
                         update_systems = true;
                     }
+                    else if (event == Event::Character("L") ||
+                             event == Event::Character("l"))
+                    {
+                        logs.open();
+                    }
                     if (update_systems)
                     {
                         updateSystems();
@@ -450,7 +462,7 @@ int main()
                 if (depth == 25)
                 {
                     quit = true;
-                    inputHighscore();
+                    inputHighscore(true);
                 }
                 else
                 {
