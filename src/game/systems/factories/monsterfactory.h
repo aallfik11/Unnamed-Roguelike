@@ -197,6 +197,15 @@ class MonsterFactory
             monster_->getComponent<WeaponSlot>()->weapon_item = weapon;
             monster_->getComponent<Inventory>()->inventory.emplace_back(weapon);
             weapon->getComponent<ItemComponent>()->equipped = true;
+            if (auto buff = weapon->getComponent<BuffComponent>())
+            {
+                System::sendSystemMessage(
+                    SystemType::EFFECT,
+                    {std::make_any<SystemAction::EFFECT>(
+                         SystemAction::EFFECT::ADD),
+                     std::make_any<observer_ptr<Entity>>(monster_),
+                     std::make_any<observer_ptr<const BuffComponent>>(buff)});
+            }
             return *this;
         }
 
@@ -213,6 +222,15 @@ class MonsterFactory
             monster_->getComponent<ArmorSlot>()->armor_item = armor;
             monster_->getComponent<Inventory>()->inventory.emplace_back(armor);
             armor->getComponent<ItemComponent>()->equipped = true;
+            if (auto buff = armor->getComponent<BuffComponent>())
+            {
+                System::sendSystemMessage(
+                    SystemType::EFFECT,
+                    {std::make_any<SystemAction::EFFECT>(
+                         SystemAction::EFFECT::ADD),
+                     std::make_any<observer_ptr<Entity>>(monster_),
+                     std::make_any<observer_ptr<const BuffComponent>>(buff)});
+            }
             return *this;
         }
 
@@ -240,6 +258,16 @@ class MonsterFactory
                 amulet_slot->amount_equipped += 1;
                 inv_ptr->inventory.emplace_back(item);
                 item->getComponent<ItemComponent>()->equipped = true;
+                if (auto buff = item->getComponent<BuffComponent>())
+                {
+                    System::sendSystemMessage(
+                        SystemType::EFFECT,
+                        {std::make_any<SystemAction::EFFECT>(
+                             SystemAction::EFFECT::ADD),
+                         std::make_any<observer_ptr<Entity>>(monster_),
+                         std::make_any<observer_ptr<const BuffComponent>>(
+                             buff)});
+                }
                 ++i;
             }
             return *this;
