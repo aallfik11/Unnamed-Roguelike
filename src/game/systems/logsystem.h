@@ -26,6 +26,10 @@ public:
     {
         (*system_messages_)[SystemType::LOG].clear();
     }
+    void hardReset()
+    {
+        logs_.clear();
+    }
 };
 
 #endif /*LOGSYSTEM_H*/
