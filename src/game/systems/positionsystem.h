@@ -248,13 +248,13 @@ public:
         if (map_ == nullptr)
             throw std::runtime_error(
                 "Position System: ERROR -> Player unassigned");
-        for (auto &entity : removal_messages_)
-        {
-            deleteEntity(entity);
-        }
         for (auto &entity : addition_messages_)
         {
             addEntity(entity);
+        }
+        for (auto &entity : removal_messages_)
+        {
+            deleteEntity(entity);
         }
         for (auto &message : pos_change_messages_)
         {
