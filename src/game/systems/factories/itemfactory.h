@@ -89,6 +89,12 @@ public:
         return *this;
     }
 
+    ItemBuilder& sprite(const TileAppearance appearance)
+    {
+        components.insert(new TileComponent(appearance));
+        return *this;
+    }
+
     ItemBuilder &damage(const uint16_t damage = 1)
     {
         components.insert(new WeaponComponent(damage));
@@ -436,7 +442,7 @@ public:
         armor_amount_distro_  = std::uniform_int_distribution<>(0, 5);
         ring_amount_distro_   = std::uniform_int_distribution<>(0, 1);
         potion_amount_distro_ = std::uniform_int_distribution<>(0, 4);
-        food_amount_distro_   = std::uniform_int_distribution<>(8, 16);
+        food_amount_distro_   = std::uniform_int_distribution<>(16, 24);
         x_pos_distro_ = std::uniform_int_distribution<>(1, G_MAP_WIDTH - 2);
         y_pos_distro_ = std::uniform_int_distribution<>(1, G_MAP_HEIGHT - 2);
 
@@ -573,11 +579,11 @@ public:
             "A dark, crimson concotion, its color reminiscent dried blood. It "
             "smells of alcohol. The potion increases the drinker's strenght";
 
-        rarity_food_values_[Rarity::COMMON]    = 15;
-        rarity_food_values_[Rarity::UNCOMMON]  = 25;
-        rarity_food_values_[Rarity::RARE]      = 50;
-        rarity_food_values_[Rarity::EPIC]      = 75;
-        rarity_food_values_[Rarity::LEGENDARY] = 100;
+        rarity_food_values_[Rarity::COMMON]    = 30;
+        rarity_food_values_[Rarity::UNCOMMON]  = 50;
+        rarity_food_values_[Rarity::RARE]      = 100;
+        rarity_food_values_[Rarity::EPIC]      = 150;
+        rarity_food_values_[Rarity::LEGENDARY] = 200;
 
         rarity_food_names_[Rarity::COMMON]     = "Tiny Food Ration";
         rarity_food_names_[Rarity::UNCOMMON]   = "Small Food Ration";
@@ -663,6 +669,7 @@ public:
                         "If you're reading this in-game, something isn't "
                         "working :)")
                     .itemComponent(ItemType::RING, 1, 1, Rarity::LEGENDARY)
+                    .sprite(TileAppearance::GOAL_ITEM)
                     .build();
             placeItem(yendor);
         }
