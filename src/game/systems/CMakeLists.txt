@@ -1,22 +1,25 @@
-
-
 add_subdirectory(factories)
 add_subdirectory(generators)
 
+find_library(components components)
+
 add_library(systems
-    entitymanager.h
-    mapmanager.h
-    positionsystem.h
-    healthsystem.h
-    aisystem.h
-    navmapmanager.h
-    lineofsightsystem.h
-    inventorysystem.h
-    attacksystem.h
-    effectsystem.h
-    playersystem.h
+    aisystem.cpp
+    attacksystem.cpp
+    effectsystem.cpp
+    entitymanager.cpp
+    experiencesystem.cpp
+    healthsystem.cpp
+    inventorysystem.cpp
+    lineofsightsystem.cpp
+    logsystem.cpp
+    mapmanager.cpp
+    navmapmanager.cpp
+    playersystem.cpp
+    positionsystem.cpp
 )
 target_link_libraries(systems
+    PRIVATE components 
     PUBLIC factories
     PUBLIC generators)
 

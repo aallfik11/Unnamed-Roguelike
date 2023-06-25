@@ -1,8 +1,6 @@
 #ifndef LOGSYSTEM_H
 #define LOGSYSTEM_H
-
 #include "../system.h"
-#include <any>
 #include <list>
 #include <string>
 
@@ -13,23 +11,10 @@ class LogSystem : public System
     std::list<std::string> logs_;
 
 public:
-    void readSystemMessages() override
-    {
-        for (auto &message : (*system_messages_)[SystemType::LOG])
-        {
-            auto message_it = message.begin();
-            logs_.emplace_back(std::any_cast<std::string>(*message_it));
-        }
-    }
-    void updateData() override {}
-    void clearSystemMessages() override
-    {
-        (*system_messages_)[SystemType::LOG].clear();
-    }
-    void hardReset()
-    {
-        logs_.clear();
-    }
+    void readSystemMessages() override;
+    void updateData() override;
+    void clearSystemMessages() override;
+    void hardReset();
 };
 
 #endif /*LOGSYSTEM_H*/

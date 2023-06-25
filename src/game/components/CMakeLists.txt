@@ -1,26 +1,26 @@
 
 
 add_library(components
-    coordinates.h
-    description.h
-    health.h
-    inventory.h
-    name.h
-    tilecomponent.h
-    aicomponent.h
-    navmapcomponent.h
-    lineofsightcomponent.h
-    weaponcomponent.h
-    armorcomponent.h
-    experiencecomponent.h
-    hungercomponent.h
-    itemcomponent.h
-    buffcomponent.h
-    amuletslot.h
-    weaponslot.h
-    armorslot.h 
-    buffcomponent.h
-    critcomponent.h
+    aicomponent.cpp
+    amuletslot.cpp
+    armorcomponent.cpp
+    armorslot.cpp
+    buffcomponent.cpp
+    coordinates.cpp
+    critcomponent.cpp
+    description.cpp
+    effectcomponent.cpp
+    experiencecomponent.cpp
+    health.cpp
+    hungercomponent.cpp
+    inventory.cpp
+    itemcomponent.cpp
+    lineofsightcomponent.cpp
+    name.cpp
+    navmapcomponent.cpp
+    tilecomponent.cpp
+    weaponcomponent.cpp
+    weaponslot.cpp
 )
 
 set_target_properties(components PROPERTIES LINKER_LANGUAGE CXX)

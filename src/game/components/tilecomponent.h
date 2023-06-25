@@ -4,48 +4,25 @@
 #include "../observerptr.h"
 #include "../tile.h"
 #include <istream>
-#include <memory>
 #include <ostream>
-#include <string>
 
 class TileComponent : public Component
 {
-    /*debug*/ bool isEqual(const observer_ptr<const Component> c) const override
-    {
-        auto t = static_cast<const TileComponent *>(c);
-        return (this->sprite == t->sprite);
-    }
-    TileComponent *cloneImpl() const override
-    {
-        return new TileComponent(*this);
-    }
+    /*debug*/ bool
+    isEqual(const observer_ptr<const Component> c) const override;
 
-    std::ostream &serialize(std::ostream &os) const override
-    {
-        os << ComponentType::TILE << ' ' << this->sprite << ' ';
-        return os;
-    }
+    TileComponent *cloneImpl() const override;
 
-    std::istream &deserialize(std::istream &is) override
-    {
-        is >> this->sprite;
-        return is;
-    }
+    std::ostream &serialize(std::ostream &os) const override;
+    std::istream &deserialize(std::istream &is) override;
 
 public:
     TileAppearance sprite;
 
-    TileComponent(TileAppearance sprite = TileAppearance::NONE)
-    {
-        this->sprite = sprite;
-    }
+    TileComponent(TileAppearance sprite = TileAppearance::NONE);
+    TileComponent(const TileComponent &tile_component);
 
-    TileComponent(const TileComponent &tile_component)
-    {
-        this->sprite = tile_component.sprite;
-    }
-
-    ComponentType getType() const override { return ComponentType::TILE; }
+    ComponentType getType() const override;
 };
 
 #endif /*TILECOMPONENT_H*/

@@ -2,48 +2,27 @@
 #define NAME_H
 #include "../component.h"
 #include "../observerptr.h"
-#include <algorithm>
 #include <istream>
-#include <memory>
 #include <ostream>
 #include <string>
 
 class Name : public Component
 {
-    /*debug*/ bool isEqual(const observer_ptr<const Component> c) const override
-    {
-        auto n = static_cast<const Name*>(c);
-        return (this->name == n->name);
-    }
-    Name         *cloneImpl() const override { return new Name(*this); }
-    std::ostream &serialize(std::ostream &os) const override
-    {
-        auto word_count =
-            std::count(this->name.cbegin(), this->name.cend(), ' ') + 1;
-        os << ComponentType::NAME << ' ' << word_count << ' ' << this->name
-           << ' ';
-        return os;
-    }
-    std::istream &deserialize(std::istream &is) override
-    {
-        int         word_count{};
-        std::string temp{};
-        is >> word_count;
-        for (int i = 0; i < word_count - 1; i++)
-        {
-            is >> temp;
-            this->name += temp + " ";
-        }
-        is >> temp;
-        this->name += temp;
-        return is;
-    }
+    /*debug*/ bool
+    isEqual(const observer_ptr<const Component> c) const override;
+
+    Name         *cloneImpl() const override;
+
+    std::ostream &serialize(std::ostream &os) const override;
+    std::istream &deserialize(std::istream &is) override;
 
 public:
     std::string name;
-    Name(std::string name = "") { this->name = name; }
-    Name(const Name &nm) { this->name = nm.name; }
-    ComponentType getType() const override { return ComponentType::NAME; }
+
+    Name(std::string name = "");
+    Name(const Name &nm);
+
+    ComponentType getType() const override;
 };
 
 #endif /*NAME_H*/

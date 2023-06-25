@@ -33,10 +33,12 @@ enable_testing()
 # set(GAMEHEADERS src/game)
 add_subdirectory(src)
 
+find_library(systems systems)
+
 add_executable(Unnamed-Roguelike main.cpp)
 
 # target_include_directories(Unnamed-Roguelike PRIVATE ${GAMEHEADERS})
-target_link_libraries(Unnamed-Roguelike PUBLIC source)
+target_link_libraries(Unnamed-Roguelike PUBLIC source PUBLIC systems)
 
 target_link_libraries(Unnamed-Roguelike
   PRIVATE ftxui::screen

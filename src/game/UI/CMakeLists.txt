@@ -1,5 +1,5 @@
 
-add_library(ui gamescreen.cpp)
+add_library(ui gamescreen.cpp highscoresaver.cpp inventory.cpp logs.cpp mainmenu.cpp savescreen.cpp)
 # FTXUI Includes ---------------------------------------------------------------
 include(FetchContent)
 

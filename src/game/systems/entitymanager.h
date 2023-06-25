@@ -1,19 +1,14 @@
 #ifndef ENTITYMANAGER_H
 #define ENTITYMANAGER_H
 #include "../component.h"
-#include "../components/inventory.h"
 #include "../entity.h"
-#include "../entitydeserializer.h"
 #include "../entityholder.h"
 #include "../entitytypes.h"
 #include "../system.h"
-#include <any>
 #include <cstdint>
-#include <iostream>
 #include <istream>
 #include <memory>
 #include <ostream>
-#include <ranges>
 #include <unordered_map>
 #include <vector>
 
@@ -28,212 +23,33 @@ class EntityManager : public System
 
 public:
     uint32_t createEntity(const EntityType         type,
-                          std::vector<Component *> components)
-    {
-        auto id       = Entity::getMaxId();
-        entities_[id] = std::make_unique<Entity>(type, components);
-        return id;
-    }
+                          std::vector<Component *> components);
 
-    void addEntity(observer_ptr<Entity> entity)
-    {
-        entities_[entity->getId()] = std::unique_ptr<Entity>(entity);
-    }
+    void addEntity(observer_ptr<Entity> entity);
 
-    observer_ptr<Entity> getEntity(const uint32_t entity_id) const
-    {
-        if (entities_.contains(entity_id))
-        {
-            return entities_.at(entity_id).get();
-        }
-        return nullptr;
-    }
+    observer_ptr<Entity> getEntity(const uint32_t entity_id) const;
 
-    EntityHashmap &getAllEntities() { return entities_; }
+    EntityHashmap &getAllEntities();
 
-    void markForDeletion(const uint32_t id) { purge_list_.emplace_back(id); }
-    void unmarkForDeletion(const uint32_t id)
-    {
-        auto iterator = std::find(purge_list_.begin(), purge_list_.end(), id);
-        if (iterator != purge_list_.end())
-            purge_list_.erase(iterator);
-    }
+    void markForDeletion(const uint32_t id);
+    void unmarkForDeletion(const uint32_t id);
 
-    void purge()
-    {
-        for (auto &entity_id : purge_list_)
-        {
-            entities_.erase(entity_id);
-        }
-    }
+    void purge();
 
-    void handleRequests()
-    {
-        for (auto &request : request_list_)
-        {
-            std::list<observer_ptr<Entity>> entities;
-            for (auto &entity_id : request.second)
-            {
-                entities.push_back(getEntity(entity_id));
-            }
-            request.first->loadEntities(entities);
-        }
-    }
+    void handleRequests();
 
-    void updateData() override
-    {
-        purge();
-        for (auto &entity : add_list_)
-        {
-            addEntity(entity);
-        }
-        handleRequests();
-    }
-    void readSystemMessages() override
-    {
-        for (auto &message : (*System::system_messages_)[SystemType::ENTITY])
-        {
-            auto                 message_it = message.begin();
-            SystemAction::ENTITY action =
-                std::any_cast<SystemAction::ENTITY>(*message_it);
-            message_it++;
-            switch (action)
-            {
-            case SystemAction::ENTITY::ADD:
-            {
-                add_list_.push_back(
-                    std::any_cast<observer_ptr<Entity>>(*message_it));
-                break;
-            }
-            case SystemAction::ENTITY::PURGE:
-            {
-                purge_list_.push_back(std::any_cast<uint32_t>(*message_it));
-                break;
-            }
-            case SystemAction::ENTITY::REQUEST:
-            {
-                request_list_.emplace_back(std::make_pair(
-                    std::any_cast<observer_ptr<EntityHolder>>(*message_it),
-                    std::any_cast<std::list<uint32_t>>(*(message_it + 1))));
-                break;
-            }
-            }
-        }
-    }
-    void clearSystemMessages() override
-    {
-        (*System::system_messages_)[SystemType::ENTITY].clear();
-        add_list_.clear();
-        purge_list_.clear();
-        request_list_.clear();
-    }
+    void updateData() override;
+    void readSystemMessages() override;
+    void clearSystemMessages() override;
+    void resetSystem() override;
 
-    void resetSystem() override
-    {
-        readSystemMessages();
-        updateData();
-        clearSystemMessages();
-        if (entities_.empty())
-            return;
-        std::list<std::unique_ptr<Entity>> player_items;
-        auto                               player = std::move(entities_[1]);
-        auto player_inventory = player->getComponent<Inventory>()->inventory;
-        for (auto &item : player_inventory)
-        {
-            player_items.emplace_back(std::move(entities_[item->getId()]));
-        }
+    void hardReset(); // use carefully
 
-        entities_.clear();
-        Entity::resetMaxId();
-
-        auto player_weaponslot         = player->getComponent<WeaponSlot>();
-        auto player_armorslot          = player->getComponent<ArmorSlot>();
-        auto player_amuletslot         = player->getComponent<AmuletSlot>();
-
-        player_weaponslot->weapon_item = nullptr;
-        player_armorslot->armor_item   = nullptr;
-        player_amuletslot->amulet_slots.clear();
-
-        player->id_  = Entity::max_id_;
-        entities_[1] = std::move(player);
-        Entity::max_id_++;
-
-        for (auto &item : player_items)
-        {
-            auto item_component = item->getComponent<ItemComponent>();
-            if (item_component->equipped)
-            {
-                switch (item_component->type)
-                {
-                case ItemType::ARMOR:
-                    player_armorslot->armor_item = item.get();
-                    break;
-                case ItemType::WEAPON:
-                    player_weaponslot->weapon_item = item.get();
-                    break;
-                case ItemType::RING:
-                    player_amuletslot->amulet_slots.insert(item.get());
-                    break;
-                default:
-                    break;
-                }
-            }
-            item->id_                  = Entity::max_id_;
-            entities_[Entity::max_id_] = std::move(item);
-            ++Entity::max_id_;
-        }
-    }
-
-    void hardReset() // use carefully
-    {
-        clearSystemMessages();
-        entities_.clear();
-        Entity::resetMaxId();
-    }
-
-    std::ostream &serialize(std::ostream &os) const override
-    {
-        os << SystemType::ENTITY << ' ' << entities_.size() << std::endl;
-        for (auto &[id, entity] : entities_)
-        {
-            os << *entity << std::endl;
-        }
-        return os;
-    }
-
-    std::istream &deserialize(std::istream &is) override
-    {
-        std::size_t entity_amount{};
-        is >> entity_amount;
-        entities_.clear();
-        entities_.reserve(entity_amount);
-        for (std::size_t i = 0; i < entity_amount; i++)
-        {
-            auto entity = std::make_unique<Entity>(true);
-            is >> *entity;
-            entities_[entity->getId()] = std::move(entity);
-        }
-        return is;
-    }
+    std::ostream &serialize(std::ostream &os) const override;
+    std::istream &deserialize(std::istream &is) override;
 
     // DEBUG
-    bool operator==(const EntityManager &e)
-    {
-        for (auto &[key, entity] : this->entities_)
-        {
-            if (e.entities_.contains(key) == false)
-            {
-                std::cerr << "KEY MISSING: " << key << ' ';
-                return false;
-            }
-            if (*(this->entities_.at(key)) != *(e.entities_.at(key)))
-            {
-                std::cerr << "ENTITY MISMATCH: " << key << ' ';
-                return false;
-            }
-        }
-        return true;
-    }
+    bool operator==(const EntityManager &e);
 };
 
 #endif /*ENTITYMANAGER*/

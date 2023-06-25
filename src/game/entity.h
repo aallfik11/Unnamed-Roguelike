@@ -2,110 +2,43 @@
 #define ENTITY_H
 #include "component.h"
 #include "entitytypes.h"
-// #include "observerptr.h"
-#include <algorithm>
-#include <iostream>
-#include <memory>
-#include <ranges>
-#include <utility>
-// #include <type_traits>
+#include "observerptr.h"
 #include <istream>
-#include <map>
+#include <memory>
 #include <ostream>
 #include <typeindex>
-#include <typeinfo>
 #include <unordered_map>
 #include <vector>
 
-class EntityManager; //for friend declaration;
+class EntityManager; // for friend declaration;
 class Entity
 {
     friend class EntityManager;
     using Components =
         std::unordered_map<std::type_index, std::unique_ptr<Component>>;
+
     static uint32_t max_id_;
     uint32_t        id_;
+    Components      components_;
 
-    Components components_;
-
-    Entity()
-    {
-        id_ = max_id_;
-        max_id_++;
-    }
+    Entity();
 
 public:
     EntityType type;
 
-    Entity(EntityType type) : Entity() { this->type = type; }
+    Entity(EntityType type);
+    Entity(EntityType type, std::vector<Component *> &components);
+    Entity(EntityType type, std::initializer_list<Component *> components);
+    Entity(const Entity &entity);
+    Entity(bool no_id_increment);
+    Entity(Entity &&entity);
 
-    Entity(EntityType type, std::vector<Component *> &components) : Entity()
-    {
-        for (auto &component : components)
-        {
-            components_.emplace(typeid(*component),
-                                std::unique_ptr<Component>(component));
-        }
-        this->type = type;
-    }
+    uint32_t        getId() const;
+    static uint32_t getMaxId();
 
-    Entity(EntityType type, std::initializer_list<Component *> components)
-        : Entity()
-    {
-        for (auto &component : components)
-        {
-            components_.emplace(typeid(*component),
-                                std::unique_ptr<Component>(component));
-        }
-        this->type = type;
-    }
-
-    Entity(const Entity &entity) : Entity()
-    {
-        this->type = entity.type;
-        for (auto &component : entity.components_)
-        {
-            this->addComponent(component.second->clone());
-        }
-    }
-
-    Entity(bool no_id_increment)
-    {
-        this->id_ = 0;
-        ++max_id_;
-        this->type = EntityType::NONE;
-    }
-
-    Entity(Entity &&entity)
-    {
-        for (auto &component : entity.components_)
-        {
-            this->addComponent(component.second->clone());
-        }
-        this->type = entity.type;
-        this->id_  = entity.id_;
-
-        entity.components_.clear();
-        entity.type = EntityType::NONE;
-        entity.id_  = 0;
-    }
-
-    uint32_t        getId() const { return id_; }
-    static uint32_t getMaxId() { return max_id_; }
-
-    void addComponent(Component *component)
-    {
-        components_.emplace(typeid(*component), component);
-    }
-
-    void addComponent(std::unique_ptr<Component> &&component)
-    {
-        components_.emplace(typeid(*component), std::move(component));
-    }
-    void addComponent(std::unique_ptr<Component> &component)
-    {
-        components_.emplace(typeid(*component), std::move(component));
-    }
+    void addComponent(Component *component);
+    void addComponent(std::unique_ptr<Component> &&component);
+    void addComponent(std::unique_ptr<Component> &component);
 
     template <class ComponentType> void removeComponent()
     {
@@ -117,23 +50,24 @@ public:
         return components_.contains(typeid(ComponentType));
     }
 
-    template <class ComponentType> ComponentType *getComponent()
-    {
-        auto it = components_.find(typeid(ComponentType));
-
-        if (it == components_.end())
-            return nullptr;
-
-        return static_cast<ComponentType *>(it->second.get());
-    }
-
-    template <class ComponentType>
-    const ComponentType* getConstComponent() const
+    template <class ComponentType> observer_ptr<ComponentType> getComponent()
     {
         if (auto it = components_.find(typeid(ComponentType));
             it != components_.end())
         {
-        return static_cast<const ComponentType *>(it->second.get());
+            return static_cast<observer_ptr<ComponentType>>(it->second.get());
+        }
+        return nullptr;
+    }
+
+    template <class ComponentType>
+    observer_ptr<const ComponentType> getConstComponent() const
+    {
+        if (auto it = components_.find(typeid(ComponentType));
+            it != components_.end())
+        {
+            return static_cast<observer_ptr<const ComponentType>>(
+                it->second.get());
         }
         return nullptr;
     }
@@ -141,36 +75,8 @@ public:
     friend std::ostream &operator<<(std::ostream &os, const Entity &entity);
     friend std::istream &operator>>(std::istream &is, Entity &entity);
 
-    static void resetMaxId() { max_id_ = 1; }
+    static void resetMaxId();
 
-    bool operator==(const Entity &e) const
-    {
-        for (auto &[type_id, component_ptr] : this->components_)
-        {
-            if (e.components_.contains(type_id) == false)
-            {
-                return false;
-            }
-            if (*component_ptr != *(e.components_.at(type_id)))
-                return false;
-        }
-        return (this->type == e.type && this->id_ == e.id_);
-    }
+    bool operator==(const Entity &e) const;
 };
-
-inline std::ostream &operator<<(std::ostream &os, const Entity &entity)
-{
-    os << entity.id_ << ' ' << entity.type << ' ' << entity.components_.size()
-       << ' ';
-    for (const auto &[key, component] : entity.components_)
-    {
-        os << *component;
-    }
-    return os;
-
-    // DEBUG
-}
-
-inline uint32_t Entity::max_id_ = 1;
-
 #endif /*ENTITY_H*/

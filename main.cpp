@@ -20,6 +20,7 @@
 #include "src/game/systems/playersystem.h"
 #include "src/game/systems/positionsystem.h"
 #include "src/permissive_fov/permissive-fov-cpp.h"
+#include "src/game/components/components_all.h"
 #include <cstdint>
 #include <filesystem>
 #include <random>
@@ -271,6 +272,7 @@ int main()
                     y = rand_y(mt);
                 }
                 position_system.assignMap(&map);
+                position_system.addEntity(player);
                 position_system.updatePosition(player, x, y);
                 it_fac.generateItems();
                 monster_fac.generateMonsters();
