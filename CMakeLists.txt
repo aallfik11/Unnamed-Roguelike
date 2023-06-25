@@ -38,13 +38,18 @@ find_library(systems systems)
 add_executable(Unnamed-Roguelike main.cpp)
 
 # target_include_directories(Unnamed-Roguelike PRIVATE ${GAMEHEADERS})
-target_link_libraries(Unnamed-Roguelike PUBLIC source PUBLIC systems)
+# target_link_libraries(Unnamed-Roguelike 
+#     PUBLIC source PUBLIC systems)
 
 target_link_libraries(Unnamed-Roguelike
+  PRIVATE source
+  PRIVATE systems
   PRIVATE ftxui::screen
   PRIVATE ftxui::dom
   PRIVATE ftxui::component
 )
+
+configure_file(circlemask.mask masks/circlemask.mask)
 
 include(InstallRequiredSystemLibraries)
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "Unnamed-Roguelike")
