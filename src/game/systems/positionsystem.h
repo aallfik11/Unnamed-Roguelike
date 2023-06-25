@@ -3,7 +3,6 @@
 #include "../components/coordinates.h"
 #include "../directions.h"
 #include "../entity.h"
-#include "../entityhash.h"
 #include "../entityholder.h"
 #include "../system.h"
 #include "../tile.h"
@@ -19,7 +18,6 @@ class PositionSystem : public System, public EntityHolder
     using Message  = std::tuple<observer_ptr<Entity>, uint16_t, uint16_t>;
 
     std::unordered_set<observer_ptr<Entity>> entity_positions_;
-    std::unordered_set<EntityId>             entities_stored_;
     std::list<Message>                       pos_change_messages_;
     std::list<std::pair<uint16_t, uint16_t>> request_messages_;
     std::list<observer_ptr<Entity>>          addition_messages_;

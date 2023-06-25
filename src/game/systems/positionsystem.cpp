@@ -3,7 +3,6 @@
 #include "../components/tilecomponent.h"
 #include "../directions.h"
 #include "../entity.h"
-// #include "../entityhash.h"
 #include "../entityholder.h"
 #include "../entitytypes.h"
 #include "../globals.h"
@@ -54,10 +53,10 @@ PositionSystem::PositionSystem(observer_ptr<GameMap> given_map)
 void PositionSystem::assignMap(observer_ptr<GameMap> map) { this->map_ = map; }
 
 bool PositionSystem::updatePosition(observer_ptr<Entity> entity,
-                                    uint16_t                   x,
-                                    uint16_t                   y)
+                                    uint16_t             x,
+                                    uint16_t             y)
 {
-    if (entities_stored_.contains(entity->getId()) == false)
+    if (entity_positions_.contains(entity) == false)
     {
         return false;
     }
@@ -145,7 +144,6 @@ PositionSystem::getEntitiesAtCoordinates(uint16_t x, uint16_t y)
 void PositionSystem::addEntity(const observer_ptr<Entity> entity)
 {
     entity_positions_.emplace(entity);
-    entities_stored_.emplace(entity->getId());
     if (auto entity_coords = entity->getComponent<Coordinates>())
     {
         TileType entity_tile_type = TileType::NONE;
@@ -173,7 +171,6 @@ void PositionSystem::deleteEntity(const observer_ptr<Entity> entity)
     entity->removeComponent<Coordinates>();
 
     entity_positions_.erase(entity);
-    entities_stored_.erase(entity->getId());
     return;
 }
 

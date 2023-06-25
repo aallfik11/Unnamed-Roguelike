@@ -2,7 +2,6 @@
 #define AMULETSLOT_H
 #include "../component.h"
 #include "../entity.h"
-#include "../entityhash.h"
 #include "../entityholder.h"
 #include "../observerptr.h"
 #include "../system.h"
